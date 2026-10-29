@@ -1,7 +1,7 @@
 # Presupuesto anual · Iniciativa Complutense
 
 Sistema de elaboración, aprobación y ratificación del presupuesto anual. El documento rector
-es [`CLAUDE.md`](CLAUDE.md). **Estado: Fase 1 de 8 (cimientos).**
+es [`CLAUDE.md`](CLAUDE.md). **Estado: Fase 2 de 8 (modelo presupuestario).**
 
 ## Arranque con Docker (un solo comando)
 
@@ -33,4 +33,6 @@ python manage.py runserver
 
 Calidad: `pytest`, `ruff check .`, `ruff format --check .`, `mypy .`
 
+Configuración legal y contable: [`docs/configuracion.md`](docs/configuracion.md).
+Datos de demostración (ficticios): [`docs/datos_demo.md`](docs/datos_demo.md).
 Decisiones técnicas: [`docs/decisiones/`](docs/decisiones/).

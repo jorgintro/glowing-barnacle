@@ -37,6 +37,8 @@ services:
       TESORERO_USUARIO: ${TESORERO_USUARIO:-}
       TESORERO_CLAVE: ${TESORERO_CLAVE:-}
       SESION_MINUTOS: ${SESION_MINUTOS:-30}
+      # Pon 0 cuando empieces a trabajar con datos reales: impide cargar datos de demostración.
+      PERMITIR_DATOS_DEMO: ${PERMITIR_DATOS_DEMO:-1}
     ports:
       - "8090:8000"  # puerto de fuera fijo; cámbialo aquí si 8090 está ocupado
     mem_limit: 512m
