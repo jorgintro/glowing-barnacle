@@ -115,7 +115,7 @@ def version(request: HttpRequest, pk: int) -> HttpResponse:
             "meses": MESES,
             "puede_editar": puede_editar,
             "validacion": validacion,
-            "con_donantes": ("I.2", "I.4"),
+            "con_donantes": dn.CAPITULOS_CON_DONANTES,
             "otras_versiones": v.ejercicio.versiones.exclude(pk=v.pk),
         },
     )
@@ -163,6 +163,7 @@ def _guardar(
                 es_ajuste=d["es_ajuste"],
                 justificacion_ajuste=d["justificacion_ajuste"],
                 origen_ingreso=d.get("origen_ingreso", ""),
+                operaciones_altas=d.get("operaciones_altas"),
             )
         except ValidationError as error:
             form.add_error(None, error)
@@ -329,6 +330,9 @@ def linea_donaciones(request: HttpRequest, pk: int, linea_pk: int) -> HttpRespon
                 linea,
                 form.cleaned_data["donante"],
                 form.cleaned_data["importe"],
+                tipo=form.cleaned_data["tipo"],
+                finalista=form.cleaned_data["finalista"],
+                revocable=form.cleaned_data["revocable"],
             )
         except ValidationError as error:
             form.add_error(None, error)

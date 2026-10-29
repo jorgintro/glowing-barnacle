@@ -9,11 +9,11 @@ from django.db import transaction
 from apps.auditoria.servicios import Contexto, registrar
 
 from .dinero import CERO, redondear
-from .models import Donacion, Donante, Linea, TipoPersona, VersionPresupuesto
+from .models import Donacion, Donante, Linea, TipoDonacion, TipoPersona, VersionPresupuesto
 from .nif import validar_nif
 from .servicios import exigir_borrador, exigir_tesorero
 
-CAPITULOS_CON_DONANTES = ("I.2", "I.4")
+CAPITULOS_CON_DONANTES = ("I.2", "I.4", "I.5")
 
 
 @transaction.atomic
@@ -23,6 +23,7 @@ def crear_donante(
     nombre: str,
     nif: str,
     tipo_persona: str = TipoPersona.FISICA,
+    contratista_publico: bool = False,
     es_demo: bool = False,
 ) -> Donante:
     exigir_tesorero(contexto)
@@ -34,7 +35,11 @@ def crear_donante(
     if Donante.objects.filter(nif=nif_ok, es_demo=es_demo).exists():
         raise ValidationError("Ya existe un donante con ese NIF.")
     donante = Donante.objects.create(
-        nombre=nombre.strip(), nif=nif_ok, tipo_persona=tipo_persona, es_demo=es_demo
+        nombre=nombre.strip(),
+        nif=nif_ok,
+        tipo_persona=tipo_persona,
+        contratista_publico=contratista_publico,
+        es_demo=es_demo,
     )
     registrar(
         contexto,
@@ -75,6 +80,10 @@ def registrar_donacion(
     linea: Linea,
     donante: Donante,
     importe: Decimal,
+    *,
+    tipo: str = TipoDonacion.DINERARIA,
+    finalista: bool = False,
+    revocable: bool = False,
 ) -> Donacion:
     exigir_tesorero(contexto)
     exigir_borrador(version)
@@ -87,6 +96,8 @@ def registrar_donacion(
         )
     if not donante.activo:
         errores.append("El donante está de baja.")
+    if tipo not in TipoDonacion.values:
+        errores.append("Tipo de donación desconocido.")
     importe = redondear(importe)
     if importe <= 0:
         errores.append("El importe debe ser mayor que cero.")
@@ -97,6 +108,9 @@ def registrar_donacion(
         linea=linea,
         donante=donante,
         importe=importe,
+        tipo=tipo,
+        finalista=finalista,
+        revocable=revocable,
         es_demo=version.es_demo,
     )
     registrar(

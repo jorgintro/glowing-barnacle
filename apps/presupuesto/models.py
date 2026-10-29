@@ -248,6 +248,15 @@ class Linea(_SinBorrado):
     )
     justificacion_variacion = models.TextField(blank=True)
     responsable = models.CharField(max_length=120, blank=True)
+    operaciones_altas = models.DecimalField(
+        "importe de operaciones individuales altas",
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Parte del ingreso formada por operaciones individuales que alcanzan el umbral "
+        "de identificación del transmitente (regla L-009). 0 si no hay; vacío = sin declarar.",
+    )
     origen_ingreso = models.CharField(
         max_length=80,
         blank=True,
@@ -273,6 +282,10 @@ class Linea(_SinBorrado):
             models.CheckConstraint(
                 condition=Q(importe_anual__gte=0) | Q(es_ajuste=True),
                 name="importe_no_negativo_salvo_ajuste",
+            ),
+            models.CheckConstraint(
+                condition=Q(operaciones_altas__isnull=True) | Q(operaciones_altas__gte=0),
+                name="operaciones_altas_no_negativas",
             ),
         ]
 
@@ -375,6 +388,12 @@ class Donante(models.Model):
     tipo_persona = models.CharField(
         max_length=10, choices=TipoPersona.choices, default=TipoPersona.FISICA
     )
+    contratista_publico = models.BooleanField(
+        "parte de un contrato público vigente",
+        default=False,
+        help_text="Persona física que, en ejercicio de una actividad económica o profesional, "
+        "es parte de un contrato vigente con el sector público (regla L-010).",
+    )
     activo = models.BooleanField(default=True)
     motivo_baja = models.TextField(blank=True)
     creado = models.DateTimeField(default=timezone.now)
@@ -392,6 +411,12 @@ class Donante(models.Model):
         return f"{self.nombre} ({self.nif})"
 
 
+class TipoDonacion(models.TextChoices):
+    DINERARIA = "DINERARIA", "En dinero"
+    ESPECIE = "ESPECIE", "En especie (bienes muebles)"
+    ESPECIE_INMUEBLE = "ESPECIE_INMUEBLE", "En especie (bien inmueble)"
+
+
 class Donacion(_SinBorrado):
     """Donación o aportación prevista de un donante, imputada a una línea de ingresos."""
 
@@ -401,6 +426,13 @@ class Donacion(_SinBorrado):
     linea = models.ForeignKey(Linea, on_delete=models.PROTECT, related_name="donaciones")
     donante = models.ForeignKey(Donante, on_delete=models.PROTECT, related_name="donaciones")
     importe = models.DecimalField(max_digits=14, decimal_places=2)
+    tipo = models.CharField(
+        max_length=20, choices=TipoDonacion.choices, default=TipoDonacion.DINERARIA
+    )
+    finalista = models.BooleanField(
+        default=False, help_text="Donación con un fin determinado (L-011)."
+    )
+    revocable = models.BooleanField(default=False, help_text="Donación revocable (L-011).")
     anulada = models.BooleanField(default=False)
     motivo_anulacion = models.TextField(blank=True)
     creada = models.DateTimeField(default=timezone.now)

@@ -12,6 +12,7 @@ from .models import (
     Linea,
     Partida,
     Tipo,
+    TipoDonacion,
     TipoLinea,
     TipoPersona,
 )
@@ -101,6 +102,12 @@ class LineaForm(forms.Form):
         required=False,
         help_text="Tipo de fuente; se contrasta con las fuentes de ingreso prohibidas.",
     )
+    operaciones_altas = _dinero(
+        "Parte del ingreso en operaciones individuales altas (€)",
+        required=False,
+        help_text="Importe formado por operaciones individuales que alcanzan el umbral de "
+        "identificación del transmitente (regla L-009). Pon 0,00 si no hay.",
+    )
     es_ajuste = forms.BooleanField(label="Es un ajuste (admite importe negativo)", required=False)
     justificacion_ajuste = forms.CharField(
         label="Justificación del ajuste", required=False, widget=forms.Textarea(attrs={"rows": 2})
@@ -116,6 +123,8 @@ class LineaForm(forms.Form):
         self.fields["dimension"].initial = partida.dimension_por_defecto
         if partida.capitulo.tipo != Tipo.INGRESO:
             del self.fields["origen_ingreso"]
+        if partida.capitulo.codigo != "I.5":
+            del self.fields["operaciones_altas"]
         for i, mes in enumerate(MESES, start=1):
             self.fields[f"mes_{i}"] = _dinero(mes, required=False)
 
@@ -156,6 +165,7 @@ class LineaForm(forms.Form):
             "es_ajuste": linea.es_ajuste,
             "justificacion_ajuste": linea.justificacion_ajuste,
             "origen_ingreso": linea.origen_ingreso,
+            "operaciones_altas": linea.operaciones_altas,
             "reparto": "MANUAL",
         }
         for i, importe in enumerate(mensuales, start=1):
@@ -175,6 +185,11 @@ class DonanteForm(forms.Form):
     tipo_persona = forms.ChoiceField(
         label="Tipo de persona", choices=TipoPersona.choices, initial=TipoPersona.FISICA
     )
+    contratista_publico = forms.BooleanField(
+        label="Es parte de un contrato público vigente",
+        required=False,
+        help_text="Solo personas físicas con actividad económica o profesional (regla L-010).",
+    )
 
 
 class BajaDonanteForm(forms.Form):
@@ -184,6 +199,9 @@ class BajaDonanteForm(forms.Form):
 class DonacionForm(forms.Form):
     donante = forms.ModelChoiceField(label="Donante", queryset=Donante.objects.none())
     importe = _dinero("Importe previsto (€)")
+    tipo = forms.ChoiceField(label="Tipo de donación", choices=TipoDonacion.choices)
+    finalista = forms.BooleanField(label="Es finalista (con un fin determinado)", required=False)
+    revocable = forms.BooleanField(label="Es revocable", required=False)
 
     def __init__(self, *args: Any, es_demo: bool, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

@@ -116,6 +116,9 @@ def _instantanea(linea: Linea) -> dict[str, Any]:
         else None,
         "responsable": linea.responsable,
         "origen_ingreso": linea.origen_ingreso,
+        "operaciones_altas": str(linea.operaciones_altas)
+        if linea.operaciones_altas is not None
+        else None,
         "es_ajuste": linea.es_ajuste,
         "hipotesis": {"texto": h.texto, "fuente": h.fuente, "confianza": h.confianza}
         if h
@@ -143,6 +146,7 @@ def guardar_linea(
     es_ajuste: bool = False,
     justificacion_ajuste: str = "",
     origen_ingreso: str = "",
+    operaciones_altas: Decimal | None = None,
     linea: Linea | None = None,
 ) -> Linea:
     """Crea o actualiza una línea con su distribución mensual y su hipótesis.
@@ -173,6 +177,14 @@ def guardar_linea(
         errores.append("No se admiten importes negativos salvo ajustes justificados.")
     if es_ajuste and not justificacion_ajuste.strip():
         errores.append("Un ajuste exige justificación.")
+    if operaciones_altas is not None:
+        operaciones_altas = redondear(operaciones_altas)
+        if capitulo.codigo != "I.5":
+            errores.append("Las operaciones individuales altas solo se declaran en I.5.")
+        elif operaciones_altas < 0 or operaciones_altas > importe_anual:
+            errores.append(
+                "Las operaciones individuales altas no pueden ser negativas ni superar el importe."
+            )
     if mensual is None:
         cuotas = repartir_uniforme(importe_anual)
     else:
@@ -204,6 +216,7 @@ def guardar_linea(
     linea.justificacion_variacion = justificacion_variacion
     linea.responsable = responsable.strip()
     linea.origen_ingreso = origen_ingreso.strip()
+    linea.operaciones_altas = operaciones_altas
     linea.es_ajuste = es_ajuste
     linea.justificacion_ajuste = justificacion_ajuste
     linea.modificada = timezone.now()
