@@ -37,7 +37,8 @@ Usuarios: `demo_cp1`, `demo_cp2`, `demo_cp3` (Comisión Permanente) y `demo_junt
 ### Defectos deliberados del ejercicio 2031
 
 Se comprueban con la configuración **ficticia** de `config/demo/` (límites inventados: 1.500 € por
-donante, 2.000 € por aportante, 15.000 € de gasto electoral y 5.000 € de endeudamiento).
+donante, 2.000 € por aportante, 15.000 € de gasto electoral, 5.000 € de endeudamiento, 3.000 € de aviso
+de notificación y 150 € de identificación).
 
 | Regla | Defecto |
 |---|---|
@@ -52,13 +53,17 @@ donante, 2.000 € por aportante, 15.000 € de gasto electoral y 5.000 € de e
 | L-003 | Un cargo que supera el límite de aportaciones y una aportación sin identificar |
 | L-004 | Gasto de campaña de 16.000 € frente a un límite ficticio de 15.000 € |
 | L-005 | Endeudamiento de 8.000 € frente a un límite ficticio de 5.000 € |
+| L-008 (aviso) | Donación de un inmueble de 4.000 € (más que el umbral ficticio de aviso, 3.000 €); además **no** cuenta para el límite por donante, que demuestra la excepción |
+| L-009 | Ventas individuales de 400 € declaradas como «operaciones altas» sin identificar al transmitente (umbral ficticio: 150 €) |
+| L-010 | Donación de un «contratista público» ficticio |
+| L-011 | Una donación finalista y otra revocable |
 
-Las demás versiones de demostración (2027–2030) **superan todas las reglas V y L** con esa
+Las demás versiones de demostración (2027–2030) **superan todas las reglas V y L (18 reglas)** con esa
 configuración. Las reglas orgánicas (O-) se demuestran en la Fase 4 con la votación y la
 ratificación.
 
-Donantes de demostración: 3 cargos (`C1`–`C3`), 8 donantes (`D1`–`D8`) y una empresa, todos
-ficticios (NIF de prueba, no pertenecen a nadie).
+Donantes de demostración: 3 cargos (`C1`–`C3`), 8 donantes (`D1`–`D8`), un contratista público y una
+empresa, todos ficticios (NIF de prueba, no pertenecen a nadie).
 
 > Las versiones demo en estado `PROPUESTO`, `APROBADO_CP` y `RATIFICADO_JG` se han sembrado
 > directamente, sin huella (hash). Se sellarán cuando exista el flujo de la Fase 4.

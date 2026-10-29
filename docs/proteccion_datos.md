@@ -5,6 +5,7 @@
 | Dato | Para qué | Quién lo ve |
 |---|---|---|
 | Nombre y NIF/NIE/CIF del donante, y tipo de persona | Comprobar el límite anual por donante y la identificación (L-001, L-003) | Tesorero (completo). Los demás roles solo ven el NIF enmascarado (`****678Z`) en los avisos |
+| Si el donante es parte de un contrato público vigente (sí/no, declarado por el Tesorero) | Aplicar la regla L-010 | Tesorero |
 | Nombre de usuario y nombre de los miembros | Acceso nominal y auditoría | Tesorero |
 
 **Decisión del Tesorero:** los donantes se identifican (esto prima sobre la recomendación de datos
@@ -12,7 +13,7 @@ mínimos de `CLAUDE.md` §13.3). Se guarda solo lo indicado: no hay dirección, 
 
 ## Medidas ya aplicadas
 
-* **Minimización**: nombre, NIF y tipo de persona; nada más.
+* **Minimización**: nombre, NIF, tipo de persona y la marca de contratista público; nada más.
 * **La auditoría no guarda nombre ni NIF** de los donantes (solo su identificador interno), porque
   la auditoría no se puede borrar y así no impide atender un derecho de supresión.
 * **Nada se borra**: un donante se da de baja con motivo y deja de poder recibir donaciones.

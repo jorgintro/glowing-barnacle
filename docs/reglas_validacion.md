@@ -28,13 +28,17 @@ avisa de que no se puede comprobar.
 
 | Código | Qué comprueba | Parámetros que usa |
 |---|---|---|
-| L-001 | Donaciones: límite anual por donante, todo el importe con donante identificado y tipo de persona permitido | `limite_donacion_anual_por_donante`, `donaciones_anonimas_permitidas`, `donaciones_personas_juridicas_permitidas` |
+| L-001 | Donaciones: límite anual por donante, todo el importe con donante identificado y tipo de persona permitido. Las donaciones en especie de **inmuebles** no cuentan para el límite | `limite_donacion_anual_por_donante`, `donaciones_anonimas_permitidas`, `donaciones_personas_juridicas_permitidas`, `donaciones_inmuebles_exentas_de_limite` |
 | L-002 | Ningún ingreso procede de una fuente prohibida (campo «origen» de la línea) | `fuentes_ingreso_prohibidas` |
 | L-003 | Aportaciones de cargos identificadas y dentro del límite | `limite_aportaciones_cargos_anual` |
 | L-004 | El gasto electoral no supera el límite y solo existe si hay proceso electoral | `limite_gasto_electoral` |
 | L-005 | El endeudamiento previsto no supera el límite | `limite_endeudamiento` |
 | L-006 | Todas las líneas siguen el cuadro de cuentas, y este está validado por el Tesorero | `cuadro_cuentas.yaml` |
 | L-007 | Todos los parámetros legales están verificados y su fecha de verificación es vigente | Todos |
+| L-008 | **Aviso**: donaciones y aportaciones que hay que notificar al Tribunal de Cuentas | `umbral_notificacion_tribunal_cuentas` |
+| L-009 | Los ingresos de actividades propias (I.5) a partir del umbral exigen identificar al transmitente | `umbral_identificacion_actividades_propias` |
+| L-010 | Sin donaciones de personas físicas que sean parte de un contrato público vigente | `donaciones_contratistas_publicos_permitidas` |
+| L-011 | Sin donaciones finalistas ni revocables | `donaciones_finalistas_o_revocables_permitidas` |
 
 **Valores del extracto.** `config/parametros_legales.yaml` lleva ya valor y referencia de cuatro
 parámetros, tomados del extracto de los arts. 4 a 8 que aportó el Tesorero
@@ -52,21 +56,30 @@ se citan de memoria. El sistema solo aplica lo que figure verificado en `paramet
 * L-007 considera vigente una verificación hecha **en el año del ejercicio o en el anterior** (la
   verificación se hace en octubre para el ejercicio siguiente, `CLAUDE.md` §14), y rechaza fechas
   futuras. Se puede desactivar la ventana con `exigir_ventana_verificacion: false` (solo en demo).
+* **L-008** avisa de las donaciones **individuales** superiores al umbral (art. 5.Dos), de **todas** las
+  de inmuebles, y de las aportaciones de un mismo aportante que, **acumuladas**, superen el umbral
+  (art. 8.Tres). Es un aviso: recuerda la obligación de notificar; no comprueba que se haga.
+* **L-009**: como el presupuesto trabaja con importes anuales, el Tesorero declara en cada línea de
+  I.5 qué parte procede de operaciones individuales que alcanzan el umbral, y esa parte debe estar
+  cubierta por transmitentes identificados. Una línea inferior al umbral no puede contener ninguna.
+  Dejar la declaración vacía en una línea que alcanza el umbral **bloquea**.
+* **L-010** y **L-011** se aplican a las donaciones del capítulo I.4. Que un donante sea contratista
+  público, y que una donación sea finalista o revocable, **lo declara el Tesorero**: el sistema no
+  puede comprobarlo.
+* **L-001, excepción de inmuebles**: solo se aplica si la donación está marcada «en especie (bien
+  inmueble)» y el parámetro de exención está verificado. El extracto añade que deben cumplirse los
+  requisitos del art. 4.Dos.e (certificación y documento que acredite la entrega); el sistema
+  **no** los comprueba.
 * L-004 suma como gasto electoral el capítulo G.7 y toda línea de gasto con dimensión «Campaña».
 
-### Lo que el extracto sugiere y todavía NO está implementado
+### Lo que el extracto menciona y NO está en el sistema
 
-Pendiente de que el Tesorero decida si se añade (cada una llevaría su regla y sus pruebas):
-
-| Artículo del extracto | Posible regla | Qué haría falta |
-|---|---|---|
-| 5.Dos y 8.Tres | **Aviso** si una donación o aportación supera 25.000 €: hay que notificarla al Tribunal de Cuentas | Parámetro nuevo con el umbral |
-| 6.Tres | Los ingresos de actividades propias de 300 € o más exigen identificar al transmitente | Parámetro nuevo y donantes también en I.5 |
-| 4.Dos.a | No se admiten donaciones de personas físicas que sean parte de un contrato público vigente | Un dato más del donante |
-| 5.Uno.b (excepción) | El límite de 50.000 € no se aplica a donaciones en especie de inmuebles | Distinguir tipo de bien en la donación |
-| 5.Uno.a | También son inadmisibles las donaciones **finalistas o revocables** | Un dato más de la donación |
-| 6.Uno | **Los partidos no pueden desarrollar actividades mercantiles**: conviene que el asesor revise partidas como la venta de merchandising (I.5.1) y los datos de demostración | Decisión del asesor |
-| 4.Dos.b, 8.Uno-Dos | Cuentas bancarias exclusivas para donaciones y cuotas | Fuera del alcance del sistema (no hay conciliación bancaria) |
+| Artículo del extracto | Motivo |
+|---|---|
+| 6.Uno: los partidos no pueden desarrollar actividades de carácter mercantil | Es una decisión de calificación para el asesor. El sistema solo ofrece la etiqueta de origen `ACTIVIDAD_MERCANTIL` (L-002). **Conviene que el asesor revise partidas como la venta de merchandising (I.5.1)**, que también aparece en los datos de demostración |
+| 4.Dos.b-d y 8.Uno-Dos: cuentas bancarias exclusivas y constancia de ingresos | Fuera del alcance del sistema (no hay conciliación bancaria, `CLAUDE.md` §16.1) |
+| 4.Dos.f-g: devolución del exceso y plazo de tres meses para devolver o ingresar en el Tesoro | Obligaciones posteriores a la ejecución; no son parte del presupuesto |
+| 7.Uno: donaciones de personas físicas extranjeras y control de cambios | No modelado; el donante no lleva nacionalidad |
 
 ## Reglas orgánicas (O)
 

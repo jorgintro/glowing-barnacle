@@ -21,6 +21,15 @@ Estructura del presupuesto (13 capítulos, partidas) y mapeo de cada partida a c
 Límites y prohibiciones legales (donaciones, gasto electoral, endeudamiento…).
 
 * **Ningún parámetro está verificado** y el fichero no afirma que ninguna norma esté vigente.
+* **Estado actual de la verificación (honesto):**
+  * Los 4 primeros parámetros (50.000 € por donante, anónimas, personas jurídicas, fuentes
+    prohibidas) figuran **verificados** porque el Tesorero lo **declaró** en la sesión del
+    29/10/2026. El sistema no puede comprobarlo. El campo «verificador» dice «Tesorero de
+    Iniciativa Complutense (declaración…)»: **sustitúyelo por tu nombre**.
+  * 5 parámetros nuevos del mismo extracto (umbral de notificación 25.000 €, umbral de
+    identificación 300 €, contratistas públicos, finalistas o revocables, exención de inmuebles)
+    están **pendientes**: se añadieron después de esa declaración.
+  * Aportaciones de cargos, gasto electoral y endeudamiento siguen **sin valor**.
 * Cuatro parámetros llevan ya **valor y referencia** tomados del extracto de la ley que aportó el
   Tesorero (`docs/fuentes_normativas/`): 50.000 € por donante y año (art. 5.Uno.b), donaciones
   anónimas no permitidas (art. 5.Uno.a), donaciones de personas jurídicas no permitidas (art.
