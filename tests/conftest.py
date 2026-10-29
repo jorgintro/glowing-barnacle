@@ -37,3 +37,22 @@ def cliente_tesorero(tesorero: Usuario) -> Client:
 
 
 __all__ = ["CLAVE", "crear", "servicios"]
+
+
+@pytest.fixture
+def catalogo(db: None) -> None:
+    from apps.presupuesto.sincronizacion import (
+        sincronizar_cuadro_cuentas,
+        sincronizar_parametros_legales,
+    )
+
+    sincronizar_cuadro_cuentas()
+    sincronizar_parametros_legales()
+
+
+@pytest.fixture
+def borrador(catalogo: None, ctx_tesorero: Contexto):
+    from apps.presupuesto import servicios as ps
+
+    _, version = ps.crear_ejercicio(ctx_tesorero, anio=2040, nombre="Ejercicio de prueba")
+    return version

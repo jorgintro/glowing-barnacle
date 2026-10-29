@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% load presupuesto_extras %}
+{% block titulo %}Presupuestos{% endblock %}
+{% block contenido %}
+<h1>Presupuestos</h1>
+{% if es_tesorero %}<p><a class="boton" href="{% url 'presupuesto:ejercicio_nuevo' %}">Nuevo ejercicio</a></p>{% endif %}
+{% for fila in filas %}
+<section class="tarjeta">
+  <h2>{{ fila.ejercicio.anio|unlocalize }}{% if fila.ejercicio.nombre %} · {{ fila.ejercicio.nombre }}{% endif %}
+    {% if fila.ejercicio.es_demo %}<span class="etiqueta aviso">DEMO · datos ficticios</span>{% endif %}
+    {% if fila.ejercicio.hay_proceso_electoral %}<span class="etiqueta marca">Con campaña</span>{% endif %}</h2>
+  <table>
+    <thead><tr><th scope="col">Versión</th><th scope="col">Estado</th><th scope="col">Motivo</th><th scope="col">Fecha</th><th scope="col"></th></tr></thead>
+    <tbody>
+    {% for v in fila.versiones %}
+      <tr>
+        <td>v{{ v.numero }}</td>
+        <td><span class="etiqueta {{ v.estado|clase_estado }}">{{ v.get_estado_display }}</span></td>
+        <td>{{ v.motivo|default:"—" }}</td>
+        <td>{{ v.fecha|date:"d/m/Y" }}</td>
+        <td><a href="{% url 'presupuesto:version' v.pk %}">Abrir</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% empty %}
+<div class="tarjeta"><p>No hay presupuestos disponibles con tu rol todavía.</p></div>
+{% endfor %}
+{% endblock %}

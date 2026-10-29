@@ -1,0 +1,5 @@
+FROM postgres:16-alpine
+RUN apk add --no-cache openssl
+COPY docker/copia.sh docker/restaurar.sh /app/
+RUN chmod +x /app/*.sh
+ENTRYPOINT ["/bin/sh", "/app/copia.sh"]

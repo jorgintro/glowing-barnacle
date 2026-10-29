@@ -1,0 +1,35 @@
+{% load presupuesto_extras %}
+<details class="capitulo"{% if bloque.lineas %} open{% endif %}>
+  <summary><span>{{ bloque.total.capitulo.codigo }} · {{ bloque.total.capitulo.denominacion }}
+    <span class="sub">({{ bloque.total.num_lineas }} línea{{ bloque.total.num_lineas|pluralize }})</span></span>
+    <span class="total">{{ bloque.total.total|euros }}</span></summary>
+  <div class="contenido">
+  {% if bloque.lineas %}
+    <table>
+      <thead><tr><th scope="col">Código</th><th scope="col">Denominación</th><th scope="col">Cuenta</th>
+        <th scope="col">Responsable</th><th scope="col" class="num">Importe anual</th>
+        {% if puede_editar %}<th scope="col"><span class="sr-only">Acciones</span></th>{% endif %}</tr></thead>
+      <tbody>
+      {% for l in bloque.lineas %}
+        <tr{% if l.anulada %} class="anulada"{% endif %}>
+          <td>{{ l.codigo }}</td>
+          <td>{{ l.denominacion }}
+            {% if l.dimension == "CAMPANA" %}<span class="etiqueta marca">Campaña</span>{% endif %}
+            {% if l.dimension == "GRUPO_MUNICIPAL" %}<span class="etiqueta marca">Grupo municipal</span>{% endif %}
+            {% if l.anulada %}<span class="etiqueta error">Anulada</span><div class="sub">{{ l.motivo_anulacion }}</div>
+            {% elif l.hipotesis and l.hipotesis.texto %}<div class="sub">Hipótesis: {{ l.hipotesis.texto }} <em>({{ l.hipotesis.fuente }})</em></div>
+            {% else %}<div class="sub"><span class="etiqueta aviso">Sin hipótesis</span></div>{% endif %}
+          </td>
+          <td>{{ l.cuenta_pgc.codigo|default:"—" }}</td>
+          <td>{{ l.responsable|default:"—" }}</td>
+          <td class="num">{{ l.importe_anual|euros }}</td>
+          {% if puede_editar %}<td class="acciones">{% if not l.anulada %}
+            <a href="{% url 'presupuesto:linea_editar' version.pk l.pk %}">Editar</a> ·
+            <a href="{% url 'presupuesto:linea_anular' version.pk l.pk %}">Anular</a>{% endif %}</td>{% endif %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}<p class="suave">Sin líneas todavía.</p>{% endif %}
+  </div>
+</details>

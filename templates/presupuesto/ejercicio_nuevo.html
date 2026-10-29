@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titulo %}Nuevo ejercicio{% endblock %}
+{% block contenido %}
+<h1>Nuevo ejercicio</h1>
+<div class="tarjeta">
+<form method="post">{% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for campo in form %}
+  <div class="campo">
+    {% if campo.field.widget.input_type == "checkbox" %}
+      <label for="{{ campo.id_for_label }}">{{ campo }} {{ campo.label }}</label>
+    {% else %}
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+    {% endif %}
+    {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}
+  </div>
+  {% endfor %}
+  <button class="boton" type="submit">Crear ejercicio y primer borrador</button>
+  <a class="boton secundario" href="{% url 'presupuesto:lista' %}">Cancelar</a>
+</form>
+</div>
+{% endblock %}

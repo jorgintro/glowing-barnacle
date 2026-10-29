@@ -31,3 +31,8 @@ django_settings_module = "proyecto.settings_pruebas"
 DJANGO_SETTINGS_MODULE = "proyecto.settings_pruebas"
 python_files = ["test_*.py"]
 testpaths = ["tests"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+warn_unused_ignores = false

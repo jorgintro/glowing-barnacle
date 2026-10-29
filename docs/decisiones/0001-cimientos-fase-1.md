@@ -22,3 +22,9 @@ Se mantiene el stack por defecto de `CLAUDE.md` §9.2. Decisiones de detalle:
    (el Tesorero vota en la CP y registra la ratificación) se aplicarán mediante
    `reglas_organicas.yaml` de demostración, nunca como comportamiento por defecto. Ver
    discrepancia con `CLAUDE.md` §4 y principio 8.
+9. **Despliegue en servidor doméstico**: se añaden `gunicorn` (servidor de aplicaciones) y
+   `whitenoise` (ficheros estáticos), dos dependencias ligeras, para poder probar cada fase en
+   el servidor del Tesorero. `docker-compose.prod.yml` incluye un contenedor de copias diarias
+   (cifrado opcional) y un script de restauración. Probado: arranque con gunicorn sin modo
+   desarrollo, estáticos, entrada por HTTP, copia y restauración (también cifrada) sobre una base
+   con contenido. **No probado**: ejecución real en Docker.

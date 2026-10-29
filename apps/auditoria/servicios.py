@@ -39,6 +39,7 @@ def registrar(
     es_demo: bool = False,
 ) -> RegistroAuditoria:
     usuario = contexto.usuario
+    es_demo = es_demo or bool(getattr(usuario, "es_demo", False))
     return RegistroAuditoria.objects.create(
         usuario=usuario,
         usuario_texto=usuario_texto or (usuario.get_username() if usuario else ""),

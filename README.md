@@ -1,7 +1,7 @@
 # Presupuesto anual · Iniciativa Complutense
 
 Sistema de elaboración, aprobación y ratificación del presupuesto anual. El documento rector
-es [`CLAUDE.md`](CLAUDE.md). **Estado: Fase 1 de 8 (cimientos).**
+es [`CLAUDE.md`](CLAUDE.md). **Estado: Fase 2 de 8 (modelo presupuestario).**
 
 ## Arranque con Docker (un solo comando)
 
@@ -9,12 +9,16 @@ es [`CLAUDE.md`](CLAUDE.md). **Estado: Fase 1 de 8 (cimientos).**
 docker compose up --build
 ```
 
-Abre <http://localhost:8000>. Para crear el primer Tesorero define `TESORERO_USUARIO` y
+Abre <http://localhost:8090>. Para crear el primer Tesorero define `TESORERO_USUARIO` y
 `TESORERO_CLAVE` (véase `.env.ejemplo`) o ejecuta:
 
 ```bash
 docker compose exec web python manage.py crear_tesorero
 ```
+
+## Servidor doméstico (Debian + Portainer)
+
+Guía paso a paso: [`docs/despliegue_homeserver.md`](docs/despliegue_homeserver.md).
 
 ## Desarrollo local
 
@@ -29,4 +33,6 @@ python manage.py runserver
 
 Calidad: `pytest`, `ruff check .`, `ruff format --check .`, `mypy .`
 
+Configuración legal y contable: [`docs/configuracion.md`](docs/configuracion.md).
+Datos de demostración (ficticios): [`docs/datos_demo.md`](docs/datos_demo.md).
 Decisiones técnicas: [`docs/decisiones/`](docs/decisiones/).

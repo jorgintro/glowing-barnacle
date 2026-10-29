@@ -30,6 +30,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-presupuesto}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-presupuesto-desarrollo}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      PERMITIR_DATOS_DEMO: ${PERMITIR_DATOS_DEMO:-1}
     ports:
       - "8090:8000"
 

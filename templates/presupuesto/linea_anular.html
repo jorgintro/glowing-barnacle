@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block titulo %}Anular línea{% endblock %}
+{% block contenido %}
+<h1>Anular {{ linea.codigo }}</h1>
+<p>{{ linea.denominacion }}. Una línea anulada <strong>no se borra</strong>: se conserva en el historial con su motivo, pero deja de sumar.</p>
+<form method="post" class="tarjeta">{% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="campo"><label for="{{ form.motivo.id_for_label }}">{{ form.motivo.label }}</label>{{ form.motivo }}{{ form.motivo.errors }}</div>
+  <button class="boton" type="submit">Anular línea</button>
+  <a class="boton secundario" href="{% url 'presupuesto:version' version.pk %}">Cancelar</a>
+</form>
+{% endblock %}
