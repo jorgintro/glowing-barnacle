@@ -6,4 +6,5 @@ urlpatterns = [
     path("", views.inicio, name="inicio"),
     path("", include("apps.usuarios.urls")),
     path("", include("apps.presupuesto.urls")),
+    path("", include("apps.organizacion.urls")),
 ]
