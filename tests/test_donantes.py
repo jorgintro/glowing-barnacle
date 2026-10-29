@@ -231,9 +231,10 @@ def test_la_estructura_del_cuadro_demo_coincide_con_la_real() -> None:
     assert not real.validado and demo.validado
 
 
-def test_ninguna_configuracion_real_trae_valores_inventados() -> None:
+def test_ninguna_configuracion_real_trae_valores_inventados_ni_verificados() -> None:
     real = cargar_configuracion(False)
-    assert all(p.valor is None and not p.verificador for p in real.legales.values())
+    assert all(not p.verificador and p.fecha_verificacion is None for p in real.legales.values())
+    assert sum(p.valor is not None for p in real.legales.values()) == 4  # solo los del extracto
     assert real.internos.umbral_variacion_porcentaje is None
     assert (
         real.organicas.quorum,

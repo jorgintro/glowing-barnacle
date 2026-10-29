@@ -22,7 +22,32 @@ def test_cuadro_real_es_valido_y_tiene_13_capitulos() -> None:
 def test_parametros_legales_reales_estan_todos_pendientes() -> None:
     p = cfg.cargar_parametros_legales()
     assert len(p.parametros) >= 7
-    assert all(x.valor is None and x.verificador == "" for x in p.parametros)
+    # Ninguno está verificado: faltan la fecha y el verificador, que solo puede poner el Tesorero.
+    assert all(x.fecha_verificacion is None and x.verificador == "" for x in p.parametros)
+
+
+def test_los_valores_del_extracto_de_la_ley_estan_cargados_con_su_referencia() -> None:
+    """Valores tomados del texto que aportó el Tesorero; la verificación sigue pendiente."""
+    por_clave = {x.clave: x for x in cfg.cargar_parametros_legales().parametros}
+    assert por_clave["limite_donacion_anual_por_donante"].valor == "50000.00"
+    assert por_clave["donaciones_anonimas_permitidas"].valor is False
+    assert por_clave["donaciones_personas_juridicas_permitidas"].valor is False
+    assert "ACTIVIDAD_MERCANTIL" in por_clave["fuentes_ingreso_prohibidas"].valor
+    for clave in (
+        "limite_donacion_anual_por_donante",
+        "donaciones_anonimas_permitidas",
+        "donaciones_personas_juridicas_permitidas",
+        "fuentes_ingreso_prohibidas",
+    ):
+        ref = por_clave[clave].referencia_normativa
+        assert "LO 8/2007" in ref and "sin contrastar con el BOE" in ref
+    # lo que el extracto no dice sigue sin valor (no se inventa)
+    for clave in (
+        "limite_aportaciones_cargos_anual",
+        "limite_gasto_electoral",
+        "limite_endeudamiento",
+    ):
+        assert por_clave[clave].valor is None and por_clave[clave].referencia_normativa == ""
 
 
 def test_cuenta_desconocida_se_rechaza(tmp_path: Path) -> None:
@@ -97,7 +122,7 @@ def test_sincronizacion_es_idempotente_y_audita() -> None:
     assert Capitulo.objects.count() == 13
     assert Partida.objects.get(codigo="G.7.1").dimension_por_defecto == "CAMPANA"
     assert CuentaPGC.objects.filter(codigo="720").exists()
-    assert ParametroLegal.objects.filter(valor__isnull=False).count() == 0
+    assert ParametroLegal.objects.filter(valor__isnull=False).count() == 4  # los del extracto
     assert not any(p.verificado for p in ParametroLegal.objects.all())
 
 

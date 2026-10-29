@@ -369,3 +369,53 @@ def test_con_la_configuracion_real_ninguna_version_puede_avanzar(ok) -> None:
     esperados = {"L-001", "L-002", "L-003", "L-006", "L-007"}
     assert esperados <= codigos(res)
     assert "L-007" in codigos(res) and len(_mensajes(res, "L-007")) == 7
+
+
+# ------------------------- con los valores reales del extracto, una vez firmados por el Tesorero
+
+
+def _real_firmado(*claves: str):
+    """Configuración REAL con la firma del Tesorero (solo en la prueba) en algunos parámetros."""
+    from tests.util_validaciones import con_param
+
+    cfg = cargar_configuracion(False)
+    for c in claves:
+        cfg = con_param(
+            cfg, c, fecha_verificacion=date(2026, 10, 29), verificador="Tesorero (prueba)"
+        )
+    return cfg
+
+
+def test_sin_firmar_los_valores_reales_no_bastan(ok) -> None:
+    version, _, _ = ok
+    res = validar_version(version, cfg=cargar_configuracion(False), hoy=HOY)
+    assert any("pendiente de verificación" in m for m in _mensajes(res, "L-001"))
+
+
+def test_con_los_valores_reales_firmados_l001_aplica_50000_euros_y_prohibe_juridicas(ok) -> None:
+    version, ctx, ls = ok
+    cfg = _real_firmado(
+        "limite_donacion_anual_por_donante",
+        "donaciones_anonimas_permitidas",
+        "donaciones_personas_juridicas_permitidas",
+    )
+    assert "L-001" not in codigos(validar_version(version, cfg=cfg, hoy=HOY))
+    grande = donante(ctx, 50, nombre="Gran Donante Ficticio")
+    Linea.objects.filter(pk=ls["dona"].pk).update(importe_anual=Decimal("51000.00"))
+    dn.registrar_donacion(ctx, version, ls["dona"], grande, Decimal("50001"))
+    msg = _mensajes(validar_version(version, cfg=cfg, hoy=HOY), "L-001")
+    assert any("Gran Donante" in m and "50.000,00" in m for m in msg)
+    empresa = donante(ctx, 51, "JURIDICA", "Empresa Ficticia")
+    Linea.objects.filter(pk=ls["dona"].pk).update(importe_anual=Decimal("51100.00"))
+    dn.registrar_donacion(ctx, version, ls["dona"], empresa, Decimal("100"))
+    assert any(
+        "jurídica" in m for m in _mensajes(validar_version(version, cfg=cfg, hoy=HOY), "L-001")
+    )
+
+
+def test_con_la_lista_real_firmada_l002_bloquea_actividad_mercantil(ok) -> None:
+    version, ctx, _ = ok
+    cfg = _real_firmado("fuentes_ingreso_prohibidas")
+    ln = linea(ctx, version, "I.5.1", "100", confianza="BAJA", origen_ingreso="actividad_mercantil")
+    inc = [i for i in validar_version(version, cfg=cfg, hoy=HOY).incidencias if i.codigo == "L-002"]
+    assert [i.linea for i in inc] == [ln.codigo]
