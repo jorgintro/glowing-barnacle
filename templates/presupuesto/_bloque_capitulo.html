@@ -17,7 +17,7 @@
             {% if l.dimension == "CAMPANA" %}<span class="etiqueta marca">Campaña</span>{% endif %}
             {% if l.dimension == "GRUPO_MUNICIPAL" %}<span class="etiqueta marca">Grupo municipal</span>{% endif %}
             {% if l.anulada %}<span class="etiqueta error">Anulada</span><div class="sub">{{ l.motivo_anulacion }}</div>
-            {% elif l.hipotesis %}<div class="sub">Hipótesis: {{ l.hipotesis.texto }} <em>({{ l.hipotesis.fuente }})</em></div>
+            {% elif l.hipotesis and l.hipotesis.texto %}<div class="sub">Hipótesis: {{ l.hipotesis.texto }} <em>({{ l.hipotesis.fuente }})</em></div>
             {% else %}<div class="sub"><span class="etiqueta aviso">Sin hipótesis</span></div>{% endif %}
           </td>
           <td>{{ l.cuenta_pgc.codigo|default:"—" }}</td>

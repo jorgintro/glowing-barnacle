@@ -185,3 +185,32 @@ def test_lista_y_configuracion(borrador, cliente_tesorero: Client) -> None:
     crear("vocal", Rol.COMISION_PERMANENTE)
     assert _cliente("vocal").get("/configuracion/").status_code == 200
     assert Client().get("/configuracion/").status_code == 302
+
+
+def test_el_anio_no_lleva_separador_de_millares(borrador, cliente_tesorero: Client) -> None:
+    """Con formato español, 2040 podría salir como «2 040»: el año no debe formatearse."""
+    pagina = cliente_tesorero.get(f"/presupuestos/version/{borrador.pk}/").content.decode()
+    assert "2040 · versión 1" in pagina
+    assert "2 040" not in pagina and "2.040" not in pagina
+    assert "<h2>2040" in cliente_tesorero.get("/presupuestos/").content.decode()
+
+
+def test_linea_sin_hipotesis_muestra_aviso(
+    borrador, ctx_tesorero: Contexto, cliente_tesorero: Client
+) -> None:
+    from apps.presupuesto.models import Hipotesis
+
+    p = Partida.objects.get(codigo="I.1.1")
+    linea = ps.guardar_linea(
+        ctx_tesorero,
+        borrador,
+        partida=p,
+        denominacion="X",
+        cuenta=CuentaPGC.objects.get(codigo="720"),
+        importe_anual=Decimal("10"),
+        hipotesis=ps.DatosHipotesis("t", "f", "ALTA"),
+        responsable="R",
+    )
+    Hipotesis.objects.filter(linea=linea).update(texto="", fuente="")
+    pagina = cliente_tesorero.get(f"/presupuestos/version/{borrador.pk}/").content.decode()
+    assert "Sin hipótesis" in pagina and "Hipótesis: ()" not in pagina
