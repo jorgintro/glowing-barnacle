@@ -4,7 +4,17 @@ from typing import Any
 
 from django import forms
 
-from .models import Confianza, CuentaPGC, Dimension, Linea, Partida, Tipo, TipoLinea
+from .models import (
+    Confianza,
+    CuentaPGC,
+    Dimension,
+    Donante,
+    Linea,
+    Partida,
+    Tipo,
+    TipoLinea,
+    TipoPersona,
+)
 
 MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 
@@ -85,6 +95,12 @@ class LineaForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={"rows": 2}),
     )
+    origen_ingreso = forms.CharField(
+        label="Origen del ingreso (opcional)",
+        max_length=80,
+        required=False,
+        help_text="Tipo de fuente; se contrasta con las fuentes de ingreso prohibidas.",
+    )
     es_ajuste = forms.BooleanField(label="Es un ajuste (admite importe negativo)", required=False)
     justificacion_ajuste = forms.CharField(
         label="Justificación del ajuste", required=False, widget=forms.Textarea(attrs={"rows": 2})
@@ -98,6 +114,8 @@ class LineaForm(forms.Form):
         self.partida = partida
         self.fields["cuenta"].queryset = partida.cuentas.filter(activa=True)  # type: ignore[attr-defined]
         self.fields["dimension"].initial = partida.dimension_por_defecto
+        if partida.capitulo.tipo != Tipo.INGRESO:
+            del self.fields["origen_ingreso"]
         for i, mes in enumerate(MESES, start=1):
             self.fields[f"mes_{i}"] = _dinero(mes, required=False)
 
@@ -137,6 +155,7 @@ class LineaForm(forms.Form):
             "justificacion_variacion": linea.justificacion_variacion,
             "es_ajuste": linea.es_ajuste,
             "justificacion_ajuste": linea.justificacion_ajuste,
+            "origen_ingreso": linea.origen_ingreso,
             "reparto": "MANUAL",
         }
         for i, importe in enumerate(mensuales, start=1):
@@ -147,4 +166,51 @@ class LineaForm(forms.Form):
 class AnularLineaForm(forms.Form):
     motivo = forms.CharField(
         label="Motivo de la anulación", widget=forms.Textarea(attrs={"rows": 2})
+    )
+
+
+class DonanteForm(forms.Form):
+    nombre = forms.CharField(label="Nombre y apellidos o razón social", max_length=200)
+    nif = forms.CharField(label="NIF / NIE / CIF", max_length=15)
+    tipo_persona = forms.ChoiceField(
+        label="Tipo de persona", choices=TipoPersona.choices, initial=TipoPersona.FISICA
+    )
+
+
+class BajaDonanteForm(forms.Form):
+    motivo = forms.CharField(label="Motivo de la baja", widget=forms.Textarea(attrs={"rows": 2}))
+
+
+class DonacionForm(forms.Form):
+    donante = forms.ModelChoiceField(label="Donante", queryset=Donante.objects.none())
+    importe = _dinero("Importe previsto (€)")
+
+    def __init__(self, *args: Any, es_demo: bool, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        campo = self.fields["donante"]
+        assert isinstance(campo, forms.ModelChoiceField)
+        campo.queryset = Donante.objects.filter(activo=True, es_demo=es_demo)
+
+
+class AnularDonacionForm(forms.Form):
+    motivo = forms.CharField(
+        label="Motivo de la anulación", widget=forms.Textarea(attrs={"rows": 2})
+    )
+
+
+class ResultadoForm(forms.Form):
+    explicacion = forms.CharField(
+        label="Explicación del resultado presupuestario",
+        widget=forms.Textarea(attrs={"rows": 4}),
+        help_text="Obligatoria siempre (regla V-006).",
+    )
+    plan_financiacion = forms.CharField(
+        label="Plan de financiación del déficit",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4}),
+        help_text="Obligatorio si el resultado es un déficit (regla V-006).",
+    )
+    endeudamiento = _dinero(
+        "Endeudamiento nuevo previsto en el ejercicio (€)",
+        help_text="Déjalo en 0,00 si no hay. Se contrasta con el límite legal (regla L-005).",
     )

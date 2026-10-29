@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load presupuesto_extras %}
+{% block titulo %}Anular donación{% endblock %}
+{% block contenido %}
+<h1>Anular donación</h1>
+<p>{{ donacion.donante.nombre }} · {{ donacion.importe|euros }} en {{ donacion.linea.codigo }}. No se borra: se conserva con su motivo y deja de contar.</p>
+<form method="post" class="tarjeta">{% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="campo"><label for="{{ form.motivo.id_for_label }}">{{ form.motivo.label }}</label>{{ form.motivo }}{{ form.motivo.errors }}</div>
+  <button class="boton" type="submit">Anular donación</button>
+  <a class="boton secundario" href="{% url 'presupuesto:linea_donaciones' version.pk donacion.linea_id %}">Cancelar</a>
+</form>
+{% endblock %}

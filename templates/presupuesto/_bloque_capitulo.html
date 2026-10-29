@@ -25,6 +25,7 @@
           <td class="num">{{ l.importe_anual|euros }}</td>
           {% if puede_editar %}<td class="acciones">{% if not l.anulada %}
             <a href="{% url 'presupuesto:linea_editar' version.pk l.pk %}">Editar</a> ·
+            {% if bloque.total.capitulo.codigo in con_donantes %}<a href="{% url 'presupuesto:linea_donaciones' version.pk l.pk %}">Donantes</a> ·{% endif %}
             <a href="{% url 'presupuesto:linea_anular' version.pk l.pk %}">Anular</a>{% endif %}</td>{% endif %}
         </tr>
       {% endfor %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block titulo %}Resultado del presupuesto{% endblock %}
+{% block contenido %}
+<h1>Resultado presupuestario</h1>
+<p class="suave">{{ version }}. Explica el resultado y, si hay déficit, cómo se financia.</p>
+<form method="post" class="tarjeta">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+  {% for campo in form %}
+  <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+    {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}</div>
+  {% endfor %}
+  <button class="boton" type="submit">Guardar</button>
+  <a class="boton secundario" href="{% url 'presupuesto:version' version.pk %}">Cancelar</a>
+</form>
+{% endblock %}

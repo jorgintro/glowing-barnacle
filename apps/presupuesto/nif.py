@@ -36,3 +36,8 @@ def validar_nif(nif: str, tipo_persona: str) -> str:
     if _LETRAS[numero % 23] != letra:
         raise ValidationError("La letra de control del NIF/NIE no es correcta.")
     return n
+
+
+def enmascarar_nif(nif: str) -> str:
+    """Muestra solo los 4 últimos caracteres: «****678Z» (minimización de datos)."""
+    return "*" * max(len(nif) - 4, 0) + nif[-4:]

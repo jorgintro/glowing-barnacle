@@ -28,7 +28,21 @@
   {% endif %}
 </div>
 
-{% if puede_editar %}<p><a class="boton" href="{% url 'presupuesto:linea_elegir' version.pk %}">Añadir línea</a></p>{% endif %}
+<section class="tarjeta" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+  <div>
+    <strong>Validaciones:</strong>
+    {% if validacion.puede_avanzar %}<span class="etiqueta ok">Sin bloqueos</span>{% else %}<span class="etiqueta error">{{ validacion.bloqueantes|length }} bloqueo{{ validacion.bloqueantes|length|pluralize }}</span>{% endif %}
+    {% if validacion.avisos %}<span class="etiqueta aviso">{{ validacion.avisos|length }} aviso{{ validacion.avisos|length|pluralize }}</span>{% endif %}
+    <a href="{% url 'presupuesto:validaciones' version.pk %}">Ver el detalle</a>
+  </div>
+  <div class="acciones">
+    {% if puede_editar %}<a class="boton" href="{% url 'presupuesto:linea_elegir' version.pk %}">Añadir línea</a>
+    <a class="boton secundario" href="{% url 'presupuesto:resultado' version.pk %}">Resultado y financiación</a>{% endif %}
+  </div>
+</section>
+{% if version.explicacion_resultado %}<p class="sub"><strong>Explicación del resultado:</strong> {{ version.explicacion_resultado }}
+  {% if version.plan_financiacion %}<br><strong>Plan de financiación:</strong> {{ version.plan_financiacion }}{% endif %}
+  {% if version.endeudamiento_previsto %}<br><strong>Endeudamiento previsto:</strong> {{ version.endeudamiento_previsto|euros }}{% endif %}</p>{% endif %}
 
 <h2>Ingresos</h2>
 {% for bloque in ingresos %}{% include "presupuesto/_bloque_capitulo.html" %}{% endfor %}

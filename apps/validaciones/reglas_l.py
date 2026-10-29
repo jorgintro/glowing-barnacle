@@ -10,6 +10,7 @@ from decimal import Decimal
 
 from apps.presupuesto.dinero import CERO, formatear_euros
 from apps.presupuesto.models import Dimension, Donante, Tipo, TipoPersona
+from apps.presupuesto.nif import enmascarar_nif
 
 from .contexto import ContextoVersion, parametro_verificado, valor_decimal
 from .tipos import Gravedad, Incidencia
@@ -17,6 +18,11 @@ from .tipos import Gravedad, Incidencia
 
 def _inc(codigo: str, msg: str, linea: str | None = None) -> Incidencia:
     return Incidencia(codigo, Gravedad.BLOQUEANTE, msg, linea)
+
+
+def _quien(donante: Donante) -> str:
+    """Nombre y NIF enmascarado: los avisos los ve también la Comisión Permanente."""
+    return f"{donante.nombre} ({enmascarar_nif(donante.nif)})"
 
 
 def _pendientes(ctx: ContextoVersion, codigo: str, claves: list[str]) -> list[Incidencia]:
@@ -98,7 +104,7 @@ def l001(ctx: ContextoVersion) -> list[Incidencia]:
                 salida.append(
                     _inc(
                         "L-001",
-                        f"{donante.nombre} ({donante.nif}) acumula {formatear_euros(total)} en "
+                        f"{_quien(donante)} acumula {formatear_euros(total)} en "
                         f"el año y el límite por donante es {formatear_euros(limite)}.",
                     )
                 )
@@ -110,7 +116,7 @@ def l001(ctx: ContextoVersion) -> list[Incidencia]:
                     salida.append(
                         _inc(
                             "L-001",
-                            f"{donante.nombre} ({donante.nif}) es persona jurídica y no se "
+                            f"{_quien(donante)} es persona jurídica y no se "
                             "admiten donaciones de personas jurídicas.",
                         )
                     )
@@ -156,7 +162,7 @@ def l003(ctx: ContextoVersion) -> list[Incidencia]:
             salida.append(
                 _inc(
                     "L-003",
-                    f"{donante.nombre} ({donante.nif}) aporta {formatear_euros(total)} en el año "
+                    f"{_quien(donante)} aporta {formatear_euros(total)} en el año "
                     f"y el límite es {formatear_euros(limite)}.",
                 )
             )

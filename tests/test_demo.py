@@ -13,6 +13,8 @@ from apps.presupuesto.calculos import resumen_version
 from apps.presupuesto.estados import EstadoVersion
 from apps.presupuesto.models import (
     Capitulo,
+    Donacion,
+    Donante,
     Ejercicio,
     Hipotesis,
     ImporteMensual,
@@ -21,6 +23,7 @@ from apps.presupuesto.models import (
 )
 from apps.usuarios.models import Usuario
 from apps.usuarios.roles import Rol
+from apps.validaciones.motor import validar_version
 from tests.conftest import CLAVE, crear
 
 pytestmark = pytest.mark.django_db
@@ -240,3 +243,61 @@ def test_la_interfaz_muestra_la_marca_demo(cargada: dict[str, str], cliente_teso
     pagina = cliente_tesorero.get("/presupuestos/").content.decode()
     assert "DEMO" in pagina and "datos ficticios" in pagina
     assert CLAVE  # el usuario real sigue pudiendo entrar
+
+
+@pytest.mark.parametrize(
+    ("anio", "numero"), [(2027, 1), (2027, 2), (2027, 3), (2028, 1), (2029, 1), (2030, 1)]
+)
+def test_las_versiones_correctas_superan_todas_las_validaciones(
+    cargada: dict[str, str], anio: int, numero: int
+) -> None:
+    """Con la configuración ficticia de demostración, las versiones buenas no tienen incidencias."""
+    res = validar_version(_version(anio, numero))
+    assert res.incidencias == [], res.incidencias
+    assert res.puede_avanzar and len(res.reglas_ejecutadas) == 14
+
+
+def test_el_caso_que_incumple_dispara_cada_regla_prevista(cargada: dict[str, str]) -> None:
+    res = validar_version(_version(2031))
+    # V-002 y L-006 saltan como consecuencia de V-001 (meses descuadrados) y V-003 (cuenta ajena).
+    esperadas = {
+        "V-001",
+        "V-002",
+        "V-003",
+        "V-004",
+        "V-005",
+        "V-006",
+        "V-007",
+        "L-001",
+        "L-002",
+        "L-003",
+        "L-004",
+        "L-005",
+        "L-006",
+    }
+    assert res.codigos_incumplidos() == esperadas
+    assert not res.puede_avanzar
+    assert {i.codigo for i in res.avisos} == {"V-007"}  # V-007 es solo un aviso
+    assert res.superadas() == ["L-007"]  # parámetros ficticios verificados en config/demo/
+
+
+def test_los_donantes_demo_son_ficticios_y_se_borran(
+    cargada: dict[str, str], ctx_tesorero: Contexto
+) -> None:
+    donantes = Donante.objects.all()
+    assert donantes.count() == 12 and all(
+        d.es_demo and "fictici" in d.nombre.lower() for d in donantes
+    )
+    assert Donacion.objects.filter(es_demo=True).exists()
+    demo.borrar_demo(ctx_tesorero)
+    assert not Donante.objects.exists() and not Donacion.objects.exists()
+
+
+def test_borrar_demo_conserva_donantes_reales(
+    cargada: dict[str, str], ctx_tesorero: Contexto
+) -> None:
+    from apps.presupuesto import donantes as dn
+
+    real = dn.crear_donante(ctx_tesorero, nombre="Persona real", nif="12345678Z")
+    demo.borrar_demo(ctx_tesorero)
+    assert list(Donante.objects.all()) == [real]

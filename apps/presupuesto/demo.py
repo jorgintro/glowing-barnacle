@@ -26,6 +26,8 @@ from .estados import EstadoVersion
 from .models import (
     Comentario,
     CuentaPGC,
+    Donacion,
+    Donante,
     Ejercicio,
     Hipotesis,
     ImporteMensual,
@@ -33,6 +35,7 @@ from .models import (
     Partida,
     VersionPresupuesto,
 )
+from .nif import validar_nif
 
 AVISO = "DATOS FICTICIOS DE DEMOSTRACIÓN"
 FIRMA = " · DEMO"
@@ -388,6 +391,28 @@ def _lineas_campana() -> list[LineaDemo]:
 
 
 _CACHE_PARTIDAS: dict[str, tuple[Partida, CuentaPGC | None]] = {}
+_DONANTES: dict[str, Donante] = {}
+
+# Quién aporta a cada línea de ingresos (claves de _crear_donantes). Todos son ficticios.
+_DONANTES_POR_PARTIDA = {
+    "I.2.1": ("C1", "C2", "C3"),
+    "I.4.1": ("D1", "D2", "D3", "D4"),
+    "I.4.2": ("D1",),
+}
+_DONANTES_CAMPANA = ("D5", "D6", "D7", "D8")
+
+
+def _crear_donantes() -> None:
+    """Personas ficticias (NIF de prueba con letra de control correcta, nada real)."""
+    letras = "TRWAGMYFPDXBNJZSQVHLCKE"
+    claves = [f"C{i}" for i in range(1, 4)] + [f"D{i}" for i in range(1, 9)]
+    for n, clave in enumerate(claves, start=1):
+        nombre = ("Cargo" if clave[0] == "C" else "Donante") + f" ficticio {clave}"
+        nif = validar_nif(f"{n:08d}{letras[n % 23]}", "FISICA")
+        _DONANTES[clave] = Donante.objects.create(nombre=nombre, nif=nif, es_demo=True)
+    _DONANTES["EMP"] = Donante.objects.create(
+        nombre="Empresa ficticia S. L.", nif="B00000011", tipo_persona="JURIDICA", es_demo=True
+    )
 
 
 def _partida_y_cuenta(codigo: str) -> tuple[Partida, CuentaPGC | None]:
@@ -411,6 +436,7 @@ class _Constructor:
         *,
         factor: Decimal = Decimal("1"),
         con_anterior: bool = False,
+        donantes: tuple[str, ...] | None = None,
         **forzar: object,
     ) -> Linea:
         partida, cuenta = _partida_y_cuenta(spec.partida)
@@ -440,7 +466,28 @@ class _Constructor:
         Hipotesis.objects.create(
             linea=linea, texto=spec.hipotesis, fuente=spec.fuente, confianza=spec.confianza
         )
+        if donantes is None:
+            donantes = _DONANTES_POR_PARTIDA.get(spec.partida, ())
+            if spec.dimension == "CAMPANA" and spec.partida == "I.4.1":
+                donantes = _DONANTES_CAMPANA
+        if donantes:
+            repartos = repartir_proporcional(importe, [1] * len(donantes))
+            for clave, parte in zip(donantes, repartos, strict=True):
+                Donacion.objects.create(
+                    version=self.version,
+                    linea=linea,
+                    donante=_DONANTES[clave],
+                    importe=parte,
+                    es_demo=True,
+                )
         return linea
+
+
+def _explicar_resultado(version: VersionPresupuesto) -> None:
+    VersionPresupuesto.objects.filter(pk=version.pk).update(
+        explicacion_resultado="Superávit ficticio de demostración: los ingresos cubren los gastos."
+    )
+    version.refresh_from_db()
 
 
 def _poner_estado(version: VersionPresupuesto, estado: str) -> None:
@@ -484,6 +531,7 @@ def _rellenar(
     if campana:
         for spec in _lineas_campana():
             c.anadir(spec, factor=factor, con_anterior=False)
+    _explicar_resultado(version)
     return c
 
 
@@ -521,6 +569,99 @@ def _casos_incumplidos(version: VersionPresupuesto) -> None:
     # V-007: variación enorme respecto al ejercicio anterior, sin justificación.
     var = c.anadir(gastos["G.4.3"])
     Linea.objects.filter(pk=var.pk).update(importe_ejercicio_anterior=Decimal("100.00"))
+
+    # L-001: un donante supera el límite, una persona jurídica dona y hay importe sin identificar.
+    c.anadir(
+        LineaDemo(
+            "I.4.1",
+            "Donación extraordinaria de un único donante",
+            "1200",
+            "BAJA",
+            "Donación ficticia que, sumada a las demás del mismo donante, supera el límite.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        donantes=("D1",),
+    )
+    c.anadir(
+        LineaDemo(
+            "I.4.1",
+            "Donación de una empresa",
+            "500",
+            "BAJA",
+            "Donación ficticia de una persona jurídica.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        donantes=("EMP",),
+    )
+    c.anadir(
+        LineaDemo(
+            "I.4.2",
+            "Donaciones anónimas en especie",
+            "250",
+            "BAJA",
+            "Importe ficticio sin donante identificado.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        donantes=(),
+    )
+    # L-002: ingreso de una fuente prohibida (en la configuración ficticia de demostración).
+    c.anadir(
+        LineaDemo(
+            "I.5.3",
+            "Ingreso de origen prohibido (ficticio)",
+            "500",
+            "BAJA",
+            "Ingreso ficticio cuyo origen figura entre las fuentes prohibidas.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        origen_ingreso="ORIGEN_PROHIBIDO_DEMO",
+    )
+    # L-003: un cargo supera el límite de aportaciones y hay una aportación sin identificar.
+    c.anadir(
+        LineaDemo(
+            "I.2.1",
+            "Aportación extraordinaria de un cargo",
+            "1900",
+            "MEDIA",
+            "Aportación ficticia que, sumada a las demás del mismo cargo, supera el límite.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        donantes=("C1",),
+    )
+    c.anadir(
+        LineaDemo(
+            "I.2.1",
+            "Aportación sin identificar de un cargo",
+            "300",
+            "MEDIA",
+            "Importe ficticio sin identificar al aportante.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        donantes=(),
+    )
+    # L-004: el gasto de campaña, con este gasto extra, supera el límite ficticio de 15.000 €.
+    c.anadir(
+        LineaDemo(
+            "G.7.1",
+            "Gasto de campaña adicional",
+            "4000",
+            "",
+            "Gasto ficticio adicional.",
+            "Estimación ficticia",
+            "Campaña",
+            tipo="EXTRAORDINARIO",
+        ),
+    )
+    # L-005: endeudamiento superior al límite ficticio de 5.000 €.
+    VersionPresupuesto.objects.filter(pk=version.pk).update(
+        endeudamiento_previsto=Decimal("8000.00")
+    )
 
     # Gastos que, junto con los anteriores, dejan un déficit sin plan de financiación (V-006).
     for partida in ("G.1.2", "G.2.4", "G.2.5", "G.3.4", "G.4.1", "G.4.2", "G.6.1", "G.8.1"):
@@ -570,11 +711,13 @@ def existe_demo() -> bool:
 def cargar_demo(contexto: Contexto) -> dict[str, str]:
     """Crea los datos de demostración. Devuelve usuario → contraseña de los usuarios demo."""
     _CACHE_PARTIDAS.clear()
+    _DONANTES.clear()
     try:
         with transaction.atomic():
             return _cargar_demo(contexto)
     finally:
         _CACHE_PARTIDAS.clear()
+        _DONANTES.clear()
 
 
 def _cargar_demo(contexto: Contexto) -> dict[str, str]:
@@ -585,6 +728,7 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
         )
     autor = contexto.usuario
     credenciales = _crear_usuarios_demo()
+    _crear_donantes()
 
     # 2027 · con campaña: v1 rechazada, v2 ratificada, v3 modificación.
     e2027 = _ejercicio(2027, "Ejercicio de demostración con campaña", True, autor)
@@ -664,11 +808,13 @@ def borrar_demo(contexto: Contexto) -> dict[str, int]:
     ids_lineas = list(Linea.objects.filter(version__es_demo=True).values_list("pk", flat=True))
     cuentas = {
         "importes_mensuales": ImporteMensual.objects.filter(linea_id__in=ids_lineas).delete()[0],
+        "donaciones": Donacion.objects.filter(version__es_demo=True).delete()[0],
         "hipotesis": Hipotesis.objects.filter(linea_id__in=ids_lineas).delete()[0],
         "comentarios": Comentario.objects.filter(es_demo=True).delete()[0],
         "lineas": Linea.objects.filter(pk__in=ids_lineas).delete()[0],
     }
     versiones.update(version_origen=None)
+    cuentas["donantes"] = Donante.objects.filter(es_demo=True).delete()[0]
     cuentas["versiones"] = versiones.delete()[0]
     cuentas["ejercicios"] = Ejercicio.objects.filter(es_demo=True).delete()[0]
     demo = Usuario.objects.filter(es_demo=True)

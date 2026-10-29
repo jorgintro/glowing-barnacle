@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load presupuesto_extras %}
+{% block titulo %}Validaciones · {{ version }}{% endblock %}
+{% block contenido %}
+<h1>Validaciones</h1>
+<p class="suave">{{ version.ejercicio }} · versión {{ version.numero }}
+  <span class="etiqueta {{ version.estado|clase_estado }}">{{ version.get_estado_display }}</span>
+  {% if usa_demo %}<span class="etiqueta aviso">DEMO · usa la configuración ficticia de <code>config/demo/</code></span>{% endif %}</p>
+
+{% if resultado.puede_avanzar %}
+<p class="aviso-caja" style="border-color:var(--ok);background:#e6f2ea"><strong>Sin bloqueos.</strong> Esta versión puede avanzar de estado.
+  {% if resultado.avisos %}Hay {{ resultado.avisos|length }} aviso{{ resultado.avisos|length|pluralize }} que requieren constancia.{% endif %}</p>
+{% else %}
+<p class="aviso-caja error"><strong>{{ resultado.bloqueantes|length }} bloqueo{{ resultado.bloqueantes|length|pluralize }}.</strong> Esta versión no puede avanzar de estado hasta resolverlos.</p>
+{% endif %}
+
+{% for item in por_regla %}
+<section class="tarjeta">
+  <h2 style="margin-top:0">{{ item.regla.codigo }} · {{ item.regla.titulo }}
+    {% if item.ok %}<span class="etiqueta ok">Superada</span>
+    {% elif item.regla.gravedad == "AVISO" %}<span class="etiqueta aviso">Aviso</span>
+    {% else %}<span class="etiqueta error">Bloqueante</span>{% endif %}</h2>
+  <p class="sub">Fuente: {{ item.regla.fuente }}</p>
+  {% if not item.ok %}
+  <ul>
+    {% for i in item.incidencias %}<li>{% if i.linea %}<strong>{{ i.linea }}</strong> · {% endif %}{{ i.mensaje }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+</section>
+{% endfor %}
+<p class="sub">Las reglas orgánicas (O-001 a O-004) se comprueban al votar y al ratificar.</p>
+<p><a href="{% url 'presupuesto:version' version.pk %}">← Volver al presupuesto</a></p>
+{% endblock %}
