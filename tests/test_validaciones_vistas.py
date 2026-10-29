@@ -158,7 +158,7 @@ def test_donaciones_de_una_linea_desde_la_interfaz(
     d = donante(ctx_tesorero, 1, nombre="Beatriz Ficticia")
     url = f"/presupuestos/version/{borrador.pk}/lineas/{ln.pk}/donantes/"
     assert cliente_tesorero.get(url).status_code == 200
-    r = cliente_tesorero.post(url, {"donante": d.pk, "importe": "400,00"})
+    r = cliente_tesorero.post(url, {"donante": d.pk, "importe": "400,00", "tipo": "DINERARIA"})
     assert r.status_code == 302
     pagina = cliente_tesorero.get(url).content.decode()
     assert (
@@ -226,4 +226,4 @@ def test_el_nif_de_pruebas_es_valido() -> None:
     from apps.presupuesto.nif import validar_nif
 
     assert validar_nif(nif(1234), "FISICA") == nif(1234)
-    assert dn.CAPITULOS_CON_DONANTES == ("I.2", "I.4")
+    assert dn.CAPITULOS_CON_DONANTES == ("I.2", "I.4", "I.5")

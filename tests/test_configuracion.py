@@ -19,11 +19,23 @@ def test_cuadro_real_es_valido_y_tiene_13_capitulos() -> None:
     assert not c.validado  # el Tesorero aún no lo ha validado
 
 
-def test_parametros_legales_reales_estan_todos_pendientes() -> None:
+def test_solo_los_cuatro_parametros_declarados_verificados_figuran_como_tales() -> None:
+    from apps.validaciones.contexto import parametro_verificado
+
     p = cfg.cargar_parametros_legales()
-    assert len(p.parametros) >= 7
-    # Ninguno está verificado: faltan la fecha y el verificador, que solo puede poner el Tesorero.
-    assert all(x.fecha_verificacion is None and x.verificador == "" for x in p.parametros)
+    assert len(p.parametros) == 12
+    verificados = {x.clave for x in p.parametros if parametro_verificado(x)}
+    assert verificados == {
+        "limite_donacion_anual_por_donante",
+        "donaciones_anonimas_permitidas",
+        "donaciones_personas_juridicas_permitidas",
+        "fuentes_ingreso_prohibidas",
+    }
+    for x in p.parametros:
+        if x.clave in verificados:
+            assert "declaración" in x.verificador  # es una declaración del Tesorero, no un hecho
+        else:
+            assert x.fecha_verificacion is None and x.verificador == ""
 
 
 def test_los_valores_del_extracto_de_la_ley_estan_cargados_con_su_referencia() -> None:
@@ -32,15 +44,25 @@ def test_los_valores_del_extracto_de_la_ley_estan_cargados_con_su_referencia() -
     assert por_clave["limite_donacion_anual_por_donante"].valor == "50000.00"
     assert por_clave["donaciones_anonimas_permitidas"].valor is False
     assert por_clave["donaciones_personas_juridicas_permitidas"].valor is False
+    assert por_clave["umbral_notificacion_tribunal_cuentas"].valor == "25000.00"
+    assert por_clave["umbral_identificacion_actividades_propias"].valor == "300.00"
+    assert por_clave["donaciones_contratistas_publicos_permitidas"].valor is False
+    assert por_clave["donaciones_finalistas_o_revocables_permitidas"].valor is False
+    assert por_clave["donaciones_inmuebles_exentas_de_limite"].valor is True
     assert "ACTIVIDAD_MERCANTIL" in por_clave["fuentes_ingreso_prohibidas"].valor
     for clave in (
         "limite_donacion_anual_por_donante",
         "donaciones_anonimas_permitidas",
         "donaciones_personas_juridicas_permitidas",
         "fuentes_ingreso_prohibidas",
+        "umbral_notificacion_tribunal_cuentas",
+        "umbral_identificacion_actividades_propias",
+        "donaciones_contratistas_publicos_permitidas",
+        "donaciones_finalistas_o_revocables_permitidas",
+        "donaciones_inmuebles_exentas_de_limite",
     ):
         ref = por_clave[clave].referencia_normativa
-        assert "LO 8/2007" in ref and "sin contrastar con el BOE" in ref
+        assert "LO 8/2007" in ref and "extracto aportado por el Tesorero" in ref
     # lo que el extracto no dice sigue sin valor (no se inventa)
     for clave in (
         "limite_aportaciones_cargos_anual",
@@ -122,8 +144,10 @@ def test_sincronizacion_es_idempotente_y_audita() -> None:
     assert Capitulo.objects.count() == 13
     assert Partida.objects.get(codigo="G.7.1").dimension_por_defecto == "CAMPANA"
     assert CuentaPGC.objects.filter(codigo="720").exists()
-    assert ParametroLegal.objects.filter(valor__isnull=False).count() == 4  # los del extracto
-    assert not any(p.verificado for p in ParametroLegal.objects.all())
+    assert ParametroLegal.objects.filter(valor__isnull=False).count() == 9  # los del extracto
+    assert (
+        sum(p.verificado for p in ParametroLegal.objects.all()) == 4
+    )  # declarados por el Tesorero
 
 
 @pytest.mark.django_db

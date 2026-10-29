@@ -254,7 +254,7 @@ def test_las_versiones_correctas_superan_todas_las_validaciones(
     """Con la configuración ficticia de demostración, las versiones buenas no tienen incidencias."""
     res = validar_version(_version(anio, numero))
     assert res.incidencias == [], res.incidencias
-    assert res.puede_avanzar and len(res.reglas_ejecutadas) == 14
+    assert res.puede_avanzar and len(res.reglas_ejecutadas) == 18
 
 
 def test_el_caso_que_incumple_dispara_cada_regla_prevista(cargada: dict[str, str]) -> None:
@@ -274,10 +274,14 @@ def test_el_caso_que_incumple_dispara_cada_regla_prevista(cargada: dict[str, str
         "L-004",
         "L-005",
         "L-006",
+        "L-008",
+        "L-009",
+        "L-010",
+        "L-011",
     }
     assert res.codigos_incumplidos() == esperadas
     assert not res.puede_avanzar
-    assert {i.codigo for i in res.avisos} == {"V-007"}  # V-007 es solo un aviso
+    assert {i.codigo for i in res.avisos} == {"V-007", "L-008"}  # solo avisos
     assert res.superadas() == ["L-007"]  # parámetros ficticios verificados en config/demo/
 
 
@@ -285,7 +289,7 @@ def test_los_donantes_demo_son_ficticios_y_se_borran(
     cargada: dict[str, str], ctx_tesorero: Contexto
 ) -> None:
     donantes = Donante.objects.all()
-    assert donantes.count() == 12 and all(
+    assert donantes.count() == 13 and all(
         d.es_demo and "fictici" in d.nombre.lower() for d in donantes
     )
     assert Donacion.objects.filter(es_demo=True).exists()

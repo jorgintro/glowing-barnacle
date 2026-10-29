@@ -362,13 +362,30 @@ def test_l007_ventana_de_verificacion(ok) -> None:
 
 
 def test_con_la_configuracion_real_ninguna_version_puede_avanzar(ok) -> None:
-    """Sin parámetros verificados ni cuadro validado, el sistema no da nada por cumplido."""
+    """Con parámetros sin verificar y el cuadro sin validar, el sistema no da nada por cumplido."""
     version, _, _ = ok
     res = validar_version(version, cfg=cargar_configuracion(False), hoy=HOY)
     assert not res.puede_avanzar
-    esperados = {"L-001", "L-002", "L-003", "L-006", "L-007"}
-    assert esperados <= codigos(res)
-    assert "L-007" in codigos(res) and len(_mensajes(res, "L-007")) == 7
+    assert {"L-003", "L-006", "L-007"} <= codigos(res)
+    # 12 parámetros: 8 pendientes y 4 verificados en 2026, que no valen para un ejercicio de 2040
+    mensajes = _mensajes(res, "L-007")
+    assert sum("pendiente de verificación" in m for m in mensajes) == 8
+    assert sum("no es vigente" in m for m in mensajes) == 4
+
+
+def test_los_parametros_declarados_verificados_ya_se_aplican_en_la_configuracion_real(ok) -> None:
+    version, ctx, ls = ok
+    real = cargar_configuracion(False)
+    res = validar_version(version, cfg=real, hoy=HOY)
+    assert "L-001" not in codigos(res)  # los 3 parámetros de L-001 figuran como verificados
+    assert "L-002" not in codigos(res)
+    # y se aplican de verdad: una persona jurídica se rechaza con la configuración real
+    empresa = donante(ctx, 99, "JURIDICA", "Empresa Ficticia")
+    Linea.objects.filter(pk=ls["dona"].pk).update(importe_anual=Decimal("1100.00"))
+    dn.registrar_donacion(ctx, version, ls["dona"], empresa, Decimal("100"))
+    assert any(
+        "jurídica" in m for m in _mensajes(validar_version(version, cfg=real, hoy=HOY), "L-001")
+    )
 
 
 # ------------------------- con los valores reales del extracto, una vez firmados por el Tesorero
@@ -386,9 +403,10 @@ def _real_firmado(*claves: str):
     return cfg
 
 
-def test_sin_firmar_los_valores_reales_no_bastan(ok) -> None:
+def test_si_se_quita_la_verificacion_los_valores_reales_dejan_de_bastar(ok) -> None:
     version, _, _ = ok
-    res = validar_version(version, cfg=cargar_configuracion(False), hoy=HOY)
+    cfg = sin_verificar(cargar_configuracion(False), "limite_donacion_anual_por_donante")
+    res = validar_version(version, cfg=cfg, hoy=HOY)
     assert any("pendiente de verificación" in m for m in _mensajes(res, "L-001"))
 
 
