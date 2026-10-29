@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block titulo %}Donantes{% endblock %}
+{% block contenido %}
+<h1>Donantes</h1>
+<p class="aviso-caja">Son datos personales. Se guardan solo el nombre, el NIF y el tipo de persona, y no se borran: se dan de baja con motivo.
+  El resto de roles solo ve el NIF enmascarado en los avisos. Consulta <code>docs/proteccion_datos.md</code>.</p>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">Nuevo donante</h2>
+  <form method="post">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+    {% for campo in form %}
+    <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}{{ campo.errors }}</div>
+    {% endfor %}
+    <button class="boton" type="submit">Registrar donante</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <table>
+    <thead><tr><th scope="col">Nombre</th><th scope="col">NIF</th><th scope="col">Tipo</th><th scope="col">Estado</th><th scope="col"></th></tr></thead>
+    <tbody>
+    {% for d in donantes %}
+      <tr>
+        <td>{{ d.nombre }}{% if d.es_demo %} <span class="etiqueta aviso">DEMO</span>{% endif %}</td>
+        <td>{{ d.nif }}</td>
+        <td>{{ d.get_tipo_persona_display }}</td>
+        <td>{% if d.activo %}<span class="etiqueta ok">Activo</span>{% else %}<span class="etiqueta error">De baja</span><div class="sub">{{ d.motivo_baja }}</div>{% endif %}</td>
+        <td>{% if d.activo %}<a href="{% url 'presupuesto:donante_baja' d.pk %}">Dar de baja</a>{% endif %}</td>
+      </tr>
+    {% empty %}<tr><td colspan="5" class="suave">Todavía no hay donantes.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

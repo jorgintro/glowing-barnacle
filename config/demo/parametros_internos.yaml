@@ -1,0 +1,5 @@
+# DEMOSTRACIÓN · FICTICIO.
+version: 1
+umbral_variacion_porcentaje: "25"
+# En la demo no se exige la ventana de verificación porque los ejercicios demo abarcan varios años.
+exigir_ventana_verificacion: false

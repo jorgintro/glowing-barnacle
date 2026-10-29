@@ -36,17 +36,34 @@ Usuarios: `demo_cp1`, `demo_cp2`, `demo_cp3` (Comisión Permanente) y `demo_junt
 
 ### Defectos deliberados del ejercicio 2031
 
+Se comprueban con la configuración **ficticia** de `config/demo/` (límites inventados: 1.500 € por
+donante, 2.000 € por aportante, 15.000 € de gasto electoral, 5.000 € de endeudamiento, 3.000 € de aviso
+de notificación y 150 € de identificación).
+
 | Regla | Defecto |
 |---|---|
-| V-001 | Una línea cuyos meses no suman su importe anual |
-| V-003 | Una línea sin cuenta del PGC y otra con una cuenta que no es de su partida |
+| V-001 (y V-002) | Una línea cuyos meses no suman su importe anual |
+| V-003 (y L-006) | Una línea sin cuenta del PGC y otra con una cuenta que no es de su partida |
 | V-004 | Una línea sin hipótesis y otra sin responsable |
 | V-005 | Un importe negativo marcado como ajuste sin justificación |
-| V-006 | Déficit sin plan de financiación |
-| V-007 | Variación enorme respecto al ejercicio anterior sin justificar |
+| V-006 | Sin explicación del resultado y déficit sin plan de financiación |
+| V-007 (aviso) | Variación enorme respecto al ejercicio anterior sin justificar |
+| L-001 | Un donante que supera el límite anual, una persona jurídica que dona y un importe sin donante identificado |
+| L-002 | Un ingreso con origen en la lista de fuentes prohibidas |
+| L-003 | Un cargo que supera el límite de aportaciones y una aportación sin identificar |
+| L-004 | Gasto de campaña de 16.000 € frente a un límite ficticio de 15.000 € |
+| L-005 | Endeudamiento de 8.000 € frente a un límite ficticio de 5.000 € |
+| L-008 (aviso) | Donación de un inmueble de 4.000 € (más que el umbral ficticio de aviso, 3.000 €); además **no** cuenta para el límite por donante, que demuestra la excepción |
+| L-009 | Ventas individuales de 400 € declaradas como «operaciones altas» sin identificar al transmitente (umbral ficticio: 150 €) |
+| L-010 | Donación de un «contratista público» ficticio |
+| L-011 | Una donación finalista y otra revocable |
 
-Los casos de las reglas legales (L-) y orgánicas (O-) se añaden en las fases 3 y 4, cuando existan
-los donantes y la votación.
+Las demás versiones de demostración (2027–2030) **superan todas las reglas V y L (18 reglas)** con esa
+configuración. Las reglas orgánicas (O-) se demuestran en la Fase 4 con la votación y la
+ratificación.
+
+Donantes de demostración: 3 cargos (`C1`–`C3`), 8 donantes (`D1`–`D8`), un contratista público y una
+empresa, todos ficticios (NIF de prueba, no pertenecen a nadie).
 
 > Las versiones demo en estado `PROPUESTO`, `APROBADO_CP` y `RATIFICADO_JG` se han sembrado
 > directamente, sin huella (hash). Se sellarán cuando exista el flujo de la Fase 4.

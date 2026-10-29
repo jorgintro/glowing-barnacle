@@ -1,0 +1,12 @@
+# Parámetros internos del sistema (no son normativa legal).
+# Se dejan SIN VALOR a propósito: la organización debe fijarlos. Mientras estén vacíos, las
+# reglas que dependen de ellos avisan de que no se pueden comprobar.
+version: 1
+
+# V-007: variación máxima, en %, respecto al ejercicio anterior sin necesidad de justificarla.
+# Se escribe como texto, p. ej. "20". Vacío = sin configurar.
+umbral_variacion_porcentaje: null
+
+# L-007: si es true, la fecha de verificación de cada parámetro legal debe caer en el año del
+# ejercicio o en el anterior (la verificación se hace en octubre, CLAUDE.md §14).
+exigir_ventana_verificacion: true

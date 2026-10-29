@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load presupuesto_extras %}
+{% block titulo %}Donantes de {{ linea.codigo }}{% endblock %}
+{% block contenido %}
+<h1>Donantes de {{ linea.codigo }}</h1>
+<p class="suave">{{ linea.denominacion }} · {{ version }}</p>
+<div class="cifras">
+  <div class="cifra"><div class="rotulo">Importe de la línea</div><div class="valor">{{ linea.importe_anual|euros }}</div></div>
+  <div class="cifra"><div class="rotulo">Identificado</div><div class="valor">{{ identificado|euros }}</div></div>
+  <div class="cifra resultado"><div class="rotulo">Sin identificar</div><div class="valor">{{ sin_identificar|euros }}</div></div>
+</div>
+
+{% if puede_editar %}
+<section class="tarjeta">
+  <h2 style="margin-top:0">Añadir donante a esta línea</h2>
+  <form method="post">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+    {% for campo in form %}
+    <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}{{ campo.errors }}</div>
+    {% endfor %}
+    <p class="ayuda">¿No está en la lista? <a href="{% url 'presupuesto:donantes' %}">Regístralo primero</a>.</p>
+    <button class="boton" type="submit">Añadir</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">Donaciones previstas en esta línea</h2>
+  <table>
+    <thead><tr><th scope="col">Donante</th><th scope="col">NIF</th><th scope="col" class="num">Importe</th><th scope="col"></th></tr></thead>
+    <tbody>
+    {% for d in donaciones %}
+      <tr{% if d.anulada %} class="anulada"{% endif %}>
+        <td>{{ d.donante.nombre }}{% if d.anulada %} <span class="etiqueta error">Anulada</span><div class="sub">{{ d.motivo_anulacion }}</div>{% endif %}</td>
+        <td>{{ d.donante.nif }}</td>
+        <td class="num">{{ d.importe|euros }}</td>
+        <td>{% if puede_editar and not d.anulada %}<a href="{% url 'presupuesto:donacion_anular' version.pk d.pk %}">Anular</a>{% endif %}</td>
+      </tr>
+    {% empty %}<tr><td colspan="4" class="suave">Aún no hay donaciones identificadas en esta línea.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">Acumulado anual por donante en esta versión</h2>
+  <table>
+    <thead><tr><th scope="col">Donante</th><th scope="col">Tipo</th><th scope="col" class="num">Acumulado</th></tr></thead>
+    <tbody>
+    {% for donante, total in acumulado.items %}
+      <tr><td>{{ donante.nombre }}</td><td>{{ donante.get_tipo_persona_display }}</td><td class="num">{{ total|euros }}</td></tr>
+    {% empty %}<tr><td colspan="3" class="suave">Sin donaciones.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <p class="sub">El límite anual por donante se comprueba en las validaciones (regla L-001) con el parámetro legal verificado.</p>
+</section>
+<p><a href="{% url 'presupuesto:version' version.pk %}">← Volver al presupuesto</a></p>
+{% endblock %}

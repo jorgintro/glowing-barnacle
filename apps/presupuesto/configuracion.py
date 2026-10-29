@@ -6,6 +6,7 @@ se falla con un mensaje claro en lugar de seguir con datos dudosos.
 
 from dataclasses import dataclass, field
 from datetime import date
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -192,3 +193,130 @@ def cargar_parametros_legales(directorio: Path | None = None) -> ParametrosLegal
             )
         )
     return ParametrosLegalesCfg(tuple(resultado))
+
+
+# ----------------------------------------------------------- reglas orgánicas e internas
+
+BASES_MAYORIA = {"MIEMBROS", "ASISTENTES", "EMITIDOS", "EMITIDOS_SIN_ABSTENCIONES"}
+
+
+@dataclass(frozen=True)
+class Fraccion:
+    """Fracción n/d. ``estricto`` significa «más de» en lugar de «al menos»."""
+
+    numerador: int
+    denominador: int
+    estricto: bool = False
+
+
+@dataclass(frozen=True)
+class MayoriaCfg:
+    tipo: str  # SIMPLE | FRACCION
+    base: str | None = None
+    fraccion: Fraccion | None = None
+
+
+@dataclass(frozen=True)
+class ReglasOrganicasCfg:
+    quorum: Fraccion | None
+    mayoria: MayoriaCfg | None
+    proponente_puede_votar: bool | None
+
+
+@dataclass(frozen=True)
+class ParametrosInternosCfg:
+    umbral_variacion_porcentaje: Decimal | None
+    exigir_ventana_verificacion: bool
+
+
+@dataclass(frozen=True)
+class ConfiguracionVersion:
+    """Toda la configuración aplicable a una versión (la real o la de demostración)."""
+
+    demo: bool
+    cuadro: CuadroCuentasCfg
+    legales: dict[str, ParametroCfg]
+    internos: ParametrosInternosCfg
+    organicas: ReglasOrganicasCfg
+
+
+def directorio_config(demo: bool = False) -> Path:
+    """Las versiones de demostración usan ``config/demo/``; las reales, ``config/``."""
+    base = Path(settings.CONFIG_DIR)
+    return base / "demo" if demo else base
+
+
+def _fraccion(texto: object, estricto: object, donde: str) -> Fraccion:
+    if not isinstance(texto, str) or texto.count("/") != 1:
+        raise ErrorConfiguracion(f'{donde}: el mínimo debe escribirse como fracción "n/d".')
+    n, d = texto.split("/")
+    if not (n.strip().isdigit() and d.strip().isdigit()) or int(d) == 0 or int(n) > int(d):
+        raise ErrorConfiguracion(f"{donde}: fracción no válida «{texto}».")
+    if not isinstance(estricto, bool):
+        raise ErrorConfiguracion(f"{donde}: «estricto» debe ser true o false.")
+    return Fraccion(int(n), int(d), estricto)
+
+
+def _decimal(valor: object, donde: str) -> Decimal | None:
+    if valor is None:
+        return None
+    if isinstance(valor, float) or isinstance(valor, bool):
+        raise ErrorConfiguracion(
+            f'{donde}: escribe el número como texto entre comillas, p. ej. "20".'
+        )
+    try:
+        return Decimal(str(valor))
+    except InvalidOperation as error:
+        raise ErrorConfiguracion(f"{donde}: «{valor}» no es un número.") from error
+
+
+def cargar_reglas_organicas(directorio: Path | None = None) -> ReglasOrganicasCfg:
+    datos = _leer("reglas_organicas.yaml", directorio)
+    quorum = None
+    if datos.get("quorum") is not None:
+        q = datos["quorum"]
+        if q.get("base") != "MIEMBROS":
+            raise ErrorConfiguracion("quorum: la base debe ser MIEMBROS.")
+        quorum = _fraccion(q.get("minimo"), q.get("estricto", False), "quorum")
+    mayoria = None
+    if datos.get("mayoria") is not None:
+        m = datos["mayoria"]
+        tipo = m.get("tipo")
+        if tipo == "SIMPLE":
+            mayoria = MayoriaCfg("SIMPLE")
+        elif tipo == "FRACCION":
+            if m.get("base") not in BASES_MAYORIA:
+                raise ErrorConfiguracion(f"mayoria: base desconocida «{m.get('base')}».")
+            mayoria = MayoriaCfg(
+                "FRACCION",
+                m["base"],
+                _fraccion(m.get("minimo"), m.get("estricto", False), "mayoria"),
+            )
+        else:
+            raise ErrorConfiguracion("mayoria: el tipo debe ser SIMPLE o FRACCION.")
+    puede = datos.get("proponente_puede_votar")
+    if puede is not None and not isinstance(puede, bool):
+        raise ErrorConfiguracion("proponente_puede_votar debe ser true, false o estar vacío.")
+    return ReglasOrganicasCfg(quorum, mayoria, puede)
+
+
+def cargar_parametros_internos(directorio: Path | None = None) -> ParametrosInternosCfg:
+    datos = _leer("parametros_internos.yaml", directorio)
+    umbral = _decimal(datos.get("umbral_variacion_porcentaje"), "umbral_variacion_porcentaje")
+    if umbral is not None and umbral < 0:
+        raise ErrorConfiguracion("umbral_variacion_porcentaje no puede ser negativo.")
+    ventana = datos.get("exigir_ventana_verificacion", True)
+    if not isinstance(ventana, bool):
+        raise ErrorConfiguracion("exigir_ventana_verificacion debe ser true o false.")
+    return ParametrosInternosCfg(umbral, ventana)
+
+
+def cargar_configuracion(demo: bool = False) -> ConfiguracionVersion:
+    d = directorio_config(demo)
+    return ConfiguracionVersion(
+        demo=demo,
+        cuadro=cargar_cuadro_cuentas(d),
+        legales={p.clave: p for p in cargar_parametros_legales(d).parametros},
+        internos=cargar_parametros_internos(d),
+        organicas=cargar_reglas_organicas(d),
+    )

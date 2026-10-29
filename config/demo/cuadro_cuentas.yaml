@@ -1,0 +1,122 @@
+# DEMOSTRACIÓN · FICTICIO · Copia del cuadro real para las versiones demo.
+# Una prueba automática comprueba que la estructura coincide con config/cuadro_cuentas.yaml.
+# Cuadro de cuentas y estructura del presupuesto (CLAUDE.md §3.3, §6).
+#
+# ESTADO: ORIENTATIVO. El mapeo de partidas a cuentas del PGC procede del apartado 3.3 de
+# CLAUDE.md y debe ser validado por el Tesorero o su asesor contable antes de usarse en un
+# ejercicio real. Mientras `validado_por` esté vacío, la aplicación lo muestra como pendiente.
+# Las denominaciones de las cuentas son las del apartado 3.3 de CLAUDE.md, no las oficiales
+# del PGC. Las cuentas terminadas en «x» son grupos que el Tesorero debe concretar.
+version: 1
+validado_por: "Validación ficticia de demostración"
+fecha_validacion: 2026-10-29
+
+cuentas:
+  - {codigo: "720", denominacion: "Cuotas de afiliados"}
+  - {codigo: "72x", denominacion: "Aportaciones y donaciones (según criterio sectorial)"}
+  - {codigo: "70x", denominacion: "Ingresos por actividad propia (actos, merchandising)"}
+  - {codigo: "74x", denominacion: "Subvenciones y donaciones (según criterio sectorial)"}
+  - {codigo: "740", denominacion: "Subvenciones públicas de funcionamiento"}
+  - {codigo: "747", denominacion: "Asignaciones a grupos municipales"}
+  - {codigo: "75x", denominacion: "Otros ingresos de gestión"}
+  - {codigo: "640", denominacion: "Gastos de personal: retribuciones"}
+  - {codigo: "642", denominacion: "Gastos de personal: cotización a cargo del partido"}
+  - {codigo: "621", denominacion: "Servicios exteriores: alquileres"}
+  - {codigo: "622", denominacion: "Servicios exteriores: reparaciones y mantenimiento"}
+  - {codigo: "623", denominacion: "Servicios exteriores: asesoría y servicios profesionales"}
+  - {codigo: "628", denominacion: "Servicios exteriores: suministros"}
+  - {codigo: "627", denominacion: "Publicidad y propaganda"}
+  - {codigo: "62x", denominacion: "Otros servicios exteriores"}
+  - {codigo: "65x", denominacion: "Otros gastos de gestión"}
+  - {codigo: "66x", denominacion: "Gastos financieros"}
+  - {codigo: "68x", denominacion: "Amortizaciones"}
+
+capitulos:
+  # ------------------------------------------------------------------ INGRESOS
+  - codigo: "I.1"
+    tipo: INGRESO
+    denominacion: "Cuotas de afiliados"
+    partidas:
+      - {codigo: "I.1.1", denominacion: "Cuotas ordinarias de afiliados", cuentas: ["720"]}
+  - codigo: "I.2"
+    tipo: INGRESO
+    denominacion: "Aportaciones de cargos públicos"
+    partidas:
+      - {codigo: "I.2.1", denominacion: "Aportaciones de cargos públicos", cuentas: ["72x", "74x"]}
+  - codigo: "I.3"
+    tipo: INGRESO
+    denominacion: "Subvenciones públicas"
+    partidas:
+      - {codigo: "I.3.1", denominacion: "Subvención por representación municipal (partido)", cuentas: ["740"]}
+      - {codigo: "I.3.2", denominacion: "Asignaciones a grupos municipales", cuentas: ["747"], dimension: GRUPO_MUNICIPAL}
+      - {codigo: "I.3.3", denominacion: "Otras subvenciones", cuentas: ["740"]}
+  - codigo: "I.4"
+    tipo: INGRESO
+    denominacion: "Donaciones"
+    partidas:
+      - {codigo: "I.4.1", denominacion: "Donaciones dinerarias", cuentas: ["74x", "72x"]}
+      - {codigo: "I.4.2", denominacion: "Donaciones en especie", cuentas: ["74x", "72x"]}
+  - codigo: "I.5"
+    tipo: INGRESO
+    denominacion: "Otros ingresos"
+    partidas:
+      - {codigo: "I.5.1", denominacion: "Actos y merchandising", cuentas: ["70x", "75x"]}
+      - {codigo: "I.5.2", denominacion: "Rendimientos financieros", cuentas: ["75x"]}
+      - {codigo: "I.5.3", denominacion: "Otros ingresos de actividad propia", cuentas: ["70x", "75x"]}
+  # ------------------------------------------------------------------- GASTOS
+  - codigo: "G.1"
+    tipo: GASTO
+    denominacion: "Gastos de personal"
+    partidas:
+      - {codigo: "G.1.1", denominacion: "Retribuciones del personal", cuentas: ["640"]}
+      - {codigo: "G.1.2", denominacion: "Cotización a cargo del partido", cuentas: ["642"]}
+  - codigo: "G.2"
+    tipo: GASTO
+    denominacion: "Servicios exteriores y funcionamiento"
+    partidas:
+      - {codigo: "G.2.1", denominacion: "Sede y alquileres", cuentas: ["621"]}
+      - {codigo: "G.2.2", denominacion: "Suministros", cuentas: ["628"]}
+      - {codigo: "G.2.3", denominacion: "Asesoría y gestoría", cuentas: ["623"]}
+      - {codigo: "G.2.4", denominacion: "Seguros", cuentas: ["62x"]}
+      - {codigo: "G.2.5", denominacion: "Material y mantenimiento", cuentas: ["622", "62x"]}
+      - {codigo: "G.2.6", denominacion: "Tecnologías de la información", cuentas: ["62x"]}
+  - codigo: "G.3"
+    tipo: GASTO
+    denominacion: "Actividades y órganos del partido"
+    partidas:
+      - {codigo: "G.3.1", denominacion: "Juntas y asambleas", cuentas: ["62x", "65x"]}
+      - {codigo: "G.3.2", denominacion: "Comisión Permanente", cuentas: ["62x", "65x"]}
+      - {codigo: "G.3.3", denominacion: "Formación", cuentas: ["62x", "65x"]}
+      - {codigo: "G.3.4", denominacion: "Actos y jornadas", cuentas: ["62x", "65x"]}
+      - {codigo: "G.3.5", denominacion: "Desplazamientos", cuentas: ["62x", "65x"]}
+  - codigo: "G.4"
+    tipo: GASTO
+    denominacion: "Comunicación, publicidad y propaganda"
+    partidas:
+      - {codigo: "G.4.1", denominacion: "Web y redes sociales", cuentas: ["627"]}
+      - {codigo: "G.4.2", denominacion: "Imprenta y cartelería", cuentas: ["627"]}
+      - {codigo: "G.4.3", denominacion: "Publicidad", cuentas: ["627"]}
+      - {codigo: "G.4.4", denominacion: "Material divulgativo", cuentas: ["627"]}
+  - codigo: "G.5"
+    tipo: GASTO
+    denominacion: "Gastos financieros"
+    partidas:
+      - {codigo: "G.5.1", denominacion: "Comisiones bancarias", cuentas: ["66x"]}
+      - {codigo: "G.5.2", denominacion: "Intereses de préstamos", cuentas: ["66x"]}
+  - codigo: "G.6"
+    tipo: GASTO
+    denominacion: "Amortizaciones"
+    partidas:
+      - {codigo: "G.6.1", denominacion: "Amortización del inmovilizado", cuentas: ["68x"]}
+  - codigo: "G.7"
+    tipo: GASTO
+    denominacion: "Gastos electorales"
+    solo_con_proceso_electoral: true
+    partidas:
+      - {codigo: "G.7.1", denominacion: "Gastos de campaña electoral", cuentas: ["62x", "65x"], dimension: CAMPANA}
+  - codigo: "G.8"
+    tipo: GASTO
+    denominacion: "Imprevistos y contingencias"
+    partidas:
+      # CLAUDE.md §3.3 no asigna cuenta a los imprevistos: el Tesorero debe fijarla.
+      - {codigo: "G.8.1", denominacion: "Reserva de contingencia", cuentas: ["65x"]}

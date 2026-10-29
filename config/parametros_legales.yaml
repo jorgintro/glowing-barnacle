@@ -1,13 +1,22 @@
 # Parámetros legales (CLAUDE.md §3, regla de oro).
 #
-# NINGÚN valor está verificado. Este fichero NO afirma que ninguna norma, artículo, límite o
-# plazo esté vigente. Para dar un parámetro por válido, el Tesorero (o su asesor) debe rellenar
-# TODOS estos campos tras comprobarlo contra el BOE: valor, referencia_normativa,
-# fecha_verificacion (AAAA-MM-DD) y verificador. Un parámetro con algún campo vacío se considera
-# «pendiente de verificación» y bloquea la regla L-007.
+# Este fichero NO afirma por sí mismo que ninguna norma, artículo, límite o plazo esté vigente.
+# Cada parámetro solo vale cuando tiene los CUATRO datos de verificación: valor, referencia
+# normativa, fecha de verificación (AAAA-MM-DD) y verificador. Con cualquier dato vacío está
+# «pendiente de verificación» y las reglas que dependen de él no se dan por cumplidas (L-007).
 #
-# `norma_orientativa` es solo un puntero a las normas citadas en CLAUDE.md §3.1; no es una
-# referencia verificada. Los importes se escriben como texto: valor: "1234.56".
+# ORIGEN DE LOS VALORES: todos proceden del extracto de los arts. 4 a 8 de la ley que aportó el
+# Tesorero el 29/10/2026 (docs/fuentes_normativas/). El sistema no ha podido contrastarlos con
+# el BOE.
+#
+# ESTADO DE LA VERIFICACIÓN:
+#  * Los cuatro primeros parámetros figuran como verificados porque el Tesorero declaró en la
+#    sesión de desarrollo del 29/10/2026 que los había verificado. Es una DECLARACIÓN: el sistema
+#    no puede comprobarla. El Tesorero debe sustituir el verificador por su nombre.
+#  * Los cinco siguientes se añadieron después de esa declaración y están PENDIENTES.
+#  * Aportaciones de cargos, gasto electoral y endeudamiento no figuran en el extracto: sin valor.
+#
+# Los importes se escriben como texto: valor: "1234.56".
 version: 1
 
 parametros:
@@ -15,42 +24,123 @@ parametros:
     descripcion: "Importe máximo anual de donaciones por donante."
     unidad: EUR
     regla: L-001
-    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
-    valor: null
-    referencia_normativa: null
-    fecha_verificacion: null
-    verificador: null
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    # Art. 5.Uno.b: «donaciones procedentes de una misma persona superiores a 50.000 euros anuales».
+    valor: "50000.00"
+    referencia_normativa: "LO 8/2007, art. 5.Uno.b (extracto aportado por el Tesorero)"
+    fecha_verificacion: 2026-10-29
+    verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
 
   - clave: donaciones_anonimas_permitidas
     descripcion: "Si se admiten donaciones de donantes no identificados (true/false)."
     unidad: BOOLEANO
     regla: L-001
-    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
-    valor: null
-    referencia_normativa: null
-    fecha_verificacion: null
-    verificador: null
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    # Art. 5.Uno.a: no se pueden aceptar «donaciones anónimas, finalistas o revocables».
+    valor: false
+    referencia_normativa: "LO 8/2007, art. 5.Uno.a (extracto aportado por el Tesorero)"
+    fecha_verificacion: 2026-10-29
+    verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
 
   - clave: donaciones_personas_juridicas_permitidas
     descripcion: "Si se admiten donaciones de personas jurídicas (true/false)."
     unidad: BOOLEANO
     regla: L-001
-    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
-    valor: null
-    referencia_normativa: null
-    fecha_verificacion: null
-    verificador: null
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    # Art. 5.Uno.c: no se admiten donaciones «de personas jurídicas y de entes sin personalidad
+    # jurídica». Art. 4.Dos.a: solo de personas físicas.
+    valor: false
+    referencia_normativa: "LO 8/2007, arts. 5.Uno.c y 4.Dos.a (extracto aportado por el Tesorero)"
+    fecha_verificacion: 2026-10-29
+    verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
 
   - clave: fuentes_ingreso_prohibidas
     descripcion: "Lista de tipos de fuente de ingreso prohibidos."
     unidad: LISTA
     regla: L-002
-    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
-    valor: null
-    referencia_normativa: null
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    # Etiquetas que se escriben en el campo «Origen del ingreso» de la línea. Las eligió el sistema
+    # a partir del extracto; el Tesorero o su asesor deben confirmarlas o corregirlas:
+    #   art. 5.Uno.a  donaciones anónimas, finalistas o revocables
+    #   art. 5.Uno.c  donaciones de personas jurídicas o entes sin personalidad jurídica
+    #   art. 4.Tres   terceros que asumen el coste de adquisiciones o gastos del partido
+    #   art. 4.Cuatro condonaciones de deuda por entidades de crédito
+    #   art. 6.Uno    actividades de carácter mercantil
+    #   art. 7.Dos    financiación de gobiernos, organismos o empresas públicas extranjeras
+    valor:
+      - DONACION_ANONIMA
+      - DONACION_FINALISTA
+      - DONACION_REVOCABLE
+      - DONACION_PERSONA_JURIDICA
+      - ASUNCION_DE_COSTES_POR_TERCEROS
+      - CONDONACION_DE_DEUDA
+      - ACTIVIDAD_MERCANTIL
+      - FINANCIACION_PUBLICA_EXTRANJERA
+    referencia_normativa: "LO 8/2007, arts. 4.Tres, 4.Cuatro, 5.Uno.a, 5.Uno.c, 6.Uno y 7.Dos (extracto aportado por el Tesorero)"
+    fecha_verificacion: 2026-10-29
+    verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
+
+  # ------------------------------------------------ añadidos después: PENDIENTES de verificar
+  - clave: umbral_notificacion_tribunal_cuentas
+    descripcion: "Importe a partir del cual una donación o aportación debe notificarse al Tribunal de Cuentas."
+    unidad: EUR
+    regla: L-008
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    # Art. 5.Dos: donaciones «superiores a 25.000 euros» (y todas las de inmuebles).
+    # Art. 8.Tres: aportaciones «de forma individual o acumulada, superiores a 25.000 euros».
+    valor: "25000.00"
+    referencia_normativa: "LO 8/2007, arts. 5.Dos y 8.Tres (extracto aportado por el Tesorero)"
     fecha_verificacion: null
     verificador: null
 
+  - clave: umbral_identificacion_actividades_propias
+    descripcion: "Importe de una operación individual de actividades propias a partir del cual hay que identificar al transmitente."
+    unidad: EUR
+    regla: L-009
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    # Art. 6.Tres: precisan identificación del transmitente cuando la transmisión patrimonial
+    # sea «igual o superior a 300 euros».
+    valor: "300.00"
+    referencia_normativa: "LO 8/2007, art. 6.Tres (extracto aportado por el Tesorero)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: donaciones_contratistas_publicos_permitidas
+    descripcion: "Si se admiten donaciones de personas físicas que sean parte de un contrato público vigente (true/false)."
+    unidad: BOOLEANO
+    regla: L-010
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    # Art. 4.Dos.a: no se pueden aceptar donaciones de personas físicas que, en ejercicio de una
+    # actividad económica o profesional, sean parte de un contrato vigente del sector público.
+    valor: false
+    referencia_normativa: "LO 8/2007, art. 4.Dos.a (extracto aportado por el Tesorero)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: donaciones_finalistas_o_revocables_permitidas
+    descripcion: "Si se admiten donaciones finalistas o revocables (true/false)."
+    unidad: BOOLEANO
+    regla: L-011
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    # Art. 5.Uno.a: no se pueden aceptar «donaciones anónimas, finalistas o revocables».
+    valor: false
+    referencia_normativa: "LO 8/2007, art. 5.Uno.a (extracto aportado por el Tesorero)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: donaciones_inmuebles_exentas_de_limite
+    descripcion: "Si las donaciones en especie de bienes inmuebles quedan fuera del límite anual por donante (true/false)."
+    unidad: BOOLEANO
+    regla: L-001
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    # Art. 5.Uno (último párrafo): se exceptúan del límite las donaciones en especie de bienes
+    # inmuebles, siempre que se cumplan los requisitos del art. 4.Dos.e.
+    valor: true
+    referencia_normativa: "LO 8/2007, art. 5.Uno (excepción) y 4.Dos.e (extracto aportado por el Tesorero)"
+    fecha_verificacion: null
+    verificador: null
+
+  # ------------------------------------------------------- sin valor: no figuran en el extracto
   - clave: limite_aportaciones_cargos_anual
     descripcion: "Límite anual aplicable a las aportaciones de cargos públicos."
     unidad: EUR

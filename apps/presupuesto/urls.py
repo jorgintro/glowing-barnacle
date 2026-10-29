@@ -28,5 +28,19 @@ urlpatterns = [
         views.linea_anular,
         name="linea_anular",
     ),
+    path("presupuestos/version/<int:pk>/validaciones/", views.validaciones, name="validaciones"),
+    path("presupuestos/version/<int:pk>/resultado/", views.resultado, name="resultado"),
+    path(
+        "presupuestos/version/<int:pk>/lineas/<int:linea_pk>/donantes/",
+        views.linea_donaciones,
+        name="linea_donaciones",
+    ),
+    path(
+        "presupuestos/version/<int:pk>/donaciones/<int:donacion_pk>/anular/",
+        views.donacion_anular,
+        name="donacion_anular",
+    ),
+    path("donantes/", views.donantes_lista, name="donantes"),
+    path("donantes/<int:pk>/baja/", views.donante_baja, name="donante_baja"),
     path("configuracion/", views.configuracion, name="configuracion"),
 ]

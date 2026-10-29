@@ -176,6 +176,18 @@ class VersionPresupuesto(models.Model):
         "self", null=True, blank=True, on_delete=models.PROTECT, related_name="derivadas"
     )
     es_prorroga = models.BooleanField(default=False)
+    explicacion_resultado = models.TextField(
+        blank=True, help_text="Explica el resultado presupuestario (regla V-006)."
+    )
+    plan_financiacion = models.TextField(
+        blank=True, help_text="Obligatorio si el resultado es un déficit (regla V-006)."
+    )
+    endeudamiento_previsto = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        help_text="Endeudamiento nuevo previsto en el ejercicio (regla L-005).",
+    )
     es_demo = models.BooleanField(default=False)
 
     class Meta:
@@ -184,6 +196,9 @@ class VersionPresupuesto(models.Model):
         verbose_name_plural = "versiones del presupuesto"
         constraints = [
             models.UniqueConstraint(fields=["ejercicio", "numero"], name="un_numero_por_ejercicio"),
+            models.CheckConstraint(
+                condition=Q(endeudamiento_previsto__gte=0), name="endeudamiento_no_negativo"
+            ),
         ]
 
     def __str__(self) -> str:
@@ -233,6 +248,20 @@ class Linea(_SinBorrado):
     )
     justificacion_variacion = models.TextField(blank=True)
     responsable = models.CharField(max_length=120, blank=True)
+    operaciones_altas = models.DecimalField(
+        "importe de operaciones individuales altas",
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Parte del ingreso formada por operaciones individuales que alcanzan el umbral "
+        "de identificación del transmitente (regla L-009). 0 si no hay; vacío = sin declarar.",
+    )
+    origen_ingreso = models.CharField(
+        max_length=80,
+        blank=True,
+        help_text="Tipo de fuente del ingreso; se contrasta con las fuentes prohibidas (L-002).",
+    )
     es_ajuste = models.BooleanField(default=False)
     justificacion_ajuste = models.TextField(blank=True)
     anulada = models.BooleanField(default=False)
@@ -253,6 +282,10 @@ class Linea(_SinBorrado):
             models.CheckConstraint(
                 condition=Q(importe_anual__gte=0) | Q(es_ajuste=True),
                 name="importe_no_negativo_salvo_ajuste",
+            ),
+            models.CheckConstraint(
+                condition=Q(operaciones_altas__isnull=True) | Q(operaciones_altas__gte=0),
+                name="operaciones_altas_no_negativas",
             ),
         ]
 
@@ -333,3 +366,89 @@ class Comentario(models.Model):
 
     def __str__(self) -> str:
         return f"Comentario de {self.autor} en {self.version}"
+
+
+# ------------------------------------------------------------ donantes y aportaciones
+
+
+class TipoPersona(models.TextChoices):
+    FISICA = "FISICA", "Persona física"
+    JURIDICA = "JURIDICA", "Persona jurídica"
+
+
+class Donante(models.Model):
+    """Persona identificada que dona o aporta. Datos mínimos: nombre, NIF y tipo de persona.
+
+    Se identifica a los donantes por decisión del Tesorero (CLAUDE.md §13.3 pide datos mínimos).
+    No se borra: se da de baja con motivo. Ver ``docs/proteccion_datos.md``.
+    """
+
+    nombre = models.CharField(max_length=200)
+    nif = models.CharField("NIF/NIE/CIF", max_length=15)
+    tipo_persona = models.CharField(
+        max_length=10, choices=TipoPersona.choices, default=TipoPersona.FISICA
+    )
+    contratista_publico = models.BooleanField(
+        "parte de un contrato público vigente",
+        default=False,
+        help_text="Persona física que, en ejercicio de una actividad económica o profesional, "
+        "es parte de un contrato vigente con el sector público (regla L-010).",
+    )
+    activo = models.BooleanField(default=True)
+    motivo_baja = models.TextField(blank=True)
+    creado = models.DateTimeField(default=timezone.now)
+    es_demo = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "donante"
+        verbose_name_plural = "donantes"
+        constraints = [
+            models.UniqueConstraint(fields=["nif", "es_demo"], name="un_donante_por_nif"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.nombre} ({self.nif})"
+
+
+class TipoDonacion(models.TextChoices):
+    DINERARIA = "DINERARIA", "En dinero"
+    ESPECIE = "ESPECIE", "En especie (bienes muebles)"
+    ESPECIE_INMUEBLE = "ESPECIE_INMUEBLE", "En especie (bien inmueble)"
+
+
+class Donacion(_SinBorrado):
+    """Donación o aportación prevista de un donante, imputada a una línea de ingresos."""
+
+    version = models.ForeignKey(
+        VersionPresupuesto, on_delete=models.PROTECT, related_name="donaciones"
+    )
+    linea = models.ForeignKey(Linea, on_delete=models.PROTECT, related_name="donaciones")
+    donante = models.ForeignKey(Donante, on_delete=models.PROTECT, related_name="donaciones")
+    importe = models.DecimalField(max_digits=14, decimal_places=2)
+    tipo = models.CharField(
+        max_length=20, choices=TipoDonacion.choices, default=TipoDonacion.DINERARIA
+    )
+    finalista = models.BooleanField(
+        default=False, help_text="Donación con un fin determinado (L-011)."
+    )
+    revocable = models.BooleanField(default=False, help_text="Donación revocable (L-011).")
+    anulada = models.BooleanField(default=False)
+    motivo_anulacion = models.TextField(blank=True)
+    creada = models.DateTimeField(default=timezone.now)
+    es_demo = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["version", "linea", "donante"]
+        verbose_name = "donación prevista"
+        verbose_name_plural = "donaciones previstas"
+        constraints = [
+            models.CheckConstraint(condition=Q(importe__gt=0), name="donacion_importe_positivo"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.donante} → {self.linea.codigo}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        _exigir_editable(self.version)
+        super().save(*args, **kwargs)
