@@ -47,7 +47,9 @@ def construir_contexto(
     for m in ImporteMensual.objects.filter(linea__in=[ln.pk for ln in lineas]).order_by("mes"):
         mensuales.setdefault(m.linea_id, []).append(m)
     donaciones = list(
-        Donacion.objects.filter(version=version, anulada=False).select_related("donante", "linea")
+        Donacion.objects.filter(version=version, anulada=False).select_related(
+            "donante", "linea__partida__capitulo"
+        )
     )
     return ContextoVersion(
         version=version,

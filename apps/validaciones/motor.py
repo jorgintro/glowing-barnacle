@@ -109,6 +109,34 @@ CATALOGO: tuple[Regla, ...] = (
         "CLAUDE.md §3 (regla de oro)",
         reglas_l.l007,
     ),
+    Regla(
+        "L-008",
+        "Donaciones y aportaciones que hay que notificar al Tribunal de Cuentas",
+        _A,
+        "LO 8/2007, arts. 5.Dos y 8.Tres (extracto aportado por el Tesorero). " + _LEGAL,
+        reglas_l.l008,
+    ),
+    Regla(
+        "L-009",
+        "Identificar al transmitente en operaciones de actividades propias de umbral o más",
+        _B,
+        "LO 8/2007, art. 6.Tres (extracto aportado por el Tesorero). " + _LEGAL,
+        reglas_l.l009,
+    ),
+    Regla(
+        "L-010",
+        "Sin donaciones de contratistas públicos",
+        _B,
+        "LO 8/2007, art. 4.Dos.a (extracto aportado por el Tesorero). " + _LEGAL,
+        reglas_l.l010,
+    ),
+    Regla(
+        "L-011",
+        "Sin donaciones finalistas ni revocables",
+        _B,
+        "LO 8/2007, art. 5.Uno.a (extracto aportado por el Tesorero). " + _LEGAL,
+        reglas_l.l011,
+    ),
 )
 
 CATALOGO_ORGANICAS: tuple[Regla, ...] = (

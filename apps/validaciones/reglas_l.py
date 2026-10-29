@@ -9,15 +9,17 @@ from collections import defaultdict
 from decimal import Decimal
 
 from apps.presupuesto.dinero import CERO, formatear_euros
-from apps.presupuesto.models import Dimension, Donante, Tipo, TipoPersona
+from apps.presupuesto.models import Dimension, Donante, Tipo, TipoDonacion, TipoPersona
 from apps.presupuesto.nif import enmascarar_nif
 
 from .contexto import ContextoVersion, parametro_verificado, valor_decimal
 from .tipos import Gravedad, Incidencia
 
 
-def _inc(codigo: str, msg: str, linea: str | None = None) -> Incidencia:
-    return Incidencia(codigo, Gravedad.BLOQUEANTE, msg, linea)
+def _inc(
+    codigo: str, msg: str, linea: str | None = None, g: Gravedad = Gravedad.BLOQUEANTE
+) -> Incidencia:
+    return Incidencia(codigo, g, msg, linea)
 
 
 def _quien(donante: Donante) -> str:
@@ -38,11 +40,16 @@ def _pendientes(ctx: ContextoVersion, codigo: str, claves: list[str]) -> list[In
     ]
 
 
-def _acumulado_por_donante(ctx: ContextoVersion, capitulo: str) -> dict[Donante, Decimal]:
+def _acumulado_por_donante(
+    ctx: ContextoVersion, capitulo: str, *, excluir_inmuebles: bool = False
+) -> dict[Donante, Decimal]:
     acumulado: dict[Donante, Decimal] = defaultdict(lambda: CERO)
     for d in ctx.donaciones:
-        if d.linea.partida.capitulo.codigo == capitulo:
-            acumulado[d.donante] += d.importe
+        if d.linea.partida.capitulo.codigo != capitulo:
+            continue
+        if excluir_inmuebles and d.tipo == TipoDonacion.ESPECIE_INMUEBLE:
+            continue
+        acumulado[d.donante] += d.importe
     return acumulado
 
 
@@ -95,7 +102,21 @@ def l001(ctx: ContextoVersion) -> list[Incidencia]:
     else:  # al menos se vigila la incoherencia
         salida += _identificacion(ctx, "L-001", "I.4", exige=False)
 
-    acumulado = _acumulado_por_donante(ctx, "I.4")
+    # Excepción del límite: donaciones en especie de inmuebles (si el parámetro está verificado).
+    hay_inmuebles = any(
+        d.tipo == TipoDonacion.ESPECIE_INMUEBLE
+        for d in ctx.donaciones
+        if d.linea.partida.capitulo.codigo == "I.4"
+    )
+    exentas = ctx.parametro("donaciones_inmuebles_exentas_de_limite")
+    if hay_inmuebles and not parametro_verificado(exentas):
+        salida += _pendientes(ctx, "L-001", ["donaciones_inmuebles_exentas_de_limite"])
+    excluir = False
+    if hay_inmuebles and parametro_verificado(exentas):
+        assert exentas is not None
+        excluir = bool(exentas.valor)
+    acumulado = _acumulado_por_donante(ctx, "I.4", excluir_inmuebles=excluir)
+    todos = _acumulado_por_donante(ctx, "I.4")
     if parametro_verificado(limite_p):
         assert limite_p is not None
         limite = valor_decimal(limite_p)
@@ -111,7 +132,7 @@ def l001(ctx: ContextoVersion) -> list[Incidencia]:
     if parametro_verificado(juridicas):
         assert juridicas is not None
         if not bool(juridicas.valor):
-            for donante in acumulado:
+            for donante in todos:
                 if donante.tipo_persona == TipoPersona.JURIDICA:
                     salida.append(
                         _inc(
@@ -284,4 +305,153 @@ def l007(ctx: ContextoVersion) -> list[Incidencia]:
                     f"ejercicio {anio}.",
                 )
             )
+    return salida
+
+
+def l008(ctx: ContextoVersion) -> list[Incidencia]:
+    """Aviso: donaciones y aportaciones que hay que notificar al Tribunal de Cuentas.
+
+    Según el extracto de la ley aportado por el Tesorero: donaciones superiores al umbral y todas
+    las de inmuebles (art. 5.Dos); aportaciones que, individual o acumuladamente, lo superen
+    (art. 8.Tres). Es un aviso: recuerda la obligación, no la comprueba.
+    """
+    donaciones = [d for d in ctx.donaciones if d.linea.partida.capitulo.codigo == "I.4"]
+    aportaciones = _acumulado_por_donante(ctx, "I.2")
+    if not donaciones and not aportaciones:
+        return []
+    p = ctx.parametro("umbral_notificacion_tribunal_cuentas")
+    if not parametro_verificado(p):
+        return [
+            _inc(
+                "L-008",
+                "No se puede comprobar qué donaciones o aportaciones hay que notificar al "
+                "Tribunal de Cuentas: el parámetro «umbral_notificacion_tribunal_cuentas» está "
+                "pendiente de verificación.",
+                g=Gravedad.AVISO,
+            )
+        ]
+    assert p is not None
+    umbral = valor_decimal(p)
+    salida = []
+    for d in donaciones:
+        if d.importe > umbral or d.tipo == TipoDonacion.ESPECIE_INMUEBLE:
+            salida.append(
+                _inc(
+                    "L-008",
+                    f"La donación de {_quien(d.donante)} ({formatear_euros(d.importe)}) debe "
+                    "notificarse al Tribunal de Cuentas.",
+                    d.linea.codigo,
+                    Gravedad.AVISO,
+                )
+            )
+    for donante, total in aportaciones.items():
+        if total > umbral:
+            salida.append(
+                _inc(
+                    "L-008",
+                    f"Las aportaciones de {_quien(donante)} suman {formatear_euros(total)} y "
+                    "deben notificarse al Tribunal de Cuentas.",
+                    g=Gravedad.AVISO,
+                )
+            )
+    return salida
+
+
+def l009(ctx: ContextoVersion) -> list[Incidencia]:
+    """Los ingresos de actividades propias de umbral o más exigen identificar al transmitente.
+
+    Como el presupuesto trabaja con importes anuales, el Tesorero declara en cada línea de I.5 la
+    parte que procede de operaciones individuales que alcanzan el umbral; esa parte debe estar
+    cubierta por donantes identificados. Una línea inferior al umbral no puede contener ninguna.
+    """
+    lineas = ctx.lineas_de_capitulo("I.5")
+    if not lineas:
+        return []
+    clave = "umbral_identificacion_actividades_propias"
+    p = ctx.parametro(clave)
+    if not parametro_verificado(p):
+        return _pendientes(ctx, "L-009", [clave])
+    assert p is not None
+    umbral = valor_decimal(p)
+    salida = []
+    for ln in lineas:
+        if ln.importe_anual < umbral:
+            continue
+        if ln.operaciones_altas is None:
+            salida.append(
+                _inc(
+                    "L-009",
+                    f"Declara qué parte del ingreso procede de operaciones individuales de "
+                    f"{formatear_euros(umbral)} o más (0,00 € si ninguna).",
+                    ln.codigo,
+                )
+            )
+            continue
+        identificado = sum((d.importe for d in ctx.donaciones_de(ln)), CERO)
+        if identificado < ln.operaciones_altas:
+            salida.append(
+                _inc(
+                    "L-009",
+                    f"Hay {formatear_euros(ln.operaciones_altas - identificado)} de operaciones "
+                    f"individuales de {formatear_euros(umbral)} o más sin identificar al "
+                    "transmitente.",
+                    ln.codigo,
+                )
+            )
+    return salida
+
+
+def l010(ctx: ContextoVersion) -> list[Incidencia]:
+    """No se aceptan donaciones de personas físicas parte de un contrato público vigente."""
+    donantes = {
+        d.donante
+        for d in ctx.donaciones
+        if d.linea.partida.capitulo.codigo == "I.4" and d.donante.contratista_publico
+    }
+    if not donantes:
+        return []
+    clave = "donaciones_contratistas_publicos_permitidas"
+    p = ctx.parametro(clave)
+    if not parametro_verificado(p):
+        return _pendientes(ctx, "L-010", [clave])
+    assert p is not None
+    if bool(p.valor):
+        return []
+    return [
+        _inc(
+            "L-010",
+            f"{_quien(d)} es parte de un contrato público vigente y no se admiten sus donaciones.",
+        )
+        for d in sorted(donantes, key=lambda x: x.nombre)
+    ]
+
+
+def l011(ctx: ContextoVersion) -> list[Incidencia]:
+    """No se aceptan donaciones finalistas ni revocables."""
+    marcadas = [
+        d
+        for d in ctx.donaciones
+        if d.linea.partida.capitulo.codigo == "I.4" and (d.finalista or d.revocable)
+    ]
+    if not marcadas:
+        return []
+    clave = "donaciones_finalistas_o_revocables_permitidas"
+    p = ctx.parametro(clave)
+    if not parametro_verificado(p):
+        return _pendientes(ctx, "L-011", [clave])
+    assert p is not None
+    if bool(p.valor):
+        return []
+    salida = []
+    for d in marcadas:
+        rasgos = " y ".join(
+            x for x, activo in (("finalista", d.finalista), ("revocable", d.revocable)) if activo
+        )
+        salida.append(
+            _inc(
+                "L-011",
+                f"La donación de {_quien(d.donante)} es {rasgos} y no se admiten.",
+                d.linea.codigo,
+            )
+        )
     return salida
