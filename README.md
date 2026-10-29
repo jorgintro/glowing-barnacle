@@ -16,6 +16,10 @@ Abre <http://localhost:8000>. Para crear el primer Tesorero define `TESORERO_USU
 docker compose exec web python manage.py crear_tesorero
 ```
 
+## Servidor doméstico (Debian + Portainer)
+
+Guía paso a paso: [`docs/despliegue_homeserver.md`](docs/despliegue_homeserver.md).
+
 ## Desarrollo local
 
 ```bash

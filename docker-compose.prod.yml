@@ -1,0 +1,64 @@
+# Despliegue en el servidor doméstico (Debian + Docker + Portainer).
+# Las variables se definen en Portainer (Stacks → Environment variables) o en un fichero .env.
+# Guía: docs/despliegue_homeserver.md
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: presupuesto
+      POSTGRES_USER: presupuesto
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD}
+    volumes:
+      - datos_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U presupuesto"]
+      interval: 5s
+      retries: 20
+    mem_limit: 768m
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DJANGO_DEBUG: "0"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Define DJANGO_SECRET_KEY}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:?Define DJANGO_ALLOWED_HOSTS}
+      DJANGO_CSRF_ORIGENES: ${DJANGO_CSRF_ORIGENES:?Define DJANGO_CSRF_ORIGENES}
+      # 0 = acceso por HTTP en la red local. 1 = solo si hay HTTPS (proxy o VPN con certificado).
+      COOKIES_SEGURAS: ${COOKIES_SEGURAS:-0}
+      POSTGRES_HOST: db
+      POSTGRES_DB: presupuesto
+      POSTGRES_USER: presupuesto
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TESORERO_USUARIO: ${TESORERO_USUARIO:-}
+      TESORERO_CLAVE: ${TESORERO_CLAVE:-}
+      SESION_MINUTOS: ${SESION_MINUTOS:-30}
+    ports:
+      - "${PUERTO:-8000}:8000"
+    mem_limit: 512m
+
+  copias:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.copias
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: presupuesto
+      PGDATABASE: presupuesto
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      COPIAS_DIAS: ${COPIAS_DIAS:-30}
+      COPIAS_CLAVE: ${COPIAS_CLAVE:-}
+    volumes:
+      - ${COPIAS_RUTA:-/srv/copias-presupuesto}:/copias
+    mem_limit: 128m
+
+volumes:
+  datos_db:

@@ -4,7 +4,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-RUN chmod +x docker/entrada.sh
+# Los estáticos se recopilan al construir la imagen (no necesita base de datos).
+RUN DJANGO_DEBUG=1 python manage.py collectstatic --noinput && chmod +x docker/*.sh
 EXPOSE 8000
 ENTRYPOINT ["docker/entrada.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "proyecto.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "60"]
