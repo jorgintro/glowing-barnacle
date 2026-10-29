@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "apps.usuarios",
+    "apps.presupuesto",
     "apps.auditoria",
 ]
 
@@ -116,6 +117,8 @@ CSRF_COOKIE_SECURE = _COOKIES_SEGURAS
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
+# Los importes se escriben y leen en formato español: 1.234,56
+USE_THOUSAND_SEPARATOR = True
 LANGUAGE_CODE = "es-es"
 TIME_ZONE = "Europe/Madrid"
 USE_I18N = True
@@ -132,5 +135,8 @@ STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
+
+# Ficheros de configuración (cuadro de cuentas, parámetros legales, reglas orgánicas).
+CONFIG_DIR = Path(os.environ.get("CONFIG_DIR", BASE_DIR / "config"))
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

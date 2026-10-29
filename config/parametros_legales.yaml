@@ -1,0 +1,82 @@
+# Parámetros legales (CLAUDE.md §3, regla de oro).
+#
+# NINGÚN valor está verificado. Este fichero NO afirma que ninguna norma, artículo, límite o
+# plazo esté vigente. Para dar un parámetro por válido, el Tesorero (o su asesor) debe rellenar
+# TODOS estos campos tras comprobarlo contra el BOE: valor, referencia_normativa,
+# fecha_verificacion (AAAA-MM-DD) y verificador. Un parámetro con algún campo vacío se considera
+# «pendiente de verificación» y bloquea la regla L-007.
+#
+# `norma_orientativa` es solo un puntero a las normas citadas en CLAUDE.md §3.1; no es una
+# referencia verificada. Los importes se escriben como texto: valor: "1234.56".
+version: 1
+
+parametros:
+  - clave: limite_donacion_anual_por_donante
+    descripcion: "Importe máximo anual de donaciones por donante."
+    unidad: EUR
+    regla: L-001
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
+    valor: null
+    referencia_normativa: null
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: donaciones_anonimas_permitidas
+    descripcion: "Si se admiten donaciones de donantes no identificados (true/false)."
+    unidad: BOOLEANO
+    regla: L-001
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
+    valor: null
+    referencia_normativa: null
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: donaciones_personas_juridicas_permitidas
+    descripcion: "Si se admiten donaciones de personas jurídicas (true/false)."
+    unidad: BOOLEANO
+    regla: L-001
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
+    valor: null
+    referencia_normativa: null
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: fuentes_ingreso_prohibidas
+    descripcion: "Lista de tipos de fuente de ingreso prohibidos."
+    unidad: LISTA
+    regla: L-002
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
+    valor: null
+    referencia_normativa: null
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: limite_aportaciones_cargos_anual
+    descripcion: "Límite anual aplicable a las aportaciones de cargos públicos."
+    unidad: EUR
+    regla: L-003
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
+    valor: null
+    referencia_normativa: null
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: limite_gasto_electoral
+    descripcion: "Límite legal de gasto electoral del proceso previsto en el ejercicio."
+    unidad: EUR
+    regla: L-004
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1); artículo por verificar"
+    valor: null
+    referencia_normativa: null
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: limite_endeudamiento
+    descripcion: "Límite de endeudamiento admisible según las condiciones legales de crédito a partidos."
+    unidad: EUR
+    regla: L-005
+    norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
+    valor: null
+    referencia_normativa: null
+    fecha_verificacion: null
+    verificador: null
