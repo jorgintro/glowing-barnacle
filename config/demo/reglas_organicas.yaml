@@ -1,0 +1,7 @@
+# DEMOSTRACIÓN · FICTICIO. No son los estatutos de ninguna organización.
+# Incluye las excepciones pedidas por el Tesorero solo para demostración y pruebas:
+# el Tesorero es miembro de la CP y vota (proponente_puede_votar: true).
+version: 1
+quorum: {base: MIEMBROS, minimo: "1/2", estricto: true}
+mayoria: {tipo: SIMPLE}
+proponente_puede_votar: true

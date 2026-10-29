@@ -1,0 +1,22 @@
+# Reglas orgánicas: quórum, mayorías y funciones (CLAUDE.md §16.2).
+# SIN VALORES a propósito: salen de los estatutos y los fija la Secretaría o el Tesorero.
+# Mientras estén vacíos, la votación de la Comisión Permanente queda BLOQUEADA (regla O-001).
+version: 1
+
+# Quórum de la Comisión Permanente.
+#   base:     MIEMBROS (siempre)
+#   minimo:   fracción "n/d" de la base que debe asistir
+#   estricto: true = «más de»; false = «al menos»
+quorum: null
+# Ejemplo (NO es un valor real, solo la forma):
+#   quorum: {base: MIEMBROS, minimo: "1/2", estricto: true}
+
+# Mayoría necesaria para aprobar.
+#   tipo: SIMPLE (más votos a favor que en contra) o FRACCION
+#   si FRACCION: base (MIEMBROS | ASISTENTES | EMITIDOS | EMITIDOS_SIN_ABSTENCIONES),
+#                minimo "n/d" y estricto true/false
+mayoria: null
+# Ejemplo: mayoria: {tipo: FRACCION, base: ASISTENTES, minimo: "2/3", estricto: false}
+
+# O-003: ¿puede votar en la CP quien propone el presupuesto? Vacío = se trata como NO.
+proponente_puede_votar: null

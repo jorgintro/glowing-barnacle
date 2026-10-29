@@ -1,0 +1,74 @@
+# DEMOSTRACIÓN · FICTICIO. Ningún valor de este fichero es un límite legal ni una norma.
+# Sirve solo para demostrar cómo se comprueban las reglas L-001 a L-007.
+version: 1
+
+parametros:
+  - clave: limite_donacion_anual_por_donante
+    descripcion: "Importe máximo anual de donaciones por donante (FICTICIO)."
+    unidad: EUR
+    regla: L-001
+    norma_orientativa: "FICTICIO"
+    valor: "1500.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: donaciones_anonimas_permitidas
+    descripcion: "Si se admiten donaciones de donantes no identificados (FICTICIO)."
+    unidad: BOOLEANO
+    regla: L-001
+    norma_orientativa: "FICTICIO"
+    valor: false
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: donaciones_personas_juridicas_permitidas
+    descripcion: "Si se admiten donaciones de personas jurídicas (FICTICIO)."
+    unidad: BOOLEANO
+    regla: L-001
+    norma_orientativa: "FICTICIO"
+    valor: false
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: fuentes_ingreso_prohibidas
+    descripcion: "Tipos de fuente de ingreso prohibidos (FICTICIO)."
+    unidad: LISTA
+    regla: L-002
+    norma_orientativa: "FICTICIO"
+    valor: ["ORIGEN_PROHIBIDO_DEMO"]
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: limite_aportaciones_cargos_anual
+    descripcion: "Límite anual por aportante en aportaciones de cargos públicos (FICTICIO)."
+    unidad: EUR
+    regla: L-003
+    norma_orientativa: "FICTICIO"
+    valor: "2000.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: limite_gasto_electoral
+    descripcion: "Límite de gasto electoral del proceso (FICTICIO)."
+    unidad: EUR
+    regla: L-004
+    norma_orientativa: "FICTICIO"
+    valor: "15000.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: limite_endeudamiento
+    descripcion: "Límite de endeudamiento del ejercicio (FICTICIO)."
+    unidad: EUR
+    regla: L-005
+    norma_orientativa: "FICTICIO"
+    valor: "5000.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
