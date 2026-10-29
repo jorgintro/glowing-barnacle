@@ -20,7 +20,17 @@ Estructura del presupuesto (13 capítulos, partidas) y mapeo de cada partida a c
 
 Límites y prohibiciones legales (donaciones, gasto electoral, endeudamiento…).
 
-* **Ningún valor está verificado** y el fichero no afirma que ninguna norma esté vigente.
+* **Ningún parámetro está verificado** y el fichero no afirma que ninguna norma esté vigente.
+* Cuatro parámetros llevan ya **valor y referencia** tomados del extracto de la ley que aportó el
+  Tesorero (`docs/fuentes_normativas/`): 50.000 € por donante y año (art. 5.Uno.b), donaciones
+  anónimas no permitidas (art. 5.Uno.a), donaciones de personas jurídicas no permitidas (art.
+  5.Uno.c y 4.Dos.a) y una lista de fuentes prohibidas. **Siguen «pendientes»** porque faltan la
+  fecha de verificación y el verificador, que solo puede poner el Tesorero o su asesor tras
+  contrastarlos con el BOE consolidado. Aportaciones de cargos, gasto electoral y endeudamiento
+  no figuran en el extracto y siguen sin valor.
+* La lista `fuentes_ingreso_prohibidas` usa **etiquetas elegidas por el sistema** a partir del
+  extracto (`DONACION_ANONIMA`, `ACTIVIDAD_MERCANTIL`…). Se escriben en el campo «Origen del
+  ingreso» de cada línea. Confírmalas o corrígelas al verificarlas.
 * Para dar un parámetro por válido hay que rellenar **valor, `referencia_normativa`,
   `fecha_verificacion` (AAAA-MM-DD) y `verificador`** tras comprobarlo contra el BOE.
   Con cualquier campo vacío sigue «pendiente de verificación».

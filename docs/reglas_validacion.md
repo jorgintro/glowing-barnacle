@@ -36,6 +36,10 @@ avisa de que no se puede comprobar.
 | L-006 | Todas las líneas siguen el cuadro de cuentas, y este está validado por el Tesorero | `cuadro_cuentas.yaml` |
 | L-007 | Todos los parámetros legales están verificados y su fecha de verificación es vigente | Todos |
 
+**Valores del extracto.** `config/parametros_legales.yaml` lleva ya valor y referencia de cuatro
+parámetros, tomados del extracto de los arts. 4 a 8 que aportó el Tesorero
+(`docs/fuentes_normativas/`). Siguen pendientes hasta que se firmen (fecha y verificador).
+
 **Fuente normativa.** Las normas de referencia son las que cita `CLAUDE.md` §3.1 (LO 8/2007, LOREG,
 PGC…). **Los artículos concretos y los valores están pendientes de verificar contra el BOE**; no
 se citan de memoria. El sistema solo aplica lo que figure verificado en `parametros_legales.yaml`.
@@ -49,6 +53,20 @@ se citan de memoria. El sistema solo aplica lo que figure verificado en `paramet
   verificación se hace en octubre para el ejercicio siguiente, `CLAUDE.md` §14), y rechaza fechas
   futuras. Se puede desactivar la ventana con `exigir_ventana_verificacion: false` (solo en demo).
 * L-004 suma como gasto electoral el capítulo G.7 y toda línea de gasto con dimensión «Campaña».
+
+### Lo que el extracto sugiere y todavía NO está implementado
+
+Pendiente de que el Tesorero decida si se añade (cada una llevaría su regla y sus pruebas):
+
+| Artículo del extracto | Posible regla | Qué haría falta |
+|---|---|---|
+| 5.Dos y 8.Tres | **Aviso** si una donación o aportación supera 25.000 €: hay que notificarla al Tribunal de Cuentas | Parámetro nuevo con el umbral |
+| 6.Tres | Los ingresos de actividades propias de 300 € o más exigen identificar al transmitente | Parámetro nuevo y donantes también en I.5 |
+| 4.Dos.a | No se admiten donaciones de personas físicas que sean parte de un contrato público vigente | Un dato más del donante |
+| 5.Uno.b (excepción) | El límite de 50.000 € no se aplica a donaciones en especie de inmuebles | Distinguir tipo de bien en la donación |
+| 5.Uno.a | También son inadmisibles las donaciones **finalistas o revocables** | Un dato más de la donación |
+| 6.Uno | **Los partidos no pueden desarrollar actividades mercantiles**: conviene que el asesor revise partidas como la venta de merchandising (I.5.1) y los datos de demostración | Decisión del asesor |
+| 4.Dos.b, 8.Uno-Dos | Cuentas bancarias exclusivas para donaciones y cuotas | Fuera del alcance del sistema (no hay conciliación bancaria) |
 
 ## Reglas orgánicas (O)
 
