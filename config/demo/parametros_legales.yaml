@@ -72,3 +72,53 @@ parametros:
     referencia_normativa: "FICTICIO: no es una norma"
     fecha_verificacion: 2026-10-29
     verificador: "Verificador ficticio (demo)"
+
+  - clave: umbral_notificacion_tribunal_cuentas
+    descripcion: "Importe a partir del cual se avisa de notificar una donación o aportación (FICTICIO)."
+    unidad: EUR
+    regla: L-008
+    norma_orientativa: "FICTICIO"
+    valor: "3000.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: umbral_identificacion_actividades_propias
+    descripcion: "Importe de operación individual a partir del cual se identifica al transmitente (FICTICIO)."
+    unidad: EUR
+    regla: L-009
+    norma_orientativa: "FICTICIO"
+    valor: "150.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: donaciones_contratistas_publicos_permitidas
+    descripcion: "Si se admiten donaciones de contratistas públicos (FICTICIO)."
+    unidad: BOOLEANO
+    regla: L-010
+    norma_orientativa: "FICTICIO"
+    valor: false
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: donaciones_finalistas_o_revocables_permitidas
+    descripcion: "Si se admiten donaciones finalistas o revocables (FICTICIO)."
+    unidad: BOOLEANO
+    regla: L-011
+    norma_orientativa: "FICTICIO"
+    valor: false
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: donaciones_inmuebles_exentas_de_limite
+    descripcion: "Si las donaciones de inmuebles quedan fuera del límite por donante (FICTICIO)."
+    unidad: BOOLEANO
+    regla: L-001
+    norma_orientativa: "FICTICIO"
+    valor: true
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
