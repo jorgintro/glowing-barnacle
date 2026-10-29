@@ -25,9 +25,14 @@ if not SECRET_KEY or (not DEBUG and SECRET_KEY == _CLAVE_DESARROLLO):
         "(o activa DJANGO_DEBUG solo en desarrollo)."
     )
 
-ALLOWED_HOSTS = [
-    h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h
-]
+
+def _lista(nombre: str, defecto: str = "") -> list[str]:
+    return [x.strip() for x in os.environ.get(nombre, defecto).split(",") if x.strip()]
+
+
+ALLOWED_HOSTS = _lista("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+# Origen(es) desde los que se accede, p. ej. http://192.168.1.50:8000 (necesario tras proxy).
+CSRF_TRUSTED_ORIGINS = _lista("DJANGO_CSRF_ORIGENES")
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -41,6 +46,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -117,5 +124,13 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
