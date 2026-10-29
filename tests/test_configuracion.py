@@ -19,23 +19,19 @@ def test_cuadro_real_es_valido_y_tiene_13_capitulos() -> None:
     assert not c.validado  # el Tesorero aún no lo ha validado
 
 
-def test_solo_los_cuatro_parametros_declarados_verificados_figuran_como_tales() -> None:
+def test_los_nueve_parametros_declarados_verificados_figuran_como_tales() -> None:
     from apps.validaciones.contexto import parametro_verificado
 
     p = cfg.cargar_parametros_legales()
     assert len(p.parametros) == 12
     verificados = {x.clave for x in p.parametros if parametro_verificado(x)}
-    assert verificados == {
-        "limite_donacion_anual_por_donante",
-        "donaciones_anonimas_permitidas",
-        "donaciones_personas_juridicas_permitidas",
-        "fuentes_ingreso_prohibidas",
-    }
+    assert verificados == {x.clave for x in p.parametros if x.valor is not None}
+    assert len(verificados) == 9
     for x in p.parametros:
         if x.clave in verificados:
             assert "declaración" in x.verificador  # es una declaración del Tesorero, no un hecho
-        else:
-            assert x.fecha_verificacion is None and x.verificador == ""
+        else:  # aportaciones de cargos, gasto electoral, endeudamiento: sin valor, sin firma
+            assert x.valor is None and x.fecha_verificacion is None and x.verificador == ""
 
 
 def test_los_valores_del_extracto_de_la_ley_estan_cargados_con_su_referencia() -> None:
@@ -146,7 +142,7 @@ def test_sincronizacion_es_idempotente_y_audita() -> None:
     assert CuentaPGC.objects.filter(codigo="720").exists()
     assert ParametroLegal.objects.filter(valor__isnull=False).count() == 9  # los del extracto
     assert (
-        sum(p.verificado for p in ParametroLegal.objects.all()) == 4
+        sum(p.verificado for p in ParametroLegal.objects.all()) == 9
     )  # declarados por el Tesorero
 
 
