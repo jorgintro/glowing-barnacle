@@ -1,0 +1,72 @@
+/* Iniciativa Complutense · estilo sobrio institucional (§12).
+   Paleta provisional: se sustituirá por la identidad gráfica cuando se facilite. */
+:root {
+  --marca: #14284b;
+  --marca-clara: #e8ecf4;
+  --acento: #b07d2b;
+  --fondo: #f7f6f2;
+  --papel: #ffffff;
+  --texto: #1d2433;
+  --suave: #5b6478;
+  --linea: #d9dbe2;
+  --ok: #1f6b45;
+  --aviso: #8a5a00;
+  --error: #9b2226;
+  --serif: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--texto); font: 1rem/1.6 var(--sans); }
+.num { font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: var(--serif); color: var(--marca); line-height: 1.25; font-weight: 600; }
+h1 { font-size: 1.9rem; margin: 0 0 .5rem; }
+h2 { font-size: 1.3rem; }
+a { color: var(--marca); }
+.saltar { position: absolute; left: -999px; top: 0; background: var(--papel); padding: .5rem 1rem; }
+.saltar:focus { left: 0; z-index: 10; }
+:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+.cabecera { background: var(--marca); color: #fff; border-bottom: 4px solid var(--acento); }
+.cabecera .dentro { max-width: 68rem; margin: 0 auto; padding: .9rem 1.5rem;
+  display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
+.marca { font-family: var(--serif); font-size: 1.25rem; color: #fff; text-decoration: none; }
+.marca small { display: block; font: .75rem var(--sans); letter-spacing: .08em; text-transform: uppercase; opacity: .8; }
+.cabecera nav { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; font-size: .95rem; }
+.cabecera nav a { color: #fff; }
+.cabecera form { display: inline; }
+.sesion { opacity: .9; }
+
+main { max-width: 68rem; margin: 2rem auto; padding: 0 1.5rem; }
+.tarjeta { background: var(--papel); border: 1px solid var(--linea); border-radius: 6px; padding: 1.5rem; margin-bottom: 1.5rem; }
+.rejilla { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.suave { color: var(--suave); }
+
+.etiqueta { display: inline-block; padding: .1rem .6rem; border-radius: 99px; border: 1px solid currentColor;
+  font-size: .8rem; font-weight: 600; }
+.etiqueta.ok { color: var(--ok); } .etiqueta.aviso { color: var(--aviso); } .etiqueta.error { color: var(--error); }
+.etiqueta.marca { color: var(--marca); }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .6rem .75rem; border-bottom: 1px solid var(--linea); }
+thead th { background: var(--marca-clara); color: var(--marca); font-weight: 600; }
+tbody tr:nth-child(even) { background: #fbfbf9; }
+
+label { display: block; font-weight: 600; margin-bottom: .25rem; }
+input[type=text], input[type=password], input[type=email], textarea {
+  width: 100%; max-width: 28rem; padding: .55rem .7rem; border: 1px solid #9aa1b3; border-radius: 4px; font: inherit; }
+.campo { margin-bottom: 1.1rem; }
+.campo ul { list-style: none; padding: 0; margin: 0; }
+.campo ul label { font-weight: 400; }
+.ayuda { color: var(--suave); font-size: .875rem; }
+.errorlist { color: var(--error); list-style: none; padding: 0; margin: .25rem 0; font-size: .9rem; }
+
+.boton { display: inline-block; background: var(--marca); color: #fff; border: 0; border-radius: 4px;
+  padding: .6rem 1.2rem; font: 600 1rem var(--sans); cursor: pointer; text-decoration: none; }
+.boton:hover { background: #0d1b36; }
+.boton.secundario { background: transparent; color: var(--marca); border: 1px solid var(--marca); }
+.boton.enlace { background: none; color: #fff; padding: 0; text-decoration: underline; font-weight: 400; font-size: .95rem; }
+
+.mensajes { list-style: none; padding: 0; margin: 0 0 1.5rem; }
+.mensajes li { padding: .75rem 1rem; border-left: 4px solid var(--marca); background: var(--marca-clara); margin-bottom: .5rem; }
+.mensajes .success { border-color: var(--ok); } .mensajes .error { border-color: var(--error); }
+.pie { max-width: 68rem; margin: 3rem auto 2rem; padding: 0 1.5rem; color: var(--suave); font-size: .85rem; }

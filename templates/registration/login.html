@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar{% endblock %}
+{% block contenido %}
+<div class="tarjeta" style="max-width:32rem">
+  <h1>Entrar</h1>
+  <p class="suave">Acceso nominal para el Tesorero, la Comisión Permanente y la Junta General.</p>
+  <form method="post">{% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="campo"><label for="{{ form.username.id_for_label }}">Usuario</label>
+      {{ form.username }}{{ form.username.errors }}</div>
+    <div class="campo"><label for="{{ form.password.id_for_label }}">Contraseña</label>
+      {{ form.password }}{{ form.password.errors }}</div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="boton" type="submit">Entrar</button>
+  </form>
+</div>
+{% endblock %}

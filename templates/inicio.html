@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<h1>Bienvenido, {{ user.nombre_visible }}</h1>
+<p class="suave">Estás actuando como <strong>{{ rol_activo_nombre }}</strong>.</p>
+<div class="rejilla">
+  <section class="tarjeta">
+    <h2>Con este rol puedes</h2><p>{{ descripcion.puede }}</p>
+    <h2>No puedes</h2><p>{{ descripcion.no_puede }}</p>
+  </section>
+  <section class="tarjeta">
+    <h2>Estado del sistema</h2>
+    <p><span class="etiqueta aviso">En construcción</span></p>
+    <p class="suave">Esta es la Fase 1 (cimientos). La elaboración del presupuesto llegará en las siguientes fases.</p>
+  </section>
+</div>
+{% endblock %}

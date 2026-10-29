@@ -1,0 +1,33 @@
+{% load static %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Presupuesto{% endblock %} · Iniciativa Complutense</title>
+  <link rel="stylesheet" href="{% static 'css/estilo.css' %}">
+</head>
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="cabecera">
+    <div class="dentro">
+      <a class="marca" href="{% url 'inicio' %}">Iniciativa Complutense
+        <small>Presupuesto anual · Alcalá de Henares</small></a>
+      {% if user.is_authenticated %}
+      <nav aria-label="Principal">
+        <span class="sesion">{{ user.nombre_visible }}{% if rol_activo_nombre %} · <strong>{{ rol_activo_nombre }}</strong>{% endif %}</span>
+        {% if es_tesorero %}<a href="{% url 'usuarios:lista' %}">Usuarios</a>{% endif %}
+        <a href="{% url 'usuarios:seleccionar_rol' %}">Cambiar de rol</a>
+        <form method="post" action="{% url 'usuarios:salir' %}">{% csrf_token %}
+          <button class="boton enlace" type="submit">Salir</button></form>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+  <main id="contenido">
+    {% if messages %}<ul class="mensajes" role="status">
+      {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+    {% block contenido %}{% endblock %}
+  </main>
+  <footer class="pie">Iniciativa Complutense · Presupuesto claro, decisiones compartidas, cuentas ordenadas.</footer>
+</body>
+</html>

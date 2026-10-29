@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}Dar de baja a {{ usuario_editado.username }}{% endblock %}
+{% block contenido %}
+<h1>Dar de baja a {{ usuario_editado.username }}</h1>
+<div class="tarjeta">
+<form method="post">{% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for campo in form %}
+  <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+    {{ campo }}{% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}</div>
+  {% endfor %}
+  <button class="boton" type="submit">Guardar</button>
+  <a class="boton secundario" href="{% url 'usuarios:lista' %}">Cancelar</a>
+</form>
+</div>
+{% endblock %}
