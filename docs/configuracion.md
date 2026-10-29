@@ -29,11 +29,46 @@ Límites y prohibiciones legales (donaciones, gasto electoral, endeudamiento…)
 * `norma_orientativa` solo apunta a las normas citadas en CLAUDE.md §3.1; no es una referencia
   verificada.
 
-## `config/reglas_organicas.yaml` (Fase 4)
+## `config/parametros_internos.yaml`
 
-Quórum, mayorías y umbrales estatutarios. Aún no existe: sin valores, la votación queda bloqueada.
-Para la demostración se preparará una configuración propia, separada de la real, con las
-excepciones pedidas (el Tesorero vota y registra la ratificación).
+Ajustes del sistema que no son normativa legal. **Sin valores a propósito**:
+
+* `umbral_variacion_porcentaje` (V-007): variación máxima, en %, respecto al ejercicio anterior sin
+  justificar. Se escribe como texto, p. ej. `"20"`.
+* `exigir_ventana_verificacion` (L-007): verificación en el año del ejercicio o el anterior.
+
+## `config/reglas_organicas.yaml`
+
+Quórum, mayorías y funciones (CLAUDE.md §16.2). **Sin valores a propósito**: salen de los
+estatutos. Mientras estén vacíos, **la votación de la Comisión Permanente queda bloqueada** (O-001).
+El fichero incluye ejemplos comentados con la forma de cada dato.
+
+## Carpeta `config/demo/` (FICTICIA)
+
+Contiene una configuración inventada (límites, quórum, etc.) que solo usan las versiones de
+demostración. **Ningún valor de esa carpeta es legal ni estatutario.** Las versiones reales usan
+siempre `config/`. Las excepciones pedidas para la demostración (el Tesorero vota y registra la
+ratificación) viven solo ahí. Una prueba comprueba que la estructura del cuadro demo coincide con
+la del real.
+
+## Cómo verificar un parámetro legal (paso a paso)
+
+Ejemplo: que no se admiten donaciones de personas jurídicas.
+
+1. Comprueba la norma vigente en el BOE (o con tu asesor) y anota **la referencia exacta**.
+2. En `config/parametros_legales.yaml`, rellena **los cuatro campos** del parámetro:
+
+   ```yaml
+   - clave: donaciones_personas_juridicas_permitidas
+     ...
+     valor: false
+     referencia_normativa: "Cita exacta de la norma y el artículo"
+     fecha_verificacion: 2026-10-29
+     verificador: "Nombre de quien lo ha comprobado"
+   ```
+3. Reinicia o redespliega para que la aplicación lea el fichero. Con cualquier campo vacío el
+   parámetro sigue «pendiente» y las reglas que dependen de él no se dan por cumplidas.
+4. Los importes van como texto entre comillas: `valor: "1234.56"`.
 
 ## Variables de entorno relacionadas
 
