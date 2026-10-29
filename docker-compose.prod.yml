@@ -38,7 +38,7 @@ services:
       TESORERO_CLAVE: ${TESORERO_CLAVE:-}
       SESION_MINUTOS: ${SESION_MINUTOS:-30}
     ports:
-      - "${PUERTO:-8090}:8000"
+      - "8090:8000"  # puerto de fuera fijo; cámbialo aquí si 8090 está ocupado
     mem_limit: 512m
 
   copias:
