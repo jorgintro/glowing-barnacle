@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 
 from .dinero import CERO
 from .models import Capitulo, Dimension, ImporteMensual, Linea, Tipo, VersionPresupuesto
@@ -41,7 +41,11 @@ class Resumen:
 
 def resumen_version(version: VersionPresupuesto) -> Resumen:
     activas = Linea.objects.filter(version=version, anulada=False)
-    por_capitulo = {c.codigo: TotalCapitulo(c) for c in Capitulo.objects.filter(activo=True)}
+    con_lineas = set(activas.values_list("partida__capitulo__codigo", flat=True))
+    por_capitulo = {
+        c.codigo: TotalCapitulo(c)
+        for c in Capitulo.objects.filter(Q(activo=True) | Q(codigo__in=con_lineas))
+    }
 
     totales = (
         activas.values("partida__capitulo__codigo")

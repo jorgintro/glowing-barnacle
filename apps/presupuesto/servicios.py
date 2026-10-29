@@ -115,6 +115,7 @@ def _instantanea(linea: Linea) -> dict[str, Any]:
         if linea.importe_ejercicio_anterior is not None
         else None,
         "responsable": linea.responsable,
+        "origen_ingreso": linea.origen_ingreso,
         "es_ajuste": linea.es_ajuste,
         "hipotesis": {"texto": h.texto, "fuente": h.fuente, "confianza": h.confianza}
         if h
@@ -141,6 +142,7 @@ def guardar_linea(
     justificacion_variacion: str = "",
     es_ajuste: bool = False,
     justificacion_ajuste: str = "",
+    origen_ingreso: str = "",
     linea: Linea | None = None,
 ) -> Linea:
     """Crea o actualiza una línea con su distribución mensual y su hipótesis.
@@ -201,6 +203,7 @@ def guardar_linea(
     )
     linea.justificacion_variacion = justificacion_variacion
     linea.responsable = responsable.strip()
+    linea.origen_ingreso = origen_ingreso.strip()
     linea.es_ajuste = es_ajuste
     linea.justificacion_ajuste = justificacion_ajuste
     linea.modificada = timezone.now()
