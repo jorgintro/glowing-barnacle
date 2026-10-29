@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Elegir rol{% endblock %}
+{% block contenido %}
+<h1>¿Con qué rol quieres actuar?</h1>
+{% if not roles %}
+<div class="tarjeta"><p>Tu usuario no tiene ningún rol asignado. Pide al Tesorero que te asigne uno.</p></div>
+{% else %}
+<p class="suave">Solo puedes actuar con un rol a la vez. Puedes cambiarlo cuando quieras.</p>
+<div class="rejilla">
+  {% for r in roles %}
+  <form method="post" class="tarjeta">{% csrf_token %}
+    <h2>{{ r.nombre }}</h2>
+    <p><strong>Puede:</strong> {{ r.puede }}</p>
+    <p><strong>No puede:</strong> {{ r.no_puede }}</p>
+    <button class="boton" name="rol" value="{{ r.clave }}" type="submit">Actuar como {{ r.nombre }}</button>
+  </form>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<h1>Usuarios y roles</h1>
+<p><a class="boton" href="{% url 'usuarios:crear' %}">Nuevo usuario</a></p>
+<div class="tarjeta">
+<table>
+  <thead><tr><th scope="col">Usuario</th><th scope="col">Nombre</th><th scope="col">Roles</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+  <tbody>
+  {% for f in filas %}
+    <tr>
+      <td>{{ f.usuario.username }}{% if f.usuario.es_demo %} <span class="etiqueta aviso">DEMO</span>{% endif %}</td>
+      <td>{{ f.usuario.nombre_visible }}</td>
+      <td>{{ f.roles|join:", "|default:"—" }}</td>
+      <td>{% if f.usuario.is_active %}<span class="etiqueta ok">Activo</span>{% else %}<span class="etiqueta error">De baja</span>{% endif %}</td>
+      <td>{% if f.usuario.is_active %}<a href="{% url 'usuarios:editar' f.usuario.pk %}">Roles</a> ·
+        <a href="{% url 'usuarios:baja' f.usuario.pk %}">Dar de baja</a>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

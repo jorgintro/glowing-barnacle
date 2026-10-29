@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Acceso no permitido{% endblock %}
+{% block contenido %}
+<div class="tarjeta">
+  <h1>Acceso no permitido</h1>
+  <p>Con tu rol actual no puedes realizar esta acción. Si necesitas hacerla, cambia de rol
+     (si tienes más de uno) o consulta con el Tesorero.</p>
+  <a class="boton" href="{% url 'inicio' %}">Volver al inicio</a>
+</div>
+{% endblock %}
