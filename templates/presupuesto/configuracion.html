@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Configuración{% endblock %}
+{% block contenido %}
+<h1>Configuración</h1>
+<p class="suave">Estos datos se leen de los ficheros de <code>config/</code>. Aquí solo se consultan.</p>
+
+<section class="tarjeta">
+  <h2>Parámetros legales</h2>
+  <p class="aviso-caja">Ningún parámetro legal está dado por válido hasta que el Tesorero (o su asesor) lo verifique contra el BOE
+    y rellene valor, referencia, fecha y verificador en <code>config/parametros_legales.yaml</code>.
+    El sistema <strong>no afirma</strong> que ninguna norma o límite esté vigente.</p>
+  <table>
+    <thead><tr><th scope="col">Parámetro</th><th scope="col">Regla</th><th scope="col">Valor</th><th scope="col">Verificación</th></tr></thead>
+    <tbody>
+    {% for p in parametros %}
+      <tr>
+        <td>{{ p.descripcion }}<div class="sub"><code>{{ p.clave }}</code></div></td>
+        <td>{{ p.regla|default:"—" }}</td>
+        <td>{{ p.valor|default_if_none:"—" }}</td>
+        <td>{% if p.verificado %}<span class="etiqueta ok">Verificado</span>
+            <div class="sub">{{ p.verificador }} · {{ p.fecha_verificacion|date:"d/m/Y" }}<br>{{ p.referencia_normativa }}</div>
+          {% else %}<span class="etiqueta aviso">Pendiente de verificación</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="tarjeta">
+  <h2>Cuadro de cuentas</h2>
+  {% if cuadro.validado %}
+    <p><span class="etiqueta ok">Validado</span> por {{ cuadro.validado_por }} el {{ cuadro.fecha_validacion|date:"d/m/Y" }}.</p>
+  {% else %}
+    <p class="aviso-caja"><span class="etiqueta aviso">Orientativo · pendiente de validación</span> El mapeo de partidas a cuentas del PGC procede del apartado 3.3 de <code>CLAUDE.md</code>. Debe validarlo el Tesorero o su asesor contable.</p>
+  {% endif %}
+  {% for c in capitulos %}
+  <details class="capitulo"><summary><span>{{ c.codigo }} · {{ c.denominacion }}</span></summary>
+    <div class="contenido"><table>
+      <thead><tr><th scope="col">Partida</th><th scope="col">Cuentas PGC</th></tr></thead>
+      <tbody>{% for p in c.partidas.all %}<tr><td>{{ p.codigo }} · {{ p.denominacion }}</td>
+        <td>{% for cu in p.cuentas.all %}<span title="{{ cu.denominacion }}">{{ cu.codigo }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>{% endfor %}</tbody>
+    </table></div></details>
+  {% endfor %}
+</section>
+{% endblock %}

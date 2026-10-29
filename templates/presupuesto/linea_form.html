@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block titulo %}{% if linea %}Editar línea{% else %}Nueva línea{% endif %}{% endblock %}
+{% block contenido %}
+<h1>{% if linea %}Editar {{ linea.codigo }}{% else %}Nueva línea{% endif %}</h1>
+<p class="suave">Partida {{ partida.codigo }} · {{ partida.denominacion }} · {{ version }}</p>
+<form method="post" class="tarjeta">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+  {% for campo in form.visible_fields %}
+    {% if not campo.name|slice:":4" == "mes_" and campo.name != "reparto" %}
+    <div class="campo">
+      {% if campo.field.widget.input_type == "checkbox" %}
+        <label for="{{ campo.id_for_label }}">{{ campo }} {{ campo.label }}</label>
+      {% else %}
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+      {% endif %}
+      {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}
+    </div>
+    {% endif %}
+  {% endfor %}
+  <fieldset class="campo">
+    <legend><strong>Distribución mensual</strong></legend>
+    {{ form.reparto }}
+    <p class="ayuda">Si eliges «Indicar cada mes», la suma debe coincidir exactamente con el importe anual.</p>
+    <div class="rejilla-meses">
+      {% for c in form.campos_mensuales %}<div><label for="{{ c.id_for_label }}">{{ c.label }}</label>{{ c }}{{ c.errors }}</div>{% endfor %}
+    </div>
+  </fieldset>
+  <button class="boton" type="submit">Guardar línea</button>
+  <a class="boton secundario" href="{% url 'presupuesto:version' version.pk %}">Cancelar</a>
+</form>
+{% endblock %}

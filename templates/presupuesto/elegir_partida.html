@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Añadir línea{% endblock %}
+{% block contenido %}
+<h1>Añadir línea</h1>
+<p class="suave">Elige la partida a la que pertenece la nueva línea ({{ version }}).</p>
+{% for c in capitulos %}
+<section class="tarjeta">
+  <h2>{{ c.codigo }} · {{ c.denominacion }}</h2>
+  <ul>
+  {% for p in c.partidas.all %}{% if p.activa %}
+    <li><a href="{% url 'presupuesto:linea_nueva' version.pk p.codigo %}">{{ p.codigo }} · {{ p.denominacion }}</a></li>
+  {% endif %}{% endfor %}
+  </ul>
+</section>
+{% endfor %}
+<p><a href="{% url 'presupuesto:version' version.pk %}">← Volver al presupuesto</a></p>
+{% endblock %}

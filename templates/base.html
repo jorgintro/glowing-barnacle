@@ -15,6 +15,8 @@
       {% if user.is_authenticated %}
       <nav aria-label="Principal">
         <span class="sesion">{{ user.nombre_visible }}{% if rol_activo_nombre %} · <strong>{{ rol_activo_nombre }}</strong>{% endif %}</span>
+        <a href="{% url 'presupuesto:lista' %}">Presupuestos</a>
+        <a href="{% url 'presupuesto:configuracion' %}">Configuración</a>
         {% if es_tesorero %}<a href="{% url 'usuarios:lista' %}">Usuarios</a>{% endif %}
         <a href="{% url 'usuarios:seleccionar_rol' %}">Cambiar de rol</a>
         <form method="post" action="{% url 'usuarios:salir' %}">{% csrf_token %}

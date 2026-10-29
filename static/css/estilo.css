@@ -70,3 +70,30 @@ input[type=text], input[type=password], input[type=email], textarea {
 .mensajes li { padding: .75rem 1rem; border-left: 4px solid var(--marca); background: var(--marca-clara); margin-bottom: .5rem; }
 .mensajes .success { border-color: var(--ok); } .mensajes .error { border-color: var(--error); }
 .pie { max-width: 68rem; margin: 3rem auto 2rem; padding: 0 1.5rem; color: var(--suave); font-size: .85rem; }
+
+/* ------------------------------------------------------------ presupuesto */
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cifras { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); margin-bottom: 1.5rem; }
+.cifra { background: var(--papel); border: 1px solid var(--linea); border-top: 3px solid var(--marca);
+  border-radius: 6px; padding: 1rem 1.25rem; }
+.cifra.resultado { border-top-color: var(--acento); }
+.cifra .rotulo { color: var(--suave); font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; }
+.cifra .valor { font-family: var(--serif); font-size: 1.7rem; color: var(--marca); font-variant-numeric: tabular-nums; }
+.cabecera-version { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-bottom: .25rem; }
+.cabecera-version h1 { margin: 0; }
+details.capitulo { background: var(--papel); border: 1px solid var(--linea); border-radius: 6px; margin-bottom: .75rem; }
+details.capitulo > summary { cursor: pointer; padding: .8rem 1.1rem; display: flex; gap: 1rem; align-items: baseline;
+  justify-content: space-between; font-family: var(--serif); color: var(--marca); font-size: 1.05rem; }
+details.capitulo > summary .total { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+details.capitulo .contenido { padding: 0 1.1rem 1rem; overflow-x: auto; }
+tfoot td, tr.total td { font-weight: 700; border-top: 2px solid var(--marca); }
+tr.anulada td { color: var(--suave); text-decoration: line-through; }
+.tabla-ancha { overflow-x: auto; }
+.tabla-ancha table { min-width: 60rem; font-size: .85rem; }
+.rejilla-meses { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); max-width: 52rem; }
+input.importe { text-align: right; max-width: 12rem; font-variant-numeric: tabular-nums; }
+.acciones { white-space: nowrap; font-size: .9rem; }
+.aviso-caja { border-left: 4px solid var(--aviso); background: #fbf3e0; padding: .75rem 1rem; margin-bottom: 1.25rem; }
+.aviso-caja.error { border-color: var(--error); background: #f9e8e8; }
+.sub { color: var(--suave); font-size: .9rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

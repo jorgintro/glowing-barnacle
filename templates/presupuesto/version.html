@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load presupuesto_extras %}
+{% block titulo %}{{ version }}{% endblock %}
+{% block contenido %}
+<div class="cabecera-version">
+  <h1>{{ version.ejercicio.anio }} · versión {{ version.numero }}</h1>
+  <span class="etiqueta {{ version.estado|clase_estado }}">{{ version.get_estado_display }}</span>
+  {% if version.es_demo %}<span class="etiqueta aviso">DEMO · datos ficticios</span>{% endif %}
+  {% if version.ejercicio.hay_proceso_electoral %}<span class="etiqueta marca">Con campaña</span>{% endif %}
+  {% if version.es_prorroga %}<span class="etiqueta aviso">Prórroga provisional</span>{% endif %}
+</div>
+<p class="suave">{{ version.ejercicio }} · {{ version.motivo|default:"" }}
+  {% if version.hash %}· Huella: <code>{{ version.hash|slice:":12" }}…</code>{% endif %}</p>
+
+{% if not version.editable %}
+<p class="aviso-caja">Esta versión es de <strong>solo lectura</strong>. Los cambios exigen una nueva versión (modificación presupuestaria).</p>
+{% endif %}
+
+<div class="cifras">
+  <div class="cifra"><div class="rotulo">Ingresos</div><div class="valor">{{ resumen.ingresos|euros }}</div></div>
+  <div class="cifra"><div class="rotulo">Gastos</div><div class="valor">{{ resumen.gastos|euros }}</div></div>
+  <div class="cifra resultado"><div class="rotulo">Resultado presupuestario</div>
+    <div class="valor">{{ resumen.resultado|euros }}</div>
+    <span class="etiqueta {% if resumen.es_deficit %}error{% else %}ok{% endif %}">{% if resumen.es_deficit %}Déficit{% elif resumen.resultado == 0 %}Equilibrado{% else %}Superávit{% endif %}</span></div>
+  {% if version.ejercicio.hay_proceso_electoral %}
+  <div class="cifra"><div class="rotulo">De ello, campaña</div><div class="valor">{{ resumen.gasto_campana|euros }}</div></div>
+  {% endif %}
+</div>
+
+{% if puede_editar %}<p><a class="boton" href="{% url 'presupuesto:linea_elegir' version.pk %}">Añadir línea</a></p>{% endif %}
+
+<h2>Ingresos</h2>
+{% for bloque in ingresos %}{% include "presupuesto/_bloque_capitulo.html" %}{% endfor %}
+<h2>Gastos</h2>
+{% for bloque in gastos %}{% include "presupuesto/_bloque_capitulo.html" %}{% endfor %}
+
+<details class="capitulo">
+  <summary><span>Distribución mensual por capítulo</span></summary>
+  <div class="contenido tabla-ancha">
+  <table>
+    <thead><tr><th scope="col">Capítulo</th>{% for m in meses %}<th scope="col" class="num">{{ m }}</th>{% endfor %}<th scope="col" class="num">Total</th></tr></thead>
+    <tbody>
+    {% for t in resumen.capitulos %}{% if t.num_lineas %}
+      <tr><th scope="row">{{ t.capitulo.codigo }}</th>{% for x in t.mensual %}<td class="num">{{ x|euros }}</td>{% endfor %}<td class="num">{{ t.total|euros }}</td></tr>
+    {% endif %}{% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td>Ingresos</td>{% for x in resumen.ingresos_mensual %}<td class="num">{{ x|euros }}</td>{% endfor %}<td class="num">{{ resumen.ingresos|euros }}</td></tr>
+      <tr><td>Gastos</td>{% for x in resumen.gastos_mensual %}<td class="num">{{ x|euros }}</td>{% endfor %}<td class="num">{{ resumen.gastos|euros }}</td></tr>
+    </tfoot>
+  </table>
+  </div>
+</details>
+
+{% if otras_versiones %}
+<p class="sub">Otras versiones de este ejercicio:
+  {% for o in otras_versiones %}<a href="{% url 'presupuesto:version' o.pk %}">v{{ o.numero }} ({{ o.get_estado_display }})</a>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+{% endif %}
+<p><a href="{% url 'presupuesto:lista' %}">← Volver a presupuestos</a></p>
+{% endblock %}
