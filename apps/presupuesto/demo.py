@@ -410,6 +410,12 @@ def _crear_donantes() -> None:
         nombre = ("Cargo" if clave[0] == "C" else "Donante") + f" ficticio {clave}"
         nif = validar_nif(f"{n:08d}{letras[n % 23]}", "FISICA")
         _DONANTES[clave] = Donante.objects.create(nombre=nombre, nif=nif, es_demo=True)
+    _DONANTES["CT"] = Donante.objects.create(
+        nombre="Contratista ficticio CT",
+        nif=validar_nif(f"{12:08d}{letras[12 % 23]}", "FISICA"),
+        contratista_publico=True,
+        es_demo=True,
+    )
     _DONANTES["EMP"] = Donante.objects.create(
         nombre="Empresa ficticia S. L.", nif="B00000011", tipo_persona="JURIDICA", es_demo=True
     )
@@ -440,6 +446,8 @@ class _Constructor:
         **forzar: object,
     ) -> Linea:
         partida, cuenta = _partida_y_cuenta(spec.partida)
+        if spec.partida.startswith("I.5."):
+            forzar.setdefault("operaciones_altas", Decimal("0.00"))
         self._contador[spec.partida] = self._contador.get(spec.partida, 0) + 1
         importe = redondear(Decimal(spec.importe) * factor)
         linea = Linea.objects.create(
@@ -663,6 +671,8 @@ def _casos_incumplidos(version: VersionPresupuesto) -> None:
         endeudamiento_previsto=Decimal("8000.00")
     )
 
+    _defectos_del_extracto(version, c)
+
     # Gastos que, junto con los anteriores, dejan un déficit sin plan de financiación (V-006).
     for partida in ("G.1.2", "G.2.4", "G.2.5", "G.3.4", "G.4.1", "G.4.2", "G.6.1", "G.8.1"):
         c.anadir(gastos[partida])
@@ -672,13 +682,86 @@ def _casos_incumplidos(version: VersionPresupuesto) -> None:
         LineaDemo(
             "G.3.4",
             "Gira de actos sin financiación prevista",
-            "6000",
+            "10000",
             "",
             "Gasto ficticio que deja el presupuesto en déficit, sin plan de financiación.",
             "Estimación ficticia",
             "Actividades",
         )
     )
+
+
+def _donar(
+    version: VersionPresupuesto, linea: Linea, clave: str, importe: str, **extra: object
+) -> None:
+    Donacion.objects.create(
+        version=version,
+        linea=linea,
+        donante=_DONANTES[clave],
+        importe=Decimal(importe),
+        es_demo=True,
+        **extra,
+    )
+
+
+def _defectos_del_extracto(version: VersionPresupuesto, c: _Constructor) -> None:
+    """Casos de las reglas L-008 a L-011 y de la excepción de inmuebles de L-001."""
+    # L-008 (aviso) y excepción de L-001: donación de un inmueble, superior al umbral de aviso.
+    inmueble = c.anadir(
+        LineaDemo(
+            "I.4.2",
+            "Donación de un inmueble (ficticia)",
+            "4000",
+            "BAJA",
+            "Valoración ficticia de un inmueble cedido.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        donantes=(),
+    )
+    _donar(version, inmueble, "D7", "4000", tipo="ESPECIE_INMUEBLE")
+    # L-009: operaciones individuales altas sin identificar al transmitente.
+    c.anadir(
+        LineaDemo(
+            "I.5.3",
+            "Ventas individuales de gran importe",
+            "400",
+            "BAJA",
+            "Ventas ficticias a compradores sin identificar.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        donantes=(),
+        operaciones_altas=Decimal("400.00"),
+    )
+    # L-010: donación de una persona parte de un contrato público vigente.
+    c.anadir(
+        LineaDemo(
+            "I.4.1",
+            "Donación de un contratista público",
+            "300",
+            "BAJA",
+            "Donación ficticia de un contratista del sector público.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        donantes=("CT",),
+    )
+    # L-011: donaciones finalista y revocable.
+    mixta = c.anadir(
+        LineaDemo(
+            "I.4.1",
+            "Donaciones finalista y revocable",
+            "200",
+            "BAJA",
+            "Donaciones ficticias con condiciones no admitidas.",
+            "Estimación ficticia",
+            "Tesorería",
+        ),
+        donantes=(),
+    )
+    _donar(version, mixta, "D2", "100", finalista=True)
+    _donar(version, mixta, "D3", "100", revocable=True)
 
 
 def _crear_usuarios_demo() -> dict[str, str]:
