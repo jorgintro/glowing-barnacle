@@ -9,7 +9,7 @@ es [`CLAUDE.md`](CLAUDE.md). **Estado: Fase 1 de 8 (cimientos).**
 docker compose up --build
 ```
 
-Abre <http://localhost:8000>. Para crear el primer Tesorero define `TESORERO_USUARIO` y
+Abre <http://localhost:8090>. Para crear el primer Tesorero define `TESORERO_USUARIO` y
 `TESORERO_CLAVE` (véase `.env.ejemplo`) o ejecuta:
 
 ```bash

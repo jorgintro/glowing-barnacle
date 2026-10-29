@@ -31,7 +31,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-presupuesto-desarrollo}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
     ports:
-      - "8000:8000"
+      - "8090:8000"
 
 volumes:
   datos_db:
