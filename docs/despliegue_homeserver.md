@@ -31,9 +31,9 @@ Esta guía se puede repetir cada vez que se complete una fase: basta con **actua
    DJANGO_SECRET_KEY=<cadena larga y aleatoria>
    POSTGRES_PASSWORD=<contraseña larga>
    DJANGO_ALLOWED_HOSTS=192.168.1.50
-   DJANGO_CSRF_ORIGENES=http://192.168.1.50:8000
+   DJANGO_CSRF_ORIGENES=http://192.168.1.50:8090
    COOKIES_SEGURAS=0
-   PUERTO=8000
+   PUERTO=8090
    TESORERO_USUARIO=tesorero
    TESORERO_CLAVE=<contraseña de al menos 12 caracteres>
    COPIAS_RUTA=/srv/copias-presupuesto
@@ -42,7 +42,7 @@ Esta guía se puede repetir cada vez que se complete una fase: basta con **actua
    ```
    Para generar una clave aleatoria: `openssl rand -base64 48`.
 4. **Deploy the stack**. La primera construcción tarda varios minutos en este procesador.
-5. Abre `http://192.168.1.50:8000` y entra con el Tesorero.
+5. Abre `http://192.168.1.50:8090` y entra con el Tesorero.
 
 Tras el primer arranque puedes **borrar `TESORERO_CLAVE`** de las variables: solo se usa si todavía
 no existe ningún Tesorero.
@@ -89,6 +89,7 @@ Prueba una restauración en frío al menos una vez, **antes** de necesitarla.
 | Síntoma | Causa probable |
 |---|---|
 | «Falta DJANGO_SECRET_KEY» o «Define POSTGRES_PASSWORD» al desplegar | Falta una variable en Portainer. |
+| «port is already allocated» | El puerto de fuera ya está en uso (Portainer usa 8000, 9000 y 9443). Por defecto se usa el 8090; cámbialo con `PUERTO`. |
 | Error 400 «Bad Request» | `DJANGO_ALLOWED_HOSTS` no coincide con la IP o nombre que usas en el navegador. |
 | «Verificación CSRF fallida» al entrar | `DJANGO_CSRF_ORIGENES` no coincide exactamente (esquema `http://`, IP y puerto). |
 | Entras pero te pide entrar otra vez | `COOKIES_SEGURAS=1` estando en HTTP. Ponla a `0` o usa HTTPS. |

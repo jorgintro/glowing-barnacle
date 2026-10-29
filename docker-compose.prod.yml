@@ -38,7 +38,7 @@ services:
       TESORERO_CLAVE: ${TESORERO_CLAVE:-}
       SESION_MINUTOS: ${SESION_MINUTOS:-30}
     ports:
-      - "${PUERTO:-8000}:8000"
+      - "${PUERTO:-8090}:8000"
     mem_limit: 512m
 
   copias:
