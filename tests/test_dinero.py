@@ -62,3 +62,28 @@ def test_prohibido_float_en_el_codigo() -> None:
         if "migrations" not in f.parts and patron.search(f.read_text(encoding="utf-8"))
     ]
     assert infractores == []
+
+
+@pytest.mark.parametrize(
+    ("importe", "pesos"),
+    [
+        ("1800", [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]),
+        ("100", [1, 1, 1]),
+        ("0.01", [1, 1, 1]),
+        ("-90", [1, 2]),
+    ],
+)
+def test_reparto_proporcional_suma_exacta(importe: str, pesos: list[int]) -> None:
+    from apps.presupuesto.dinero import repartir_proporcional
+
+    cuotas = repartir_proporcional(Decimal(importe), pesos)
+    assert sum(cuotas) == Decimal(importe) and len(cuotas) == len(pesos)
+    assert all(c == 0 for c, p in zip(cuotas, pesos, strict=True) if p == 0)
+
+
+def test_reparto_proporcional_rechaza_pesos_invalidos() -> None:
+    from apps.presupuesto.dinero import repartir_proporcional
+
+    for malos in ([], [0, 0], [1, -1]):
+        with pytest.raises(ValueError):
+            repartir_proporcional(Decimal("10"), malos)

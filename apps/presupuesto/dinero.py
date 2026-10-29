@@ -44,3 +44,23 @@ def formatear_euros(valor: Decimal | None) -> str:
     entero, decimales = f"{abs(v):.2f}".split(".")
     entero = f"{int(entero):,}".replace(",", ".")
     return f"{signo}{entero},{decimales} €"
+
+
+def repartir_proporcional(importe: Decimal, pesos: list[int]) -> list[Decimal]:
+    """Reparte ``importe`` según ``pesos`` (método del mayor resto, en céntimos enteros).
+
+    La suma es siempre exactamente el importe. Sirve para distribuciones irregulares
+    (p. ej. un pago trimestral: pesos ``[0, 0, 1, 0, 0, 1, ...]``).
+    """
+    if not pesos or any(p < 0 for p in pesos) or sum(pesos) == 0:
+        raise ValueError("Los pesos deben ser no negativos y sumar más de cero.")
+    total = a_centimos(importe)
+    signo = -1 if total < 0 else 1
+    absoluto = abs(total)
+    suma = sum(pesos)
+    base = [absoluto * p // suma for p in pesos]
+    resto = absoluto - sum(base)
+    por_resto = sorted(range(len(pesos)), key=lambda i: (-(absoluto * pesos[i] % suma), i))
+    for i in por_resto[:resto]:
+        base[i] += 1
+    return [de_centimos(signo * c) for c in base]

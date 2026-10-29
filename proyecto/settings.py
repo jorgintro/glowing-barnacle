@@ -139,4 +139,7 @@ STORAGES = {
 # Ficheros de configuración (cuadro de cuentas, parámetros legales, reglas orgánicas).
 CONFIG_DIR = Path(os.environ.get("CONFIG_DIR", BASE_DIR / "config"))
 
+# Desactívalo (PERMITIR_DATOS_DEMO=0) cuando empieces a trabajar con datos reales.
+PERMITIR_DATOS_DEMO = _entorno_bool("PERMITIR_DATOS_DEMO", True)
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
