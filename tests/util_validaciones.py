@@ -77,6 +77,12 @@ def linea(
 
 
 def donante(ctx: Contexto, n: int, tipo: str = "FISICA", nombre: str | None = None) -> Donante:
+    """Crea el donante n, o devuelve el que ya existe (se reutiliza entre versiones)."""
+    existente = Donante.objects.filter(
+        nif=nif(n) if tipo == "FISICA" else f"B{n:07d}1", es_demo=False
+    ).first()
+    if existente is not None:
+        return existente
     if tipo == "JURIDICA":
         return dn.crear_donante(
             ctx, nombre=nombre or f"Empresa {n}", nif=f"B{n:07d}1", tipo_persona=tipo

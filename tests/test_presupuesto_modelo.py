@@ -13,7 +13,7 @@ from apps.presupuesto.errores import RegistroNoBorrable, VersionNoEditable
 from apps.presupuesto.estados import EstadoVersion
 from apps.presupuesto.models import CuentaPGC, Hipotesis, ImporteMensual, Linea, Partida
 from apps.usuarios.roles import Rol
-from tests.conftest import crear
+from tests.conftest import crear, poner_estado
 
 pytestmark = pytest.mark.django_db
 HIP = ps.DatosHipotesis("Cuota media por afiliado", "Padrón de afiliados", "ALTA")
@@ -159,8 +159,7 @@ def test_versiones_que_no_son_borrador_no_admiten_cambios(
     estado,
 ) -> None:
     linea = _linea(ctx_tesorero, borrador)
-    borrador.estado = estado
-    borrador.save()
+    poner_estado(borrador, estado)
     with pytest.raises(VersionNoEditable):
         _linea(ctx_tesorero, borrador)
     with pytest.raises(VersionNoEditable):

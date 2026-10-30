@@ -9,7 +9,7 @@ from apps.presupuesto.estados import EstadoVersion
 from apps.presupuesto.forms import LineaForm
 from apps.presupuesto.models import CuentaPGC, Linea, Partida
 from apps.usuarios.roles import Rol
-from tests.conftest import CLAVE, crear
+from tests.conftest import CLAVE, crear, poner_estado
 
 pytestmark = pytest.mark.django_db
 
@@ -128,8 +128,7 @@ def test_formulario_se_rellena_al_editar(
 def test_version_no_borrador_es_de_solo_lectura_en_la_interfaz(
     borrador, cliente_tesorero: Client
 ) -> None:
-    borrador.estado = EstadoVersion.APROBADO_CP
-    borrador.save()
+    poner_estado(borrador, EstadoVersion.APROBADO_CP)
     pagina = cliente_tesorero.get(f"/presupuestos/version/{borrador.pk}/").content.decode()
     assert "solo lectura" in pagina and "Añadir línea" not in pagina
     r = cliente_tesorero.get(f"/presupuestos/version/{borrador.pk}/lineas/nueva/I.1.1/")
@@ -152,8 +151,7 @@ def test_version_no_borrador_es_de_solo_lectura_en_la_interfaz(
     ],
 )
 def test_visibilidad_por_rol(borrador, estado, cp_ve: bool, junta_ve: bool) -> None:
-    borrador.estado = estado
-    borrador.save()
+    poner_estado(borrador, estado)
     crear("vocal", Rol.COMISION_PERMANENTE)
     crear("junta", Rol.JUNTA_GENERAL)
     url = f"/presupuestos/version/{borrador.pk}/"

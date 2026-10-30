@@ -57,7 +57,7 @@ def test_todo_esta_marcado_como_ficticio(cargada: dict[str, str]) -> None:
         )
         or True
     )
-    assert Usuario.objects.filter(username__startswith="demo_", es_demo=True).count() == 4
+    assert Usuario.objects.filter(username__startswith="demo_", es_demo=True).count() == 5
 
 
 def test_los_cinco_capitulos_de_ingresos_y_los_ocho_de_gastos(cargada: dict[str, str]) -> None:
@@ -151,7 +151,7 @@ def test_no_se_carga_dos_veces(cargada: dict[str, str]) -> None:
 def test_los_usuarios_demo_tienen_contrasena_aleatoria_y_pueden_entrar(
     cargada: dict[str, str],
 ) -> None:
-    assert len(set(cargada.values())) == 4 and all(len(c) >= 12 for c in cargada.values())
+    assert len(set(cargada.values())) == 5 and all(len(c) >= 12 for c in cargada.values())
     from django.test import Client
 
     c = Client()
@@ -209,7 +209,7 @@ def test_se_puede_recargar_despues_de_borrar(
 ) -> None:
     demo.borrar_demo(ctx_tesorero)
     demo.cargar_demo(ctx_tesorero)
-    assert Ejercicio.objects.filter(es_demo=True).count() == 5
+    assert Ejercicio.objects.filter(es_demo=True).count() == 6
 
 
 def test_borrar_demo_no_puede_borrar_auditoria_real(
