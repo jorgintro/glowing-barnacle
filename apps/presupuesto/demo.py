@@ -12,17 +12,29 @@ Casos que cubre (los que dependen de reglas aún no construidas llegan con su fa
 """
 
 import secrets
+from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import timedelta
 from decimal import Decimal
 
 from django.db import connection, transaction
+from django.utils import timezone
 
 from apps.auditoria.servicios import Contexto, registrar
+from apps.flujo import servicios as flujo
+from apps.flujo.models import (
+    Convocatoria,
+    Ratificacion,
+    TransicionEstado,
+    Votacion,
+    Voto,
+    VotoNominal,
+)
+from apps.organizacion.models import Cargo, Persona
 from apps.usuarios.models import AsignacionRol, Usuario
 from apps.usuarios.roles import Rol
 
 from .dinero import redondear, repartir_proporcional, repartir_uniforme
-from .estados import EstadoVersion
 from .models import (
     Comentario,
     CuentaPGC,
@@ -33,6 +45,7 @@ from .models import (
     ImporteMensual,
     Linea,
     Partida,
+    TipoOrigen,
     VersionPresupuesto,
 )
 from .nif import validar_nif
@@ -498,11 +511,6 @@ def _explicar_resultado(version: VersionPresupuesto) -> None:
     version.refresh_from_db()
 
 
-def _poner_estado(version: VersionPresupuesto, estado: str) -> None:
-    VersionPresupuesto.objects.filter(pk=version.pk).update(estado=estado)
-    version.estado = estado
-
-
 def _ejercicio(anio: int, nombre: str, campana: bool, autor: Usuario | None) -> Ejercicio:
     return Ejercicio.objects.create(
         anio=anio,
@@ -519,6 +527,7 @@ def _version(
     motivo: str,
     autor: Usuario | None,
     origen: VersionPresupuesto | None = None,
+    tipo_origen: str = TipoOrigen.NUEVA,
 ) -> VersionPresupuesto:
     return VersionPresupuesto.objects.create(
         ejercicio=ej,
@@ -526,6 +535,7 @@ def _version(
         motivo=motivo,
         autor=autor,
         version_origen=origen,
+        tipo_origen=tipo_origen,
         es_demo=True,
     )
 
@@ -764,9 +774,12 @@ def _defectos_del_extracto(version: VersionPresupuesto, c: _Constructor) -> None
     _donar(version, mixta, "D3", "100", revocable=True)
 
 
-def _crear_usuarios_demo() -> dict[str, str]:
+def _crear_usuarios_demo() -> tuple[dict[str, str], dict[str, Usuario]]:
+    """Usuarios ficticios. El Tesorero de la demo también es miembro de la CP y vota."""
     credenciales: dict[str, str] = {}
+    usuarios: dict[str, Usuario] = {}
     for nombre, roles in [
+        ("demo_tesorero", [Rol.TESORERO, Rol.COMISION_PERMANENTE]),
         ("demo_cp1", [Rol.COMISION_PERMANENTE]),
         ("demo_cp2", [Rol.COMISION_PERMANENTE]),
         ("demo_cp3", [Rol.COMISION_PERMANENTE]),
@@ -781,7 +794,88 @@ def _crear_usuarios_demo() -> dict[str, str]:
         for rol in roles:
             AsignacionRol.objects.create(usuario=u, rol=rol)
         credenciales[nombre] = clave
-    return credenciales
+        usuarios[nombre] = u
+    return credenciales, usuarios
+
+
+def _crear_organizacion_demo(usuarios: dict[str, Usuario]) -> None:
+    """Cargos y personas ficticios para los certificados (nada de esto es real)."""
+    letras = "TRWAGMYFPDXBNJZSQVHLCKE"
+    cargos = {
+        n: Cargo.objects.create(denominacion=f"{n} (demo)", orden=i, es_demo=True)
+        for i, n in enumerate(["Gerencia", "Secretaría", "Presidencia", "Vocalía"], start=1)
+    }
+    for usuario, nombre, apellidos, cargo, numero in [
+        ("demo_tesorero", "Teodoro", "Ficticio Demo", "Gerencia", 901),
+        ("demo_cp1", "Sara", "Ficticia Demo", "Secretaría", 902),
+        ("demo_cp2", "Vicente", "Ficticio Demo", "Vocalía", 903),
+        ("demo_cp3", "Paula", "Ficticia Demo", "Presidencia", 904),
+        ("demo_junta", "Julia", "Ficticia Demo", "Secretaría", 905),
+    ]:
+        p = Persona.objects.create(
+            nombre=nombre,
+            apellidos=apellidos,
+            dni=f"{numero:08d}{letras[numero % 23]}",
+            usuario=usuarios[usuario],
+            es_demo=True,
+        )
+        p.cargos.add(cargos[cargo])
+
+
+def _ctx(usuarios: dict[str, Usuario], nombre: str, rol: str) -> Contexto:
+    return Contexto(usuarios[nombre], rol, None)
+
+
+def _recorrer_flujo(
+    version: VersionPresupuesto,
+    usuarios: dict[str, Usuario],
+    *,
+    votos: Mapping[str, str],
+    cerrar: bool = True,
+    convocar: str | None = None,
+    ratificar: str | None = None,
+    quien_ratifica: tuple[str, str] = ("demo_junta", Rol.JUNTA_GENERAL),
+    acta: str = "ACTA-DEMO",
+    crear_borrador: bool = True,
+) -> None:
+    """Lleva la versión por el flujo REAL (así la demo también prueba el flujo)."""
+    hoy = timezone.localdate()
+    tesorero = _ctx(usuarios, "demo_tesorero", Rol.TESORERO)
+    votacion = flujo.proponer(
+        tesorero, version, avisos_aceptados=["V-007", "L-008"], confirmar=True
+    )
+    for nombre, voto in votos.items():
+        flujo.votar(_ctx(usuarios, nombre, Rol.COMISION_PERMANENTE), votacion, voto)
+    if not cerrar:
+        return
+    cierra = _ctx(usuarios, next(iter(votos)), Rol.COMISION_PERMANENTE)
+    flujo.cerrar_votacion(
+        cierra, votacion, "Votación de demostración (ficticia)", crear_borrador=crear_borrador
+    )
+    version.refresh_from_db()
+    if version.estado != "APROBADO_CP" or convocar is None:
+        return
+    sesion = hoy if ratificar else hoy + timedelta(days=15)
+    flujo.registrar_convocatoria(
+        tesorero,
+        version,
+        fecha_convocatoria=hoy - timedelta(days=10),
+        fecha_sesion=sesion,
+        referencia=convocar,
+    )
+    if ratificar is None:
+        return
+    usuario, rol = quien_ratifica
+    flujo.registrar_ratificacion(
+        _ctx(usuarios, usuario, rol),
+        version,
+        fecha_sesion=hoy,
+        resultado=ratificar,
+        referencia_acta=acta,
+        observaciones="Sesión ficticia de demostración.",
+        avisos_aceptados=["O-004"],
+        crear_borrador=crear_borrador,
+    )
 
 
 def existe_demo() -> bool:
@@ -809,60 +903,94 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
         raise RuntimeError(
             "Ya hay datos de demostración cargados. Bórralos antes de volver a cargarlos."
         )
-    autor = contexto.usuario
-    credenciales = _crear_usuarios_demo()
+    credenciales, usuarios = _crear_usuarios_demo()
+    _crear_organizacion_demo(usuarios)
     _crear_donantes()
+    autor = usuarios["demo_tesorero"]
+    A, C, N = Voto.A_FAVOR, Voto.EN_CONTRA, Voto.ABSTENCION
+    todos_a_favor = {"demo_tesorero": A, "demo_cp1": A, "demo_cp2": A, "demo_cp3": A}
+    mayoria = {"demo_tesorero": A, "demo_cp1": A, "demo_cp2": A, "demo_cp3": N}
 
-    # 2027 · con campaña: v1 rechazada, v2 ratificada, v3 modificación.
+    # 2027 · con campaña: v1 rechazada por la Junta, v2 ratificada, v3 modificación.
     e2027 = _ejercicio(2027, "Ejercicio de demostración con campaña", True, autor)
     v1 = _version(e2027, 1, "Primera propuesta (rechazada por la Junta en la demostración)", autor)
     _rellenar(v1, campana=True, factor=Decimal("0.90"), anterior=False)
-    _poner_estado(v1, EstadoVersion.RECHAZADO)
-    v2 = _version(e2027, 2, "Versión corregida tras el rechazo", autor, origen=v1)
+    _recorrer_flujo(
+        v1,
+        usuarios,
+        votos=todos_a_favor,
+        convocar="CONV-DEMO-01",
+        ratificar="RECHAZADO",
+        acta="ACTA-DEMO-01",
+        crear_borrador=False,
+    )
+    v2 = _version(e2027, 2, "Versión corregida tras el rechazo", autor, v1, TipoOrigen.TRAS_RECHAZO)
     _rellenar(v2, campana=True, factor=Decimal("1.00"), anterior=False)
-    _poner_estado(v2, EstadoVersion.RATIFICADO_JG)
-    v3 = _version(e2027, 3, "Modificación: reforma ficticia de la sede", autor, origen=v2)
+    _recorrer_flujo(
+        v2,
+        usuarios,
+        votos=mayoria,
+        convocar="CONV-DEMO-02",
+        ratificar="RATIFICADO",
+        quien_ratifica=("demo_tesorero", Rol.TESORERO),
+        acta="ACTA-DEMO-02",
+    )
+    v3 = _version(
+        e2027, 3, "Modificación: reforma ficticia de la sede", autor, v2, TipoOrigen.MODIFICACION
+    )
     c3 = _rellenar(v3, campana=True, factor=Decimal("1.00"), anterior=False)
     c3.anadir(
         LineaDemo(
             "G.2.5",
             "Reforma de la sede",
-            "800",
+            "400",
             "",
-            "Obra menor ficticia, extraordinaria.",
+            "Obra menor ficticia, extraordinaria (no supera el umbral ficticio de la Junta).",
             "Presupuesto ficticio de obra",
             "Secretaría",
             tipo="EXTRAORDINARIO",
         )
     )
-    _poner_estado(v3, EstadoVersion.MODIFICADO)
+    _recorrer_flujo(v3, usuarios, votos=mayoria)
 
-    # Ejercicios sin campaña, cada uno en un estado.
-    for anio, estado, factor, texto in [
-        (2028, EstadoVersion.BORRADOR, Decimal("1.00"), "Borrador de trabajo del Tesorero"),
-        (2029, EstadoVersion.PROPUESTO, Decimal("1.02"), "Propuesto a la Comisión Permanente"),
-        (2030, EstadoVersion.APROBADO_CP, Decimal("1.04"), "Aprobado por la Comisión Permanente"),
-    ]:
-        e = _ejercicio(
-            anio, f"Ejercicio de demostración sin campaña ({estado.label})", False, autor
-        )
-        v = _version(e, 1, texto, autor)
-        _rellenar(v, campana=False, factor=factor, anterior=factor != Decimal("1.00"))
-        _poner_estado(v, estado)
+    # Ejercicios sin campaña, cada uno en un punto del flujo.
+    e2028 = _ejercicio(2028, "Ejercicio de demostración sin campaña (Borrador)", False, autor)
+    v = _version(e2028, 1, "Borrador de trabajo del Tesorero", autor)
+    _rellenar(v, campana=False, factor=Decimal("1.00"), anterior=False)
+
+    e2029 = _ejercicio(2029, "Ejercicio de demostración sin campaña (Propuesto)", False, autor)
+    v2029 = _version(e2029, 1, "Propuesto a la Comisión Permanente (votación abierta)", autor)
+    _rellenar(v2029, campana=False, factor=Decimal("1.02"), anterior=True)
+    _recorrer_flujo(v2029, usuarios, votos={"demo_cp1": A}, cerrar=False)
+    flujo.comentar(
+        _ctx(usuarios, "demo_cp2", Rol.COMISION_PERMANENTE),
+        v2029,
+        "Comentario ficticio de demostración: ¿se puede detallar mejor la partida de actos?",
+    )
+
+    e2030 = _ejercicio(2030, "Ejercicio de demostración sin campaña (Aprobado)", False, autor)
+    v2030 = _version(e2030, 1, "Aprobado por la Comisión Permanente", autor)
+    _rellenar(v2030, campana=False, factor=Decimal("1.04"), anterior=True)
+    _recorrer_flujo(
+        v2030,
+        usuarios,
+        votos={"demo_tesorero": A, "demo_cp1": A, "demo_cp2": A, "demo_cp3": C},
+        convocar="CONV-DEMO-03",
+    )
 
     # 2031 · con campaña y defectos deliberados.
     e2031 = _ejercicio(2031, "Casos que incumplen reglas", True, autor)
     v = _version(e2031, 1, "Borrador con errores deliberados para probar los bloqueos", autor)
     _casos_incumplidos(v)
 
-    if autor is not None:
-        Comentario.objects.create(
-            version=v,
-            autor=autor,
-            rol_autor=contexto.rol_activo,
-            texto="Comentario ficticio de demostración.",
-            es_demo=True,
-        )
+    # 2032 · rechazada por la Comisión Permanente (y nuevo borrador automático).
+    e2032 = _ejercicio(2032, "Ejercicio de demostración rechazado por la CP", False, autor)
+    v = _version(e2032, 1, "Propuesta que la Comisión Permanente rechaza en la demostración", autor)
+    _rellenar(v, campana=False, factor=Decimal("1.00"), anterior=False)
+    _recorrer_flujo(
+        v, usuarios, votos={"demo_tesorero": A, "demo_cp1": C, "demo_cp2": C, "demo_cp3": C}
+    )
+
     registrar(
         contexto,
         accion="demo.cargar",
@@ -890,16 +1018,30 @@ def borrar_demo(contexto: Contexto) -> dict[str, int]:
     versiones = VersionPresupuesto.objects.filter(es_demo=True)
     ids_lineas = list(Linea.objects.filter(version__es_demo=True).values_list("pk", flat=True))
     cuentas = {
+        "votos": VotoNominal.objects.filter(es_demo=True).delete()[0],
+        "votaciones": Votacion.objects.filter(es_demo=True).delete()[0],
+        "ratificaciones": Ratificacion.objects.filter(es_demo=True).delete()[0],
+        "convocatorias": Convocatoria.objects.filter(es_demo=True).delete()[0],
+        "transiciones": TransicionEstado.objects.filter(es_demo=True).delete()[0],
         "importes_mensuales": ImporteMensual.objects.filter(linea_id__in=ids_lineas).delete()[0],
         "donaciones": Donacion.objects.filter(version__es_demo=True).delete()[0],
         "hipotesis": Hipotesis.objects.filter(linea_id__in=ids_lineas).delete()[0],
         "comentarios": Comentario.objects.filter(es_demo=True).delete()[0],
         "lineas": Linea.objects.filter(pk__in=ids_lineas).delete()[0],
     }
-    versiones.update(version_origen=None)
     cuentas["donantes"] = Donante.objects.filter(es_demo=True).delete()[0]
-    cuentas["versiones"] = versiones.delete()[0]
+    # Las versiones derivadas se borran antes que su origen (no se puede «desenlazar» una versión
+    # sellada: el disparador lo impediría).
+    borradas = 0
+    while versiones.exists():
+        hojas = versiones.filter(derivadas__isnull=True)
+        if not hojas.exists():  # defensa ante un ciclo imposible
+            break
+        borradas += hojas.delete()[0]
+    cuentas["versiones"] = borradas
     cuentas["ejercicios"] = Ejercicio.objects.filter(es_demo=True).delete()[0]
+    cuentas["personas"] = Persona.objects.filter(es_demo=True).delete()[0]
+    cuentas["cargos"] = Cargo.objects.filter(es_demo=True).delete()[0]
     demo = Usuario.objects.filter(es_demo=True)
     AsignacionRol.objects.filter(usuario__in=demo).delete()
     cuentas["usuarios"] = demo.delete()[0]
