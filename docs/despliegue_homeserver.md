@@ -60,6 +60,19 @@ En Portainer: *Stacks → presupuesto → Pull and redeploy* (marcando *Re-build
 Las migraciones de base de datos se aplican solas al arrancar y **los datos se conservan**
 (viven en el volumen `datos_db`).
 
+## 4 bis. Comprobar la integridad de las versiones selladas
+
+Desde la terminal del servidor, para comprobar que nadie ha manipulado ninguna versión:
+
+```bash
+docker exec presupuesto-web-1 python manage.py verificar_integridad
+```
+
+Debe terminar con «Todas las versiones (N) son íntegras». Si alguna sale como ALTERADA, no la uses y
+avisa al desarrollador. Cuando la actualización incluya una librería nueva (como ocurrió con la de
+los PDF), hay que reconstruir la imagen: para el stack, borra la imagen `presupuesto-web` en
+*Images* y pulsa *Pull and redeploy*.
+
 ## 5. Copias de seguridad
 
 - El contenedor `copias` hace una copia **diaria** de la base de datos en `COPIAS_RUTA`

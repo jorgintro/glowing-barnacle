@@ -61,7 +61,15 @@ Ajustes del sistema que no son normativa legal. **Sin valores a propósito**:
 
 Quórum, mayorías y funciones (CLAUDE.md §16.2). **Sin valores a propósito**: salen de los
 estatutos. Mientras estén vacíos, **la votación de la Comisión Permanente queda bloqueada** (O-001).
-El fichero incluye ejemplos comentados con la forma de cada dato.
+El fichero incluye ejemplos comentados con la forma de cada dato. Claves:
+
+| Clave | Para qué | Si está vacía |
+|---|---|---|
+| `quorum` y `mayoria` | Votación de la CP (regla O-001) | La votación queda bloqueada |
+| `proponente_puede_votar` | Regla O-003 | Quien propone no puede votar |
+| `ratificacion_registrada_por` | Quién registra la ratificación (`JUNTA_GENERAL`, `TESORERO`) | Solo la Junta General |
+| `umbral_modificacion_junta` | A partir de cuánto una modificación vuelve a la Junta (`IMPORTE` o `PORCENTAJE`) | Toda modificación vuelve a la Junta |
+| `transferencias_solo_cp` | Si las transferencias entre partidas bastan con la CP | No: también van a la Junta |
 
 ## Carpeta `config/demo/` (FICTICIA)
 

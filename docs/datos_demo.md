@@ -22,17 +22,30 @@ contenedor si es otro).
 
 ## Qué contiene
 
+Todo se crea **recorriendo el flujo real** (proponer, votar, cerrar, convocar y ratificar con los
+usuarios de demostración), así que también sirve de prueba del flujo.
+
 | Ejercicio | Versión | Estado | Campaña | Para qué sirve |
 |---|---|---|---|---|
-| 2027 | v1 | `RECHAZADO` | Sí | Rechazo de la Junta; origen de la v2 |
-| 2027 | v2 | `RATIFICADO_JG` | Sí | Presupuesto completo con los 13 capítulos |
-| 2027 | v3 | `MODIFICADO` | Sí | Modificación derivada de la ratificada |
-| 2028 | v1 | `BORRADOR` | No | Borrador correcto para editar |
-| 2029 | v1 | `PROPUESTO` | No | Pendiente de votación de la CP |
-| 2030 | v1 | `APROBADO_CP` | No | Pendiente de ratificación |
+| 2027 | v1 | `RECHAZADO` | Sí | Aprobada por la CP y rechazada por la Junta |
+| 2027 | v2 | `RATIFICADO_JG` | Sí | Presupuesto completo, ratificado (lo registra el Tesorero de la demo) |
+| 2027 | v3 | `MODIFICADO` | Sí | Modificación pequeña (400 €) aprobada solo por la CP |
+| 2028 | v1 | `BORRADOR` | No | Borrador correcto para editar y proponer |
+| 2029 | v1 | `PROPUESTO` | No | Votación abierta con un solo voto (para probar votar y cerrar) y un comentario |
+| 2030 | v1 | `APROBADO_CP` | No | Votación cerrada y convocatoria registrada; falta ratificar |
 | 2031 | v1 | `BORRADOR` | Sí | **Casos que incumplen reglas** |
+| 2032 | v1 | `RECHAZADO` | No | Rechazada por la CP (con un nuevo borrador v2 abierto automáticamente) |
 
-Usuarios: `demo_cp1`, `demo_cp2`, `demo_cp3` (Comisión Permanente) y `demo_junta` (Junta General).
+Usuarios (contraseñas aleatorias que se muestran **una sola vez** al cargar):
+
+| Usuario | Roles | Papel en la demo |
+|---|---|---|
+| `demo_tesorero` | Tesorero y Comisión Permanente | Propone y también vota |
+| `demo_cp1`, `demo_cp2`, `demo_cp3` | Comisión Permanente | Votan |
+| `demo_junta` | Junta General | Convoca y ratifica |
+
+También hay personas ficticias en el panel de la organización (con DNI de prueba y cargos «(demo)»)
+para poder probar los certificados.
 
 ### Defectos deliberados del ejercicio 2031
 
