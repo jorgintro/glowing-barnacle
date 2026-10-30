@@ -1,0 +1,19 @@
+# Memoria y plan de tesorería de la DEMOSTRACIÓN. Todo ficticio.
+# Solo los parámetros: las secciones de la memoria se siembran siempre desde config/memoria.yaml.
+# Los valores numéricos son inventados para la demo.
+version: 1
+
+parametros:
+  variaciones_destacadas: 3
+  marcas_pendiente:
+    - "[COMPLETAR"
+    - "PENDIENTE DE REVISAR"
+  saldo_minimo_tesoreria: "500.00"
+  reduccion_ingresos_prudente:
+    ALTA: "5"
+    MEDIA: "15"
+    BAJA: "40"
+  reduccion_gastos_ajustado:
+    RECURRENTE: "5"
+    EXTRAORDINARIO: "30"
+    CONDICIONADO: "50"

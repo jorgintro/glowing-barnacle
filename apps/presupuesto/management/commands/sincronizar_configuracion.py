@@ -1,9 +1,10 @@
-"""Carga config/cuadro_cuentas.yaml y config/parametros_legales.yaml en la base de datos."""
+"""Carga la configuración (cuadro, parámetros legales y valores propuestos de los anexos)."""
 
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
+from apps.anexos.configuracion import asegurar_configuracion
 from apps.presupuesto.configuracion import ErrorConfiguracion
 from apps.presupuesto.sincronizacion import sincronizar_todo
 
@@ -14,6 +15,7 @@ class Command(BaseCommand):
     def handle(self, *args: Any, **opciones: Any) -> None:
         try:
             resultados = sincronizar_todo()
+            asegurar_configuracion(False)  # memoria y tesorería: solo siembra lo que falte
         except ErrorConfiguracion as error:
             raise CommandError(str(error)) from error
         for nombre, r in resultados.items():
