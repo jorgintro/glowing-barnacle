@@ -1,8 +1,10 @@
 """Sellado de versiones: huella (SHA-256) del contenido y cadena de transiciones.
 
 La huella cubre todo el contenido que importa: ejercicio, versión, líneas, hipótesis, importes
-mensuales y donaciones. Se calcula con una representación canónica (claves y listas ordenadas,
-importes como texto), así que no cambia por el orden en que se guardaron los datos.
+mensuales y donaciones. Desde la huella de tipo 2 cubre además la memoria explicativa y el saldo
+inicial de tesorería; las versiones selladas antes (tipo 1) se siguen verificando como entonces.
+Se calcula con una representación canónica (claves y listas ordenadas, importes como texto),
+así que no cambia por el orden en que se guardaron los datos.
 """
 
 import hashlib
@@ -15,9 +17,10 @@ from apps.presupuesto.models import Donacion, ImporteMensual, Linea, VersionPres
 
 from .models import TransicionEstado
 
+HUELLA_ACTUAL = 2
+
 
 def contenido_canonico(version: VersionPresupuesto) -> dict[str, Any]:
-    ej = version.ejercicio
     lineas = []
     for ln in (
         Linea.objects.filter(version=version)
@@ -72,6 +75,23 @@ def contenido_canonico(version: VersionPresupuesto) -> dict[str, Any]:
         ),
         key=lambda x: (x["linea"], x["donante"], x["importe"], x["tipo"]),
     )
+    contenido = _contenido_base(version, lineas, donaciones)
+    if version.version_huella >= 2:
+        from apps.anexos.models import SeccionMemoria
+
+        contenido["memoria"] = {
+            s.clave: s.texto
+            for s in SeccionMemoria.objects.filter(version=version).order_by("clave")
+        }
+        saldo = version.saldo_inicial_tesoreria
+        contenido["tesoreria"] = {"saldo_inicial": None if saldo is None else str(saldo)}
+    return contenido
+
+
+def _contenido_base(
+    version: VersionPresupuesto, lineas: list[dict[str, Any]], donaciones: list[dict[str, Any]]
+) -> dict[str, Any]:
+    ej = version.ejercicio
     return {
         "ejercicio": {"anio": ej.anio, "proceso_electoral": ej.hay_proceso_electoral},
         "version": {

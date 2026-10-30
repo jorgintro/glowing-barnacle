@@ -176,3 +176,58 @@ def v007(ctx: ContextoVersion) -> list[Incidencia]:
                 )
             )
     return salida
+
+
+# ------------------------------------------------------------------ anexos (Fase 5)
+
+
+def v008(ctx: ContextoVersion) -> list[Incidencia]:
+    """La memoria explicativa está completa (bloquea la propuesta, CLAUDE.md §5.1 y §7.1)."""
+    from apps.anexos.completitud import problemas_memoria
+
+    return [_inc("V-008", problema) for problema in problemas_memoria(ctx.version)]
+
+
+def v009(ctx: ContextoVersion) -> list[Incidencia]:
+    """Aviso: sin saldo inicial no se pueden calcular los saldos del plan de tesorería."""
+    if ctx.version.saldo_inicial_tesoreria is not None:
+        return []
+    return [
+        _inc(
+            "V-009",
+            "Falta el saldo inicial de tesorería: el plan de tesorería no puede calcular saldos.",
+            g=Gravedad.AVISO,
+        )
+    ]
+
+
+def v010(ctx: ContextoVersion) -> list[Incidencia]:
+    """Aviso: tensión de tesorería (saldo negativo o por debajo del mínimo) en el escenario base."""
+    from apps.anexos.configuracion import parametros_de_version
+    from apps.anexos.tesoreria import BASE, calcular_plan
+
+    if ctx.version.saldo_inicial_tesoreria is None:
+        return []  # ya avisa V-009
+    params = parametros_de_version(ctx.version)
+    plan = calcular_plan(ctx.version, params)
+    salida = []
+    if params.saldo_minimo is None:
+        salida.append(
+            _inc(
+                "V-010",
+                "El saldo mínimo de tesorería no está configurado (panel «Anexos»): solo se "
+                "comprueba que el saldo no sea negativo.",
+                g=Gravedad.AVISO,
+            )
+        )
+    for mes in plan.escenario(BASE).meses_en_tension:
+        assert mes.saldo is not None
+        salida.append(
+            _inc(
+                "V-010",
+                f"Tensión de tesorería en {mes.nombre.lower()}: {mes.motivo_tension} "
+                f"({formatear_euros(mes.saldo)}).",
+                g=Gravedad.AVISO,
+            )
+        )
+    return salida
