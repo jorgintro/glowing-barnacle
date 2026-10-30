@@ -1,6 +1,7 @@
 # Anexos: memoria explicativa y plan de tesorería
 
-Fase 5 (CLAUDE.md §7.1 y §7.2). La campaña (§7.3) y la comparativa (§7.4) llegan en la Fase 6.
+Fase 5 (CLAUDE.md §7.1 y §7.2). La campaña (§7.3) y la comparativa (§7.4) están en
+`docs/campana_y_comparativa.md` (Fase 6).
 No hay PDF ni Word: todo se ve en pantalla.
 
 ## Memoria explicativa
@@ -117,8 +118,9 @@ Desde esta fase hay dos tipos de huella (campo `version_huella`):
 
 * **1**: líneas, hipótesis, importes mensuales y donaciones (versiones selladas hasta la Fase 4).
 * **2**: lo anterior **más la memoria y el saldo inicial de tesorería**.
+* **3**: lo anterior **más los datos del proceso electoral** (Fase 6).
 
-Toda versión que se propone se sella con la 2. Las ya selladas con la 1 se siguen verificando
+Toda versión que se propone se sella con la 3 (la actual). Las ya selladas con la 1 se siguen verificando
 con su método, así que nada se invalida. `version_huella` y el saldo inicial son inmutables en las
 versiones que no son borrador.
 

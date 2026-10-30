@@ -23,7 +23,7 @@ from .configuracion import (
     asegurar_configuracion,
     parametros_actuales,
 )
-from .models import ParametrosAnexosCfg, SeccionMemoria, SeccionMemoriaCfg
+from .models import ParametrosAnexosCfg, ProcesoElectoral, SeccionMemoria, SeccionMemoriaCfg
 
 
 def _huella(texto: str) -> str:
@@ -100,10 +100,21 @@ def guardar_saldo_inicial(
     )
 
 
-def copiar_anexos(origen: VersionPresupuesto, destino: VersionPresupuesto, *, saldo: bool) -> int:
-    """Copia la memoria (marcada como pendiente de revisar) y, si procede, el saldo inicial."""
+def copiar_anexos(
+    origen: VersionPresupuesto,
+    destino: VersionPresupuesto,
+    *,
+    saldo: bool,
+    campana: bool = True,
+) -> int:
+    """Copia la memoria (marcada como pendiente de revisar), el saldo inicial y la campaña."""
     n = 0
+    params = parametros_actuales(destino.es_demo)
+    hay_campana = destino.ejercicio.hay_proceso_electoral
     for s in SeccionMemoria.objects.filter(version=origen):
+        cfg = params.seccion(s.clave)
+        if cfg is None or not cfg.aplicables_a(hay_campana):
+            continue  # la sección ya no existe o no se aplica a la versión nueva
         SeccionMemoria.objects.create(
             version=destino,
             clave=s.clave,
@@ -118,7 +129,97 @@ def copiar_anexos(origen: VersionPresupuesto, destino: VersionPresupuesto, *, sa
             saldo_inicial_tesoreria=origen.saldo_inicial_tesoreria
         )
         destino.saldo_inicial_tesoreria = origen.saldo_inicial_tesoreria
+    pe = ProcesoElectoral.objects.filter(version=origen).first()
+    if campana and pe is not None:
+        ProcesoElectoral.objects.create(
+            version=destino,
+            denominacion=pe.denominacion,
+            fecha_convocatoria=pe.fecha_convocatoria,
+            fecha_elecciones=pe.fecha_elecciones,
+            fecha_proclamacion=pe.fecha_proclamacion,
+            habitantes_derecho=pe.habitantes_derecho,
+            provincias_adicional=pe.provincias_adicional,
+            subvencion_envio_aplicable=pe.subvencion_envio_aplicable,
+            electores_envio=pe.electores_envio,
+            concejales_previstos=pe.concejales_previstos,
+            votos_previstos=pe.votos_previstos,
+            observaciones=pe.observaciones,
+            actualizado_por=None,
+        )
     return n
+
+
+CAMPOS_PROCESO = (
+    "denominacion",
+    "fecha_convocatoria",
+    "fecha_elecciones",
+    "fecha_proclamacion",
+    "habitantes_derecho",
+    "provincias_adicional",
+    "subvencion_envio_aplicable",
+    "electores_envio",
+    "concejales_previstos",
+    "votos_previstos",
+    "observaciones",
+)
+
+
+def _datos_proceso(pe: ProcesoElectoral | None) -> dict[str, Any] | None:
+    if pe is None:
+        return None
+    return {c: None if getattr(pe, c) is None else str(getattr(pe, c)) for c in CAMPOS_PROCESO}
+
+
+@transaction.atomic
+def guardar_proceso_electoral(
+    contexto: Contexto, version: VersionPresupuesto, **datos: Any
+) -> ProcesoElectoral:
+    """Datos del proceso electoral de la versión (solo borradores de ejercicios con campaña)."""
+    exigir_tesorero(contexto)
+    exigir_borrador(version)
+    if not version.ejercicio.hay_proceso_electoral:
+        raise ValidationError("El ejercicio no tiene proceso electoral previsto.")
+    desconocidos = set(datos) - set(CAMPOS_PROCESO)
+    if desconocidos:
+        raise ValidationError(f"Datos desconocidos: {', '.join(sorted(desconocidos))}.")
+    conv, elec, proc = (
+        datos.get("fecha_convocatoria"),
+        datos.get("fecha_elecciones"),
+        datos.get("fecha_proclamacion"),
+    )
+    errores = []
+    if conv and elec and elec < conv:
+        errores.append("La fecha de las elecciones no puede ser anterior a la convocatoria.")
+    if elec and proc and proc < elec:
+        errores.append("La proclamación de electos no puede ser anterior a las elecciones.")
+    if conv and proc and proc < conv:
+        errores.append("La proclamación de electos no puede ser anterior a la convocatoria.")
+    if errores:
+        raise ValidationError(errores)
+    anterior = ProcesoElectoral.objects.filter(version=version).first()
+    antes = _datos_proceso(anterior)
+    pe = anterior or ProcesoElectoral(version=version)
+    for campo in CAMPOS_PROCESO:
+        if campo in datos:
+            valor = datos[campo]
+            if campo in ("denominacion", "observaciones"):
+                valor = (valor or "").strip()
+            elif campo == "provincias_adicional":
+                valor = valor or 0
+            setattr(pe, campo, valor)
+    pe.actualizado_por = contexto.usuario
+    pe.actualizado_en = timezone.now()
+    pe.save()
+    registrar(
+        contexto,
+        accion="campana.guardar_proceso_electoral",
+        entidad="ProcesoElectoral",
+        entidad_id=pe.pk,
+        antes=antes,
+        despues={**(_datos_proceso(pe) or {}), "version": version.pk},
+        es_demo=version.es_demo,
+    )
+    return pe
 
 
 # ------------------------------------------------------- configuración (panel Anexos)
@@ -237,6 +338,10 @@ def _datos_parametros(p: ParametrosAnexosCfg) -> dict[str, Any]:
     campos = [
         "variaciones_destacadas",
         "saldo_minimo_tesoreria",
+        "porcentaje_aviso_limite_campana",
+        "semaforo_ambar_pct",
+        "semaforo_rojo_pct",
+        "semaforo_importe_minimo",
         *CAMPOS_CONFIANZA.values(),
         *CAMPOS_TIPO.values(),
     ]

@@ -307,6 +307,7 @@ Las validaciones se ejecutan **antes de cada transición de estado** y también 
 | `V-008` | La memoria explicativa está completa (§7.1). | 🔴 Bloqueante |
 | `V-009` | Está indicado el saldo inicial de tesorería (§7.2). | 🟡 Aviso |
 | `V-010` | Sin tensión de tesorería (saldo negativo o bajo el mínimo) en el escenario base (§7.2). | 🟡 Aviso |
+| `V-011` | El gasto electoral no llega al porcentaje del límite configurado para avisar (§7.3). | 🟡 Aviso |
 
 ### 8.2 Validaciones legales
 
@@ -319,6 +320,11 @@ Las validaciones se ejecutan **antes de cada transición de estado** y también 
 | `L-005` | El endeudamiento previsto es compatible con las condiciones legales de crédito a partidos. | 🔴 Bloqueante |
 | `L-006` | El presupuesto sigue la estructura exigida por el cuadro de cuentas adaptado. | 🔴 Bloqueante |
 | `L-007` | Parámetros legales verificados en el ejercicio en curso (fecha de verificación vigente). | 🔴 Bloqueante |
+| `L-008` a `L-011` | Notificaciones al Tribunal de Cuentas, identificación en actividades propias, contratistas públicos, donaciones finalistas o revocables (extracto de la LO 8/2007 aportado por el Tesorero). | 🔴/🟡 |
+| `L-012` | Nadie aporta a las cuentas electorales más del máximo legal por persona. | 🔴 Bloqueante |
+| `L-013` | La subvención electoral presupuestada no supera el gasto electoral previsto. | 🟡 Aviso |
+| `L-014` | La subvención electoral presupuestada no supera la estimada con las previsiones. | 🟡 Aviso |
+| `L-015` | El gasto de campaña está dentro del periodo electoral. | 🟡 Aviso |
 
 ### 8.3 Validaciones orgánicas
 

@@ -85,6 +85,9 @@ class Partida(models.Model):
     dimension_por_defecto = models.CharField(
         max_length=20, choices=Dimension.choices, default=Dimension.ORDINARIO
     )
+    envio_electoral = models.BooleanField(
+        default=False, help_text="Gasto de envío directo y personal de propaganda a electores."
+    )
     activa = models.BooleanField(default=True)
 
     class Meta:
@@ -108,6 +111,8 @@ class ParametroLegal(models.Model):
     referencia_normativa = models.CharField(max_length=300, blank=True)
     fecha_verificacion = models.DateField(null=True, blank=True)
     verificador = models.CharField(max_length=150, blank=True)
+    ambito = models.CharField(max_length=10, default="GENERAL")
+    informativo = models.BooleanField(default=False)
     activo = models.BooleanField(default=True)
 
     class Meta:
@@ -214,9 +219,9 @@ class VersionPresupuesto(models.Model):
         help_text="Saldo de caja y bancos a 1 de enero. Lo introduce el Tesorero.",
     )
     version_huella = models.PositiveSmallIntegerField(
-        default=2,
+        default=3,
         help_text="Qué contenido cubre la huella: 1 = líneas y donaciones; 2 = además memoria y "
-        "saldo inicial de tesorería.",
+        "saldo inicial de tesorería; 3 = además los datos del proceso electoral.",
     )
     es_demo = models.BooleanField(default=False)
 

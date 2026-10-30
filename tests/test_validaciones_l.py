@@ -202,14 +202,14 @@ def test_l004_dentro_del_limite(con_campana) -> None:
 
 def test_l004_supera_el_limite(con_campana) -> None:
     version, ctx, _ = con_campana
-    linea(ctx, version, "G.7.1", "10001", tipo="EXTRAORDINARIO")  # 5.000 + 10.001 > 15.000
+    linea(ctx, version, "G.7.1", "10000", tipo="EXTRAORDINARIO")  # 5.000 + 10.000 > 14.960
     msg = _mensajes(validar(version), "L-004")
-    assert len(msg) == 1 and "15.001,00" in msg[0] and "15.000,00" in msg[0]
+    assert len(msg) == 1 and "15.000,00" in msg[0] and "14.960,00" in msg[0]
 
 
 def test_l004_justo_en_el_limite_se_acepta(con_campana) -> None:
     version, ctx, _ = con_campana
-    linea(ctx, version, "G.7.1", "10000", tipo="EXTRAORDINARIO")
+    linea(ctx, version, "G.7.1", "9960", tipo="EXTRAORDINARIO")  # 5.000 + 9.960 = 14.960
     assert "L-004" not in codigos(validar(version))
 
 
@@ -225,14 +225,14 @@ def test_l004_gasto_electoral_sin_proceso_electoral(ok) -> None:
 
 def test_l004_limite_sin_verificar(con_campana) -> None:
     version, _, _ = con_campana
-    res = validar(version, sin_verificar(cfg_demo(), "limite_gasto_electoral"))
-    assert any("limite_gasto_electoral" in m for m in _mensajes(res, "L-004"))
+    res = validar(version, sin_verificar(cfg_demo(), "gasto_electoral_euros_por_habitante"))
+    assert any("gasto_electoral_euros_por_habitante" in m for m in _mensajes(res, "L-004"))
 
 
 def test_l004_no_aplica_sin_campana_ni_gasto(ok) -> None:
     version, _, _ = ok
     assert "L-004" not in codigos(
-        validar(version, sin_verificar(cfg_demo(), "limite_gasto_electoral"))
+        validar(version, sin_verificar(cfg_demo(), "gasto_electoral_euros_por_habitante"))
     )
 
 
@@ -331,13 +331,13 @@ def test_l007_basta_con_que_falte_un_dato_de_la_verificacion(ok, campo: str) -> 
         "fecha_verificacion": None,
         "verificador": " ",
     }
-    cfg = con_param(cfg_demo(), "limite_gasto_electoral", **{campo: vacio[campo]})
+    cfg = con_param(cfg_demo(), "limite_endeudamiento", **{campo: vacio[campo]})
     assert "L-007" in codigos(validar(version, cfg))
 
 
 def test_l007_fecha_futura(ok) -> None:
     version, _, _ = ok
-    cfg = con_param(cfg_demo(), "limite_gasto_electoral", fecha_verificacion=date(2026, 10, 30))
+    cfg = con_param(cfg_demo(), "limite_endeudamiento", fecha_verificacion=date(2026, 10, 30))
     assert any("futura" in m for m in _mensajes(validar(version, cfg), "L-007"))
 
 
@@ -347,9 +347,7 @@ def test_l007_ventana_de_verificacion(ok) -> None:
     estricta = replace(cfg, internos=replace(cfg.internos, exigir_ventana_verificacion=True))
     assert any("no es vigente" in m for m in _mensajes(validar(version, estricta), "L-007"))
     for anio_ok in (2039, 2040):
-        buena = con_param(
-            estricta, "limite_gasto_electoral", fecha_verificacion=date(anio_ok, 1, 2)
-        )
+        buena = con_param(estricta, "limite_endeudamiento", fecha_verificacion=date(anio_ok, 1, 2))
         todas = {
             k: replace(p, fecha_verificacion=date(anio_ok, 1, 2))
             for k, p in estricta.legales.items()
@@ -367,9 +365,10 @@ def test_con_la_configuracion_real_ninguna_version_puede_avanzar(ok) -> None:
     res = validar_version(version, cfg=cargar_configuracion(False), hoy=HOY)
     assert not res.puede_avanzar
     assert {"L-003", "L-006", "L-007"} <= codigos(res)
-    # 12 parámetros: 3 sin valor y 9 verificados en 2026, que no valen para un ejercicio de 2040
+    # Sin proceso electoral no se exigen los 16 parámetros electorales ni los informativos:
+    # 2 sin valor y 9 verificados en 2026, que no valen para un ejercicio de 2040
     mensajes = _mensajes(res, "L-007")
-    assert sum("pendiente de verificación" in m for m in mensajes) == 3
+    assert sum("pendiente de verificación" in m for m in mensajes) == 2
     assert sum("no es vigente" in m for m in mensajes) == 9
 
 

@@ -1,0 +1,14 @@
+{% load presupuesto_extras %}
+<div class="aviso-caja" style="border-color:var(--marca);background:var(--marca-clara)">
+  <strong>Campaña (se calcula sola)</strong>
+  {% if plan.proceso %}
+  <p class="sub">{{ plan.proceso.denominacion|default:"Proceso electoral" }}{% if plan.proceso.fecha_elecciones %} · elecciones el {{ plan.proceso.fecha_elecciones|date:"d/m/Y" }}{% endif %}</p>
+  {% else %}<p class="sub">Todavía no se han indicado los datos del proceso electoral.</p>{% endif %}
+  <table><tbody>
+    <tr><th scope="row">Gasto electoral previsto</th><td class="num">{{ plan.gasto_total|euros }}</td></tr>
+    <tr><th scope="row">Límite legal de gasto</th><td class="num">{% if plan.limite is None %}no calculable{% else %}{{ plan.limite|euros }}{% endif %}</td></tr>
+    <tr><th scope="row">Ingresos de la campaña</th><td class="num">{{ plan.ingresos_campana|euros }}</td></tr>
+    <tr><th scope="row">A cubrir con fondos ordinarios</th><td class="num">{{ plan.a_cubrir_con_fondos_ordinarios|euros }}</td></tr>
+  </tbody></table>
+  <p><a href="{% url 'anexos:campana' version.pk %}">Ver el presupuesto de campaña completo</a></p>
+</div>

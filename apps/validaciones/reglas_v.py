@@ -231,3 +231,37 @@ def v010(ctx: ContextoVersion) -> list[Incidencia]:
             )
         )
     return salida
+
+
+def v011(ctx: ContextoVersion) -> list[Incidencia]:
+    """Aviso: el gasto electoral se acerca al límite (o no se puede vigilar)."""
+    from apps.anexos.campana import construir_plan_campana
+    from apps.anexos.configuracion import parametros_de_version
+
+    if not ctx.version.ejercicio.hay_proceso_electoral:
+        return []
+    plan = construir_plan_campana(ctx.version, ctx.cfg)
+    if plan.gasto_total == 0 or plan.limite is None or plan.supera_el_limite:
+        return []  # sin gasto, sin límite calculable (L-004 avisa) o ya superado (L-004 bloquea)
+    umbral = parametros_de_version(ctx.version).porcentaje_aviso_limite_campana
+    if umbral is None:
+        return [
+            _inc(
+                "V-011",
+                "El porcentaje de aviso del límite de gasto electoral no está configurado "
+                "(panel «Anexos»): no se vigila la cercanía al límite.",
+                g=Gravedad.AVISO,
+            )
+        ]
+    uso = plan.porcentaje_del_limite
+    if uso is not None and uso >= umbral:
+        return [
+            _inc(
+                "V-011",
+                f"El gasto electoral ({formatear_euros(plan.gasto_computable)}) alcanza el "
+                f"{uso} % del límite ({formatear_euros(plan.limite)}); el aviso está fijado en "
+                f"el {umbral} %.",
+                g=Gravedad.AVISO,
+            )
+        ]
+    return []

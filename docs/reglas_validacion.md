@@ -23,6 +23,7 @@ que la rompe (`tests/test_validaciones_v.py`, `_l.py` y `_o.py`).
 | V-008 | La memoria explicativa está completa (secciones obligatorias escritas, mínimos, sin marcas de pendiente ni secciones por revisar) | Bloqueante |
 | V-009 | Está indicado el saldo inicial de tesorería | Aviso |
 | V-010 | Ningún mes del plan de tesorería base tiene saldo negativo o por debajo del mínimo | Aviso |
+| V-011 | El gasto electoral no llega al % del límite fijado en el panel «Anexos» | Aviso |
 
 V-007 usa `umbral_variacion_porcentaje` de `config/parametros_internos.yaml`. Mientras esté vacío
 avisa de que no se puede comprobar.
@@ -39,7 +40,7 @@ saldo no sea negativo.
 | L-001 | Donaciones: límite anual por donante, todo el importe con donante identificado y tipo de persona permitido. Las donaciones en especie de **inmuebles** no cuentan para el límite | `limite_donacion_anual_por_donante`, `donaciones_anonimas_permitidas`, `donaciones_personas_juridicas_permitidas`, `donaciones_inmuebles_exentas_de_limite` |
 | L-002 | Ningún ingreso procede de una fuente prohibida (campo «origen» de la línea) | `fuentes_ingreso_prohibidas` |
 | L-003 | Aportaciones de cargos identificadas y dentro del límite | `limite_aportaciones_cargos_anual` |
-| L-004 | El gasto electoral no supera el límite y solo existe si hay proceso electoral | `limite_gasto_electoral` |
+| L-004 | El gasto electoral que cuenta no supera el límite (habitantes × tarifa + adicional por provincia) y solo existe si hay proceso electoral | `gasto_electoral_euros_por_habitante`, `gasto_electoral_adicional_por_provincia` |
 | L-005 | El endeudamiento previsto no supera el límite | `limite_endeudamiento` |
 | L-006 | Todas las líneas siguen el cuadro de cuentas, y este está validado por el Tesorero | `cuadro_cuentas.yaml` |
 | L-007 | Todos los parámetros legales están verificados y su fecha de verificación es vigente | Todos |
@@ -47,6 +48,10 @@ saldo no sea negativo.
 | L-009 | Los ingresos de actividades propias (I.5) a partir del umbral exigen identificar al transmitente | `umbral_identificacion_actividades_propias` |
 | L-010 | Sin donaciones de personas físicas que sean parte de un contrato público vigente | `donaciones_contratistas_publicos_permitidas` |
 | L-011 | Sin donaciones finalistas ni revocables | `donaciones_finalistas_o_revocables_permitidas` |
+| L-012 | Nadie aporta a las cuentas electorales más del máximo por persona (LOREG art. 129) | `limite_aportacion_electoral_por_persona` |
+| L-013 | La subvención electoral presupuestada no supera el gasto electoral (art. 127.1) — aviso | — |
+| L-014 | La subvención electoral presupuestada no supera la estimada con las previsiones — aviso | `subvencion_electoral_por_concejal`, `subvencion_electoral_por_voto`, `subvencion_envio_por_elector` |
+| L-015 | El gasto de campaña cae dentro del periodo electoral (art. 130) — aviso | — |
 
 **Valores del extracto.** `config/parametros_legales.yaml` lleva ya valor y referencia de cuatro
 parámetros, tomados del extracto de los arts. 4 a 8 que aportó el Tesorero
@@ -113,3 +118,8 @@ O-001 y O-003 se comprueban también al votar. Ver `docs/flujo.md`.
 1. Escribe la función en `apps/validaciones/reglas_*.py` y regístrala en `motor.py` con su fuente.
 2. Añade al menos una prueba que la cumpla y otra que la rompa.
 3. Documéntala aquí y referencia su fuente normativa (pendiente de verificar si es legal).
+
+## Fase 6: campaña
+
+L-004 y L-012 a L-015 y V-011 se explican en `docs/campana_y_comparativa.md`. L-007 solo exige verificar
+los parámetros `ELECTORAL` en ejercicios con proceso electoral y no exige los `informativo`.

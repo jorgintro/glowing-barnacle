@@ -235,5 +235,5 @@ def test_el_panel_real_y_el_de_demostracion_no_se_mezclan(catalogo) -> None:
     c = cliente("tesorera_real", "TESORERO")
     pagina = c.get("/anexos/").content.decode()
     assert "configuración de la DEMOSTRACIÓN" not in pagina
-    assert SeccionMemoriaCfg.objects.filter(es_demo=False).count() == 6
+    assert SeccionMemoriaCfg.objects.filter(es_demo=False).count() == 7
     assert ParametrosAnexosCfg.objects.get(es_demo=False).saldo_minimo_tesoreria is None

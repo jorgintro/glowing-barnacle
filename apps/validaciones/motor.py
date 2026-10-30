@@ -82,6 +82,13 @@ CATALOGO: tuple[Regla, ...] = (
         reglas_v.v010,
     ),
     Regla(
+        "V-011",
+        "Gasto electoral lejos del límite (aviso de cercanía)",
+        _A,
+        "CLAUDE.md §7.3",
+        reglas_v.v011,
+    ),
+    Regla(
         "L-001",
         "Donaciones: límite por donante, identificación y tipo de persona",
         _B,
@@ -106,7 +113,7 @@ CATALOGO: tuple[Regla, ...] = (
         "L-004",
         "El gasto electoral no supera el límite legal",
         _B,
-        "LOREG, LO 5/1985 (CLAUDE.md §3.1). " + _LEGAL,
+        "LOREG arts. 130 y 131 y disposición de subvenciones (extracto del Tesorero). " + _LEGAL,
         reglas_l.l004,
     ),
     Regla(
@@ -157,6 +164,34 @@ CATALOGO: tuple[Regla, ...] = (
         _B,
         "LO 8/2007, art. 5.Uno.a (extracto aportado por el Tesorero). " + _LEGAL,
         reglas_l.l011,
+    ),
+    Regla(
+        "L-012",
+        "Aportaciones a las cuentas electorales dentro del máximo por persona",
+        _B,
+        "LOREG art. 129 (extracto aportado por el Tesorero). " + _LEGAL,
+        reglas_l.l012,
+    ),
+    Regla(
+        "L-013",
+        "La subvención electoral no supera el gasto electoral previsto",
+        _A,
+        "LOREG art. 127.1 (extracto aportado por el Tesorero). " + _LEGAL,
+        reglas_l.l013,
+    ),
+    Regla(
+        "L-014",
+        "La subvención electoral presupuestada no supera la estimada",
+        _A,
+        "Disposición de subvenciones (extracto aportado por el Tesorero). " + _LEGAL,
+        reglas_l.l014,
+    ),
+    Regla(
+        "L-015",
+        "Gasto de campaña dentro del periodo electoral",
+        _A,
+        "LOREG art. 130 (extracto aportado por el Tesorero). " + _LEGAL,
+        reglas_l.l015,
     ),
 )
 

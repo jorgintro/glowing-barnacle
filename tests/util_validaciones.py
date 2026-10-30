@@ -92,6 +92,13 @@ def donante(ctx: Contexto, n: int, tipo: str = "FISICA", nombre: str | None = No
     return dn.crear_donante(ctx, nombre=nombre or f"Donante {n}", nif=nif(n))
 
 
+def proceso_electoral(ctx: Contexto, version: VersionPresupuesto, **cambios: Any) -> None:
+    """Datos del proceso electoral de la prueba: 136.000 habitantes → límite demo de 14.960 €."""
+    datos: dict[str, Any] = {"denominacion": "Elecciones de prueba", "habitantes_derecho": 136000}
+    datos.update(cambios)
+    anexos.guardar_proceso_electoral(ctx, version, **datos)
+
+
 def completar_anexos(ctx: Contexto, version: VersionPresupuesto) -> None:
     """Memoria escrita en todas sus secciones y saldo inicial de tesorería."""
     params = parametros_actuales(version.es_demo)
@@ -100,7 +107,12 @@ def completar_anexos(ctx: Contexto, version: VersionPresupuesto) -> None:
             anexos.guardar_seccion(ctx, version, cfg.clave, "Texto de prueba. " * 20)
     anexos.guardar_saldo_inicial(ctx, version, Decimal("100000"))
     if params.saldo_minimo is None:  # la configuración real no trae ningún valor
-        anexos.guardar_parametros(ctx, demo=version.es_demo, saldo_minimo_tesoreria=Decimal("500"))
+        anexos.guardar_parametros(
+            ctx,
+            demo=version.es_demo,
+            saldo_minimo_tesoreria=Decimal("500"),
+            porcentaje_aviso_limite_campana=Decimal("90"),
+        )
 
 
 def presupuesto_valido(
@@ -124,7 +136,7 @@ def presupuesto_valido(
             ctx,
             version,
             "I.3.3",
-            "6000",
+            "4000",
             confianza="BAJA",
             dimension="CAMPANA",
             tipo="CONDICIONADO",
@@ -137,5 +149,7 @@ def presupuesto_valido(
         plan_financiacion="",
         endeudamiento=Decimal("0"),
     )
+    if campana:
+        proceso_electoral(ctx, version)
     completar_anexos(ctx, version)
     return ls

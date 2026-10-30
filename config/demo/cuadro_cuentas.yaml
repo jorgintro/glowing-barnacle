@@ -30,6 +30,29 @@ cuentas:
   - {codigo: "65x", denominacion: "Otros gastos de gestión"}
   - {codigo: "66x", denominacion: "Gastos financieros"}
   - {codigo: "68x", denominacion: "Amortizaciones"}
+  # Cuentas de la actividad electoral: modelo aportado por el Tesorero el 30/10/2026
+  # (docs/fuentes_normativas/LOREG_gastos_electorales_aportado_por_el_tesorero.md). Pendiente de validar.
+  - {codigo: "721", denominacion: "Subvenciones públicas por resultados electorales"}
+  - {codigo: "722", denominacion: "Subvenciones públicas por envíos electorales"}
+  - {codigo: "731", denominacion: "Ingresos electorales de origen privado"}
+  - {codigo: "650", denominacion: "Personal no permanente: sueldos, salarios y asimilados"}
+  - {codigo: "651", denominacion: "Personal no permanente: cargas sociales"}
+  - {codigo: "6521", denominacion: "Gastos electorales: arrendamientos"}
+  - {codigo: "6523", denominacion: "Gastos electorales: servicios de profesionales independientes"}
+  - {codigo: "6524", denominacion: "Gastos electorales: transportes"}
+  - {codigo: "6525", denominacion: "Gastos electorales: primas de seguros"}
+  - {codigo: "6526", denominacion: "Gastos electorales: servicios bancarios y similares"}
+  - {codigo: "65270", denominacion: "Gastos electorales: publicidad en prensa y radio"}
+  - {codigo: "65271", denominacion: "Gastos electorales: publicidad exterior"}
+  - {codigo: "65272", denominacion: "Gastos electorales: otra propaganda y publicidad dirigida a promover el voto"}
+  - {codigo: "6529", denominacion: "Gastos electorales: otros servicios"}
+  - {codigo: "6530", denominacion: "Envíos electorales: confección de sobres y papeletas"}
+  - {codigo: "6531", denominacion: "Envíos electorales: confección de propaganda para su envío"}
+  - {codigo: "6532", denominacion: "Envíos electorales: correspondencia y franqueo"}
+  - {codigo: "6539", denominacion: "Otros gastos por envíos electorales"}
+  - {codigo: "6630", denominacion: "Gastos financieros electorales liquidados"}
+  - {codigo: "6631", denominacion: "Gastos financieros electorales estimados"}
+  - {codigo: "6632", denominacion: "Gastos financieros electorales liquidados (otros)"}
 
 capitulos:
   # ------------------------------------------------------------------ INGRESOS
@@ -50,12 +73,15 @@ capitulos:
       - {codigo: "I.3.1", denominacion: "Subvención por representación municipal (partido)", cuentas: ["740"]}
       - {codigo: "I.3.2", denominacion: "Asignaciones a grupos municipales", cuentas: ["747"], dimension: GRUPO_MUNICIPAL}
       - {codigo: "I.3.3", denominacion: "Otras subvenciones", cuentas: ["740"]}
+      - {codigo: "I.3.4", denominacion: "Subvención electoral por resultados", cuentas: ["721"], dimension: CAMPANA}
+      - {codigo: "I.3.5", denominacion: "Subvención electoral por envíos directos", cuentas: ["722"], dimension: CAMPANA}
   - codigo: "I.4"
     tipo: INGRESO
     denominacion: "Donaciones"
     partidas:
       - {codigo: "I.4.1", denominacion: "Donaciones dinerarias", cuentas: ["74x", "72x"]}
       - {codigo: "I.4.2", denominacion: "Donaciones en especie", cuentas: ["74x", "72x"]}
+      - {codigo: "I.4.3", denominacion: "Donaciones y aportaciones para la campaña electoral", cuentas: ["731"], dimension: CAMPANA}
   - codigo: "I.5"
     tipo: INGRESO
     denominacion: "Otros ingresos"
@@ -113,7 +139,21 @@ capitulos:
     denominacion: "Gastos electorales"
     solo_con_proceso_electoral: true
     partidas:
-      - {codigo: "G.7.1", denominacion: "Gastos de campaña electoral", cuentas: ["62x", "65x"], dimension: CAMPANA}
+      - {codigo: "G.7.1", denominacion: "Personal no permanente", cuentas: ["650", "651"], dimension: CAMPANA}
+      - {codigo: "G.7.2", denominacion: "Alquiler de locales para actos de campaña", cuentas: ["6521"], dimension: CAMPANA}
+      - {codigo: "G.7.3", denominacion: "Servicios de profesionales independientes", cuentas: ["6523"], dimension: CAMPANA}
+      - {codigo: "G.7.4", denominacion: "Transportes y desplazamientos", cuentas: ["6524"], dimension: CAMPANA}
+      - {codigo: "G.7.5", denominacion: "Primas de seguros", cuentas: ["6525"], dimension: CAMPANA}
+      - {codigo: "G.7.6", denominacion: "Servicios bancarios y similares", cuentas: ["6526"], dimension: CAMPANA}
+      - {codigo: "G.7.7", denominacion: "Publicidad en prensa y radio", cuentas: ["65270"], dimension: CAMPANA}
+      - {codigo: "G.7.8", denominacion: "Publicidad exterior", cuentas: ["65271"], dimension: CAMPANA}
+      - {codigo: "G.7.9", denominacion: "Otra propaganda y publicidad dirigida a promover el voto", cuentas: ["65272"], dimension: CAMPANA}
+      - {codigo: "G.7.10", denominacion: "Otros servicios de la campaña", cuentas: ["6529"], dimension: CAMPANA}
+      - {codigo: "G.7.11", denominacion: "Envíos electorales: confección de sobres y papeletas", cuentas: ["6530"], dimension: CAMPANA, envio_electoral: true}
+      - {codigo: "G.7.12", denominacion: "Envíos electorales: confección de propaganda para su envío", cuentas: ["6531"], dimension: CAMPANA, envio_electoral: true}
+      - {codigo: "G.7.13", denominacion: "Envíos electorales: correspondencia y franqueo", cuentas: ["6532"], dimension: CAMPANA, envio_electoral: true}
+      - {codigo: "G.7.14", denominacion: "Otros gastos por envíos electorales", cuentas: ["6539"], dimension: CAMPANA, envio_electoral: true}
+      - {codigo: "G.7.15", denominacion: "Gastos financieros de la campaña (intereses de créditos)", cuentas: ["6630", "6631", "6632"], dimension: CAMPANA}
   - codigo: "G.8"
     tipo: GASTO
     denominacion: "Imprevistos y contingencias"

@@ -53,12 +53,191 @@ parametros:
     fecha_verificacion: 2026-10-29
     verificador: "Verificador ficticio (demo)"
 
-  - clave: limite_gasto_electoral
-    descripcion: "Límite de gasto electoral del proceso (FICTICIO)."
+  - clave: gasto_electoral_euros_por_habitante
+    descripcion: "Euros de límite de gasto electoral por habitante (FICTICIO)."
     unidad: EUR
     regla: L-004
     norma_orientativa: "FICTICIO"
-    valor: "15000.00"
+    ambito: ELECTORAL
+    valor: "0.11"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: gasto_electoral_adicional_por_provincia
+    descripcion: "Gasto electoral adicional por provincia (FICTICIO)."
+    unidad: EUR
+    regla: L-004
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    valor: "50000.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: limite_aportacion_electoral_por_persona
+    descripcion: "Máximo que una persona aporta a las cuentas electorales (FICTICIO)."
+    unidad: EUR
+    regla: L-012
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    valor: "1000.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: subvencion_electoral_por_concejal
+    descripcion: "Subvención por concejal electo (FICTICIO)."
+    unidad: EUR
+    regla: L-013
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "200.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: subvencion_electoral_por_voto
+    descripcion: "Subvención por voto (FICTICIO)."
+    unidad: EUR
+    regla: L-013
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "0.50"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: subvencion_envio_por_elector
+    descripcion: "Subvención de envío por elector (FICTICIO)."
+    unidad: EUR
+    regla: L-004
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "0.20"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: umbral_informe_empresas_gasto_electoral
+    descripcion: "Facturación electoral que obliga a informar (FICTICIO)."
+    unidad: EUR
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "8000.00"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: plazo_contabilidad_electoral_desde_dias
+    descripcion: "Días desde los que se presenta la contabilidad electoral (FICTICIO)."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "100"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: plazo_contabilidad_electoral_hasta_dias
+    descripcion: "Días hasta los que se presenta la contabilidad electoral (FICTICIO)."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "125"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: adelanto_solicitud_desde_dias
+    descripcion: "Día desde el que se solicita el adelanto (FICTICIO)."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "21"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: adelanto_solicitud_hasta_dias
+    descripcion: "Día hasta el que se solicita el adelanto (FICTICIO)."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "23"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: adelanto_disponible_desde_dias
+    descripcion: "Día desde el que el adelanto está disponible (FICTICIO)."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "29"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: adelanto_porcentaje_maximo
+    descripcion: "Porcentaje máximo del adelanto (FICTICIO)."
+    unidad: PORCENTAJE
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "30"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: adelanto_tras_contabilidad_porcentaje
+    descripcion: "Porcentaje adelantado tras la contabilidad (FICTICIO)."
+    unidad: PORCENTAJE
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "90"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: adelanto_aval_porcentaje
+    descripcion: "Aval exigido (FICTICIO)."
+    unidad: PORCENTAJE
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "10"
+    referencia_normativa: "FICTICIO: no es una norma"
+    fecha_verificacion: 2026-10-29
+    verificador: "Verificador ficticio (demo)"
+
+  - clave: adelanto_plazo_entrega_dias
+    descripcion: "Plazo de entrega del adelanto (FICTICIO)."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "FICTICIO"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "30"
     referencia_normativa: "FICTICIO: no es una norma"
     fecha_verificacion: 2026-10-29
     verificador: "Verificador ficticio (demo)"

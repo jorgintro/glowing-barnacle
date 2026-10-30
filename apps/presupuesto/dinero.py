@@ -4,6 +4,7 @@ Criterio de redondeo (único en todo el sistema): ``ROUND_HALF_UP`` a céntimos,
 medio céntimo se redondea hacia arriba (en valor absoluto).
 """
 
+import re
 from decimal import ROUND_HALF_UP, Decimal
 
 CERO = Decimal("0.00")
@@ -64,3 +65,18 @@ def repartir_proporcional(importe: Decimal, pesos: list[int]) -> list[Decimal]:
     for i in por_resto[:resto]:
         base[i] += 1
     return [de_centimos(signo * c) for c in base]
+
+
+_IMPORTE_ES = re.compile(r"^-?(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?$")
+
+
+def parsear_importe_es(texto: str) -> Decimal:
+    """Importe en formato español estricto: ``1.234,56`` o ``1234,56`` (o con 0-2 decimales).
+
+    No admite el punto como separador decimal («12.50» podría leerse como 1.250): ante la duda,
+    se rechaza con ``ValueError``.
+    """
+    limpio = texto.strip().replace("\u00a0", "").replace(" ", "").replace("€", "")
+    if not _IMPORTE_ES.match(limpio):
+        raise ValueError(f"«{texto}» no es un importe válido (usa coma decimal: 1.234,56)")
+    return Decimal(limpio.replace(".", "").replace(",", "."))

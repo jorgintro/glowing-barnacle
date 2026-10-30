@@ -9,7 +9,7 @@ from collections import defaultdict
 from decimal import Decimal
 
 from apps.presupuesto.dinero import CERO, formatear_euros
-from apps.presupuesto.models import Dimension, Donante, Tipo, TipoDonacion, TipoPersona
+from apps.presupuesto.models import Donante, Tipo, TipoDonacion, TipoPersona
 from apps.presupuesto.nif import enmascarar_nif
 
 from .contexto import ContextoVersion, parametro_verificado, valor_decimal
@@ -191,14 +191,14 @@ def l003(ctx: ContextoVersion) -> list[Incidencia]:
 
 
 def l004(ctx: ContextoVersion) -> list[Incidencia]:
-    """El gasto electoral no supera el límite legal del proceso."""
-    gasto = [
-        ln
-        for ln in ctx.lineas
-        if ln.partida.capitulo.tipo == Tipo.GASTO
-        and (ln.dimension == Dimension.CAMPANA or ln.partida.capitulo.codigo == "G.7")
-    ]
-    total = sum((ln.importe_anual for ln in gasto), CERO)
+    """El gasto electoral no supera el límite legal del proceso.
+
+    Límite = habitantes de derecho × euros por habitante (+ adicional por provincia). Del gasto se
+    descuenta, si se cumplen los requisitos, el envío directo subvencionado (ver ``campana.py``).
+    """
+    from apps.anexos.campana import construir_plan_campana, es_gasto_electoral
+
+    gasto = [ln for ln in ctx.lineas if es_gasto_electoral(ln)]
     if not ctx.version.ejercicio.hay_proceso_electoral:
         if gasto:
             return [
@@ -208,22 +208,133 @@ def l004(ctx: ContextoVersion) -> list[Incidencia]:
                 )
             ]
         return []
-    if total == 0:
+    if not gasto:
         return []
-    p = ctx.parametro("limite_gasto_electoral")
-    if not parametro_verificado(p):
-        return _pendientes(ctx, "L-004", ["limite_gasto_electoral"])
-    assert p is not None
-    limite = valor_decimal(p)
-    if total > limite:
+    plan = construir_plan_campana(ctx.version, ctx.cfg)
+    if plan.limite is None:
+        return [
+            _inc("L-004", f"No se puede comprobar el límite de gasto electoral: falta {falta}.")
+            for falta in plan.limite_pendiente
+        ]
+    if plan.supera_el_limite:
         return [
             _inc(
                 "L-004",
-                f"El gasto electoral previsto ({formatear_euros(total)}) supera el límite "
-                f"({formatear_euros(limite)}).",
+                f"El gasto electoral previsto ({formatear_euros(plan.gasto_computable)}) supera "
+                f"el límite ({formatear_euros(plan.limite)}).",
             )
         ]
     return []
+
+
+def l012(ctx: ContextoVersion) -> list[Incidencia]:
+    """Nadie aporta a las cuentas electorales más del máximo legal por persona (LOREG art. 129)."""
+    from apps.anexos.campana import aportaciones_de_campana_por_persona
+
+    aportaciones = aportaciones_de_campana_por_persona(ctx.version)
+    if not aportaciones:
+        return []
+    p = ctx.parametro("limite_aportacion_electoral_por_persona")
+    if not parametro_verificado(p):
+        return _pendientes(ctx, "L-012", ["limite_aportacion_electoral_por_persona"])
+    assert p is not None
+    limite = valor_decimal(p)
+    return [
+        _inc(
+            "L-012",
+            f"{_quien(donante)} aporta {formatear_euros(total)} a las cuentas electorales y el "
+            f"límite por persona es {formatear_euros(limite)}.",
+        )
+        for donante, total in sorted(aportaciones.items(), key=lambda x: x[0].nombre)
+        if total > limite
+    ]
+
+
+def l013(ctx: ContextoVersion) -> list[Incidencia]:
+    """Aviso: la subvención electoral presupuestada no puede superar el gasto electoral.
+
+    LOREG art. 127.1: la subvención no sobrepasa los gastos electorales declarados y justificados.
+    """
+    from apps.anexos.campana import construir_plan_campana
+
+    if not ctx.version.ejercicio.hay_proceso_electoral:
+        return []
+    plan = construir_plan_campana(ctx.version, ctx.cfg)
+    if plan.subvenciones > plan.gasto_total:
+        return [
+            _inc(
+                "L-013",
+                f"La subvención electoral presupuestada ({formatear_euros(plan.subvenciones)}) "
+                f"supera el gasto electoral previsto ({formatear_euros(plan.gasto_total)}): la "
+                "ley no la concede por encima de los gastos justificados.",
+                g=Gravedad.AVISO,
+            )
+        ]
+    return []
+
+
+def l014(ctx: ContextoVersion) -> list[Incidencia]:
+    """Aviso: la subvención electoral presupuestada supera la estimada con las previsiones."""
+    from apps.anexos.campana import construir_plan_campana
+
+    if not ctx.version.ejercicio.hay_proceso_electoral:
+        return []
+    plan = construir_plan_campana(ctx.version, ctx.cfg)
+    if plan.proceso is None or plan.subvenciones == 0:
+        return []
+    if plan.subvencion_estimada_pendiente:
+        return [
+            _inc(
+                "L-014",
+                "No se puede comparar la subvención con la estimada: el parámetro "
+                f"«{plan.subvencion_estimada_pendiente[0]}» está pendiente de verificación.",
+                g=Gravedad.AVISO,
+            )
+        ]
+    if plan.subvencion_estimada is not None and plan.subvenciones > plan.subvencion_estimada:
+        return [
+            _inc(
+                "L-014",
+                f"La subvención electoral presupuestada ({formatear_euros(plan.subvenciones)}) "
+                f"supera la estimada con las previsiones de concejales y votos "
+                f"({formatear_euros(plan.subvencion_estimada)}). Solo deben presupuestarse "
+                "ingresos con base cierta.",
+                g=Gravedad.AVISO,
+            )
+        ]
+    return []
+
+
+def l015(ctx: ContextoVersion) -> list[Incidencia]:
+    """Aviso: gasto de campaña en meses fuera del periodo electoral (LOREG art. 130)."""
+    from apps.anexos.campana import construir_plan_campana
+
+    if not ctx.version.ejercicio.hay_proceso_electoral:
+        return []
+    plan = construir_plan_campana(ctx.version, ctx.cfg)
+    pe = plan.proceso
+    if pe is None or pe.fecha_convocatoria is None or pe.fecha_proclamacion is None:
+        return []
+    anio = ctx.version.ejercicio.anio
+    inicio = (pe.fecha_convocatoria.year, pe.fecha_convocatoria.month)
+    fin = (pe.fecha_proclamacion.year, pe.fecha_proclamacion.month)
+    fuera = [
+        m + 1
+        for m, importe in enumerate(plan.gasto_mensual)
+        if importe != 0 and not (inicio <= (anio, m + 1) <= fin)
+    ]
+    if not fuera:
+        return []
+    meses = ", ".join(f"{m:02d}/{anio}" for m in fuera)
+    return [
+        _inc(
+            "L-015",
+            f"Hay gasto de campaña presupuestado fuera del periodo electoral "
+            f"({pe.fecha_convocatoria:%d/%m/%Y} a {pe.fecha_proclamacion:%d/%m/%Y}), en: {meses}. "
+            "Solo son gastos electorales los de ese periodo.",
+            g=Gravedad.AVISO,
+        )
+    ]
 
 
 def l005(ctx: ContextoVersion) -> list[Incidencia]:
@@ -285,7 +396,10 @@ def l007(ctx: ContextoVersion) -> list[Incidencia]:
     """
     salida = []
     anio = ctx.version.ejercicio.anio
+    hay_elecciones = ctx.version.ejercicio.hay_proceso_electoral
     for clave, p in ctx.cfg.legales.items():
+        if p.informativo or (p.ambito == "ELECTORAL" and not hay_elecciones):
+            continue  # no condiciona ninguna regla de esta versión
         if not parametro_verificado(p):
             salida.append(
                 _inc("L-007", f"El parámetro legal «{clave}» está pendiente de verificación.")

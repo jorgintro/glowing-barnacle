@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load presupuesto_extras %}
+{% block titulo %}Presupuesto de campaña{% endblock %}
+{% block contenido %}
+<h1>Presupuesto de campaña</h1>
+{% include "anexos/_cabecera.html" %}
+{% if sin_proceso %}
+<p class="aviso-caja">Este ejercicio <strong>no tiene proceso electoral previsto</strong>, así que no hay anexo de campaña. Si lo hay, actívalo al crear el ejercicio.</p>
+{% else %}
+<p class="aviso-caja">Los gastos electorales se imputan <strong>de forma separada</strong> del gasto ordinario (capítulo G.7 y líneas de dimensión «campaña»). Los importes legales salen de <code>config/parametros_legales.yaml</code>; los que figuran como «sin verificar» no se dan por buenos. No es asesoramiento jurídico.</p>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">1 · Datos del proceso electoral</h2>
+  {% if form %}
+  <form method="post">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+    {% for campo in form %}
+    <div class="campo"><label for="{{ campo.id_for_label }}">{% if campo.field.widget.input_type == "checkbox" %}{{ campo }} {% endif %}{{ campo.label }}</label>{% if campo.field.widget.input_type != "checkbox" %}{{ campo }}{% endif %}
+      {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}</div>
+    {% endfor %}
+    <button class="boton" type="submit">Guardar los datos</button>
+  </form>
+  {% elif plan.proceso %}
+  <table><tbody>
+    <tr><th scope="row">Proceso</th><td>{{ plan.proceso.denominacion|default:"—" }}</td></tr>
+    <tr><th scope="row">Convocatoria</th><td>{{ plan.proceso.fecha_convocatoria|date:"d/m/Y"|default:"—" }}</td></tr>
+    <tr><th scope="row">Elecciones</th><td>{{ plan.proceso.fecha_elecciones|date:"d/m/Y"|default:"—" }}</td></tr>
+    <tr><th scope="row">Proclamación de electos</th><td>{{ plan.proceso.fecha_proclamacion|date:"d/m/Y"|default:"—" }}</td></tr>
+    <tr><th scope="row">Habitantes de derecho</th><td class="num">{{ plan.proceso.habitantes_derecho|default_if_none:"—" }}</td></tr>
+    <tr><th scope="row">Envío directo con subvención</th><td>{% if plan.proceso.subvencion_envio_aplicable %}Sí{% else %}No{% endif %}</td></tr>
+  </tbody></table>
+  {% else %}<p class="suave">Todavía no se han indicado los datos del proceso electoral.</p>{% endif %}
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">2 · Límite de gasto</h2>
+  {% if plan.limite is None %}
+  <div class="aviso-caja error"><strong>No se puede calcular el límite.</strong> Falta:
+    <ul>{% for f in plan.limite_pendiente %}<li>{{ f }}</li>{% endfor %}</ul></div>
+  {% else %}
+  <div class="cifras">
+    <div class="cifra"><div class="rotulo">Límite legal</div><div class="valor">{{ plan.limite|euros }}</div></div>
+    <div class="cifra"><div class="rotulo">Gasto que cuenta</div><div class="valor">{{ plan.gasto_computable|euros }}</div></div>
+    <div class="cifra resultado"><div class="rotulo">Uso del límite</div><div class="valor">{{ plan.porcentaje_del_limite|default_if_none:"—" }} %</div>
+      <span class="etiqueta {% if plan.supera_el_limite %}error{% else %}ok{% endif %}">{% if plan.supera_el_limite %}Supera el límite{% else %}Dentro del límite{% endif %}</span></div>
+  </div>
+  {% endif %}
+  {% if plan.nota_envio %}<p class="sub">{{ plan.nota_envio }}</p>{% endif %}
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">3 · Gastos electorales por concepto</h2>
+  <div class="tabla-ancha"><table>
+    <thead><tr><th scope="col">Partida</th><th scope="col">Cuentas</th><th scope="col" class="num">Importe</th></tr></thead>
+    <tbody>
+    {% for c in plan.conceptos %}
+      <tr><td>{{ c.partida }} · {{ c.denominacion }}{% if c.es_envio %} <span class="etiqueta marca">Envío directo</span>{% endif %}</td><td>{{ c.cuentas }}</td><td class="num">{{ c.importe|euros }}</td></tr>
+    {% empty %}<tr><td colspan="3" class="suave">Todavía no hay gastos electorales.</td></tr>{% endfor %}
+    </tbody>
+    <tfoot><tr><th scope="row" colspan="2">Total gasto electoral</th><td class="num"><strong>{{ plan.gasto_total|euros }}</strong></td></tr>
+      <tr><td colspan="2">De ello, envío directo</td><td class="num">{{ plan.gasto_envio|euros }}</td></tr></tfoot>
+  </table></div>
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">4 · Financiación de la campaña</h2>
+  <table><tbody>
+    <tr><th scope="row">Subvenciones electorales presupuestadas</th><td class="num">{{ plan.subvenciones|euros }}</td></tr>
+    <tr><th scope="row">Donaciones y aportaciones a la campaña</th><td class="num">{{ plan.aportaciones|euros }}</td></tr>
+    {% if plan.otros_ingresos %}<tr><th scope="row">Otros ingresos de campaña</th><td class="num">{{ plan.otros_ingresos|euros }}</td></tr>{% endif %}
+    <tr><th scope="row">Endeudamiento previsto del ejercicio</th><td class="num">{{ plan.endeudamiento|euros }}</td></tr>
+    <tr><th scope="row"><strong>A cubrir con fondos ordinarios</strong></th><td class="num"><strong>{{ plan.a_cubrir_con_fondos_ordinarios|euros }}</strong></td></tr>
+  </tbody></table>
+  {% if plan.subvencion_estimada is not None %}
+  <p>Subvención estimada con tus previsiones: <strong class="num">{{ plan.subvencion_estimada|euros }}</strong>.</p>
+  {% elif plan.subvencion_estimada_pendiente %}
+  <p class="sub">No se puede estimar la subvención: parámetro «{{ plan.subvencion_estimada_pendiente.0 }}» pendiente de verificación.</p>
+  {% else %}<p class="sub">Indica los concejales y votos previstos para estimar la subvención.</p>{% endif %}
+  <p class="sub">La subvención nunca puede superar el gasto electoral justificado (art. 127.1 de la LOREG). Las aportaciones a las cuentas electorales están limitadas por persona y hay fondos prohibidos (arts. 128 y 129).</p>
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">5 · Distribución mensual del gasto de campaña</h2>
+  <div class="tabla-ancha"><table>
+    <thead><tr>{% for m in meses %}<th scope="col" class="num">{{ m }}</th>{% endfor %}</tr></thead>
+    <tbody><tr>{% for g in plan.gasto_mensual %}<td class="num">{{ g|euros }}</td>{% endfor %}</tr></tbody>
+  </table></div>
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">6 · Calendario legal orientativo</h2>
+  {% if plan.calendario %}
+  <table>
+    <thead><tr><th scope="col">Hito</th><th scope="col">Fechas</th><th scope="col">Estado del parámetro</th></tr></thead>
+    <tbody>
+    {% for h in plan.calendario %}
+      <tr><td>{{ h.nombre }}<div class="sub">{{ h.detalle }}</div></td>
+        <td>{% if h.desde %}{{ h.desde|date:"d/m/Y" }}{% else %}—{% endif %}{% if h.hasta %} a {{ h.hasta|date:"d/m/Y" }}{% endif %}</td>
+        <td>{% if h.verificado %}<span class="etiqueta ok">Verificado</span>{% else %}<span class="etiqueta aviso">Sin verificar</span>{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="suave">Indica las fechas de convocatoria y elecciones para ver el calendario.</p>{% endif %}
+  {% if plan.umbral_empresas %}<p class="sub">Recordatorio: las empresas que facturen gastos electorales por más de {{ plan.umbral_empresas|euros }} informan al Tribunal de Cuentas{% if not plan.umbral_empresas_verificado %} (importe sin verificar){% endif %}.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

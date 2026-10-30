@@ -17,6 +17,7 @@ from apps.presupuesto.dinero import CERO, formatear_euros
 from apps.presupuesto.models import Confianza, Linea, Tipo, TipoLinea, VersionPresupuesto
 from apps.validaciones.motor import CATALOGO, validar_version
 
+from .campana import construir_plan_campana
 from .completitud import EstadoSeccion, estado_secciones
 from .configuracion import ParametrosAnexos, SeccionCfg, parametros_de_version
 from .models import ContenidoAutomatico
@@ -263,6 +264,8 @@ def construir_memoria(version: VersionPresupuesto) -> Memoria:
                 auto = bloque_hipotesis(version)
             case ContenidoAutomatico.RIESGOS:
                 auto = bloque_riesgos(version)
+            case ContenidoAutomatico.CAMPANA:
+                auto = construir_plan_campana(version)
             case ContenidoAutomatico.CUMPLIMIENTO:
                 auto = bloque_cumplimiento(version)
         memoria.secciones.append(SeccionMostrada(estado, auto, estado.cfg.contenido))

@@ -64,6 +64,14 @@ class ParametrosAnexos:
     reduccion_ingresos: dict[str, Decimal | None] = field(default_factory=dict)
     # tipo de línea → % de reducción de gastos (escenario ajustado)
     reduccion_gastos: dict[str, Decimal | None] = field(default_factory=dict)
+    porcentaje_aviso_limite_campana: Decimal | None = None
+    semaforo_ambar_pct: Decimal | None = None
+    semaforo_rojo_pct: Decimal | None = None
+    semaforo_importe_minimo: Decimal | None = None
+
+    @property
+    def semaforo_configurado(self) -> bool:
+        return self.semaforo_ambar_pct is not None and self.semaforo_rojo_pct is not None
 
     @property
     def prudente_configurado(self) -> bool:
@@ -105,6 +113,10 @@ class ParametrosAnexos:
             "saldo_minimo": dec(self.saldo_minimo),
             "reduccion_ingresos": {k: dec(v) for k, v in self.reduccion_ingresos.items()},
             "reduccion_gastos": {k: dec(v) for k, v in self.reduccion_gastos.items()},
+            "porcentaje_aviso_limite_campana": dec(self.porcentaje_aviso_limite_campana),
+            "semaforo_ambar_pct": dec(self.semaforo_ambar_pct),
+            "semaforo_rojo_pct": dec(self.semaforo_rojo_pct),
+            "semaforo_importe_minimo": dec(self.semaforo_importe_minimo),
         }
 
     @classmethod
@@ -119,6 +131,10 @@ class ParametrosAnexos:
             saldo_minimo=dec(datos["saldo_minimo"]),
             reduccion_ingresos={k: dec(v) for k, v in datos["reduccion_ingresos"].items()},
             reduccion_gastos={k: dec(v) for k, v in datos["reduccion_gastos"].items()},
+            porcentaje_aviso_limite_campana=dec(datos.get("porcentaje_aviso_limite_campana")),
+            semaforo_ambar_pct=dec(datos.get("semaforo_ambar_pct")),
+            semaforo_rojo_pct=dec(datos.get("semaforo_rojo_pct")),
+            semaforo_importe_minimo=dec(datos.get("semaforo_importe_minimo")),
         )
 
 
@@ -211,6 +227,13 @@ def asegurar_configuracion(demo: bool = False) -> None:
             p.get("saldo_minimo_tesoreria"), "saldo_minimo_tesoreria"
         ),
     }
+    for campo in (
+        "porcentaje_aviso_limite_campana",
+        "semaforo_ambar_pct",
+        "semaforo_rojo_pct",
+        "semaforo_importe_minimo",
+    ):
+        valores[campo] = _decimal(p.get(campo), campo)
     if p.get("marcas_pendiente"):
         valores["marcas_pendiente"] = "\n".join(str(m) for m in p["marcas_pendiente"])
     for confianza, campo in CAMPOS_CONFIANZA.items():
@@ -248,6 +271,10 @@ def parametros_actuales(demo: bool = False) -> ParametrosAnexos:
         saldo_minimo=p.saldo_minimo_tesoreria,
         reduccion_ingresos={c.value: getattr(p, campo) for c, campo in CAMPOS_CONFIANZA.items()},
         reduccion_gastos={t.value: getattr(p, campo) for t, campo in CAMPOS_TIPO.items()},
+        porcentaje_aviso_limite_campana=p.porcentaje_aviso_limite_campana,
+        semaforo_ambar_pct=p.semaforo_ambar_pct,
+        semaforo_rojo_pct=p.semaforo_rojo_pct,
+        semaforo_importe_minimo=p.semaforo_importe_minimo,
     )
 
 

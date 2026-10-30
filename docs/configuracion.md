@@ -49,6 +49,16 @@ Límites y prohibiciones legales (donaciones, gasto electoral, endeudamiento…)
 * `norma_orientativa` solo apunta a las normas citadas en CLAUDE.md §3.1; no es una referencia
   verificada.
 
+### Marcas `ambito` e `informativo` de los parámetros legales
+
+* `ambito: ELECTORAL`: el parámetro solo se exige verificado (L-007) en ejercicios con proceso
+  electoral. Sin esta marca es `GENERAL`.
+* `informativo: true`: el parámetro solo alimenta estimaciones y calendarios (importes de
+  subvención y plazos); L-007 no lo exige, pero la pantalla muestra «sin verificar» si lo está.
+* Unidad `DIAS`: número entero de días (texto, p. ej. `"100"`).
+* Los parámetros electorales de `config/parametros_legales.yaml` proceden del extracto del
+  30/10/2026 y son los de las elecciones locales de 2023; **figuran sin verificar**.
+
 ## `config/parametros_internos.yaml`
 
 Ajustes del sistema que no son normativa legal. **Sin valores a propósito**:

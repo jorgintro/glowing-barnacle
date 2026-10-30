@@ -8,24 +8,35 @@ from django.views.decorators.http import require_POST
 
 from apps.auditoria.servicios import Contexto
 from apps.presupuesto.errores import VersionNoEditable
-from apps.presupuesto.models import VersionPresupuesto
+from apps.presupuesto.models import Ejercicio, VersionPresupuesto
 from apps.presupuesto.permisos import versiones_visibles
 from apps.usuarios.decoradores import requiere_rol
 from apps.usuarios.roles import Rol
 
 from . import servicios
+from .campana import construir_plan_campana
+from .comparativa import construir_comparativa
 from .completitud import textos_de
 from .configuracion import asegurar_configuracion, parametros_actuales
+from .ejecucion import anular_importacion, importacion_vigente, importar_ejecucion, plantilla_csv
 from .forms import (
+    ImportarEjecucionForm,
+    MotivoAnulacionForm,
     NuevaSeccionForm,
     ParametrosForm,
+    ProcesoElectoralForm,
     SaldoInicialForm,
     SeccionCfgForm,
     TextoSeccionForm,
 )
 from .memoria import construir_memoria, texto_inicial
-from .models import ParametrosAnexosCfg, SeccionMemoriaCfg
-from .tesoreria import calcular_plan
+from .models import (
+    ImportacionEjecucion,
+    ParametrosAnexosCfg,
+    ProcesoElectoral,
+    SeccionMemoriaCfg,
+)
+from .tesoreria import MESES, calcular_plan
 
 TODOS = (Rol.TESORERO, Rol.COMISION_PERMANENTE, Rol.JUNTA_GENERAL)
 
@@ -104,6 +115,44 @@ def memoria_editar(request: HttpRequest, pk: int, clave: str) -> HttpResponse:
     )
 
 
+# ----------------------------------------------------------------------- campaña
+
+
+@requiere_rol(*TODOS)
+def campana(request: HttpRequest, pk: int) -> HttpResponse:
+    v = _visible(request, pk)
+    if not v.ejercicio.hay_proceso_electoral:
+        return render(request, "anexos/campana.html", {"version": v, "sin_proceso": True})
+    puede = _puede_editar(request, v)
+    form = None
+    if puede:
+        existente = ProcesoElectoral.objects.filter(version=v).first()
+        form = ProcesoElectoralForm(request.POST or None, instance=existente)
+        if request.method == "POST" and form.is_valid():
+            try:
+                servicios.guardar_proceso_electoral(
+                    Contexto.desde_request(request),
+                    v,
+                    **{c: form.cleaned_data[c] for c in form.fields},
+                )
+            except (ValidationError, PermissionDenied, VersionNoEditable) as error:
+                _errores(request, error)
+            else:
+                messages.success(request, "Datos del proceso electoral guardados.")
+                return redirect("anexos:campana", pk=v.pk)
+    return render(
+        request,
+        "anexos/campana.html",
+        {
+            "version": v,
+            "plan": construir_plan_campana(v),
+            "form": form,
+            "puede_editar": puede,
+            "meses": MESES,
+        },
+    )
+
+
 # --------------------------------------------------------------------- tesorería
 
 
@@ -131,6 +180,88 @@ def tesoreria(request: HttpRequest, pk: int) -> HttpResponse:
     )
 
 
+# ----------------------------------------------------------- comparativa y ejecución
+
+
+@requiere_rol(*TODOS)
+def comparativa(request: HttpRequest, pk: int) -> HttpResponse:
+    v = _visible(request, pk)
+    return render(
+        request,
+        "anexos/comparativa.html",
+        {"version": v, "comp": construir_comparativa(v), "meses": MESES},
+    )
+
+
+@requiere_rol(Rol.TESORERO)
+def ejecucion(request: HttpRequest, pk: int) -> HttpResponse:
+    ejercicio = get_object_or_404(Ejercicio, pk=pk)
+    form = ImportarEjecucionForm(request.POST or None, request.FILES or None)
+    if request.method == "POST" and form.is_valid():
+        fichero = form.cleaned_data["fichero"]
+        try:
+            imp = importar_ejecucion(
+                Contexto.desde_request(request),
+                ejercicio,
+                nombre_fichero=fichero.name,
+                contenido=fichero.read(),
+                mes_corte=form.cleaned_data["mes_corte"],
+            )
+        except (ValidationError, PermissionDenied) as error:
+            _errores(request, error)
+        else:
+            messages.success(
+                request, f"Importadas {imp.filas} filas (corte en el mes {imp.mes_corte})."
+            )
+            return redirect("anexos:ejecucion", pk=ejercicio.pk)
+    ultima = ejercicio.versiones.order_by("-numero").first()
+    return render(
+        request,
+        "anexos/ejecucion.html",
+        {
+            "ejercicio": ejercicio,
+            "form": form,
+            "form_anular": MotivoAnulacionForm(),
+            "importaciones": ejercicio.importaciones.select_related("importado_por"),
+            "vigente": importacion_vigente(ejercicio),
+            "version_para_comparar": ejercicio.versiones.exclude(estado="BORRADOR")
+            .order_by("-numero")
+            .first()
+            or ultima,
+        },
+    )
+
+
+@requiere_rol(Rol.TESORERO)
+def ejecucion_plantilla(request: HttpRequest, pk: int) -> HttpResponse:
+    ejercicio = get_object_or_404(Ejercicio, pk=pk)
+    respuesta = HttpResponse(
+        "\ufeff" + plantilla_csv(ejercicio), content_type="text/csv; charset=utf-8"
+    )
+    respuesta["Content-Disposition"] = (
+        f'attachment; filename="plantilla_ejecucion_{ejercicio.anio}.csv"'
+    )
+    return respuesta
+
+
+@requiere_rol(Rol.TESORERO)
+@require_POST
+def ejecucion_anular(request: HttpRequest, pk: int, importacion_pk: int) -> HttpResponse:
+    ejercicio = get_object_or_404(Ejercicio, pk=pk)
+    imp = get_object_or_404(ImportacionEjecucion, pk=importacion_pk, ejercicio=ejercicio)
+    form = MotivoAnulacionForm(request.POST)
+    if form.is_valid():
+        try:
+            anular_importacion(Contexto.desde_request(request), imp, form.cleaned_data["motivo"])
+        except (ValidationError, PermissionDenied) as error:
+            _errores(request, error)
+        else:
+            messages.success(request, "Importación anulada. La comparativa usa la anterior activa.")
+    else:
+        messages.error(request, "Anular una importación exige un motivo.")
+    return redirect("anexos:ejecucion", pk=ejercicio.pk)
+
+
 # ------------------------------------------------------- panel de configuración
 
 
@@ -143,6 +274,10 @@ def _valores_parametros(p: ParametrosAnexosCfg) -> dict[str, Any]:
         "variaciones_destacadas": p.variaciones_destacadas,
         "marcas_pendiente": p.marcas_pendiente,
         "saldo_minimo_tesoreria": p.saldo_minimo_tesoreria,
+        "porcentaje_aviso_limite_campana": p.porcentaje_aviso_limite_campana,
+        "semaforo_ambar_pct": p.semaforo_ambar_pct,
+        "semaforo_rojo_pct": p.semaforo_rojo_pct,
+        "semaforo_importe_minimo": p.semaforo_importe_minimo,
         "reduccion_ingresos_alta": p.reduccion_ingresos_alta,
         "reduccion_ingresos_media": p.reduccion_ingresos_media,
         "reduccion_ingresos_baja": p.reduccion_ingresos_baja,
@@ -167,6 +302,10 @@ def configuracion(request: HttpRequest) -> HttpResponse:
                 variaciones_destacadas=d["variaciones_destacadas"],
                 marcas_pendiente=d["marcas_pendiente"],
                 saldo_minimo_tesoreria=d["saldo_minimo_tesoreria"],
+                porcentaje_aviso_limite_campana=d["porcentaje_aviso_limite_campana"],
+                semaforo_ambar_pct=d["semaforo_ambar_pct"],
+                semaforo_rojo_pct=d["semaforo_rojo_pct"],
+                semaforo_importe_minimo=d["semaforo_importe_minimo"],
                 **{c: d[c] for c in d if c.startswith("reduccion_")},
             )
         except (ValidationError, PermissionDenied) as error:

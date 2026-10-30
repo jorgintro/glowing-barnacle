@@ -4,4 +4,6 @@
   {% if version.es_demo %}<span class="etiqueta aviso">DEMO · datos ficticios</span>{% endif %}
   · <a href="{% url 'presupuesto:version' version.pk %}">Volver a la versión</a>
   · <a href="{% url 'anexos:memoria' version.pk %}">Memoria</a>
-  · <a href="{% url 'anexos:tesoreria' version.pk %}">Plan de tesorería</a></p>
+  · <a href="{% url 'anexos:tesoreria' version.pk %}">Plan de tesorería</a>
+  {% if version.ejercicio.hay_proceso_electoral %}· <a href="{% url 'anexos:campana' version.pk %}">Campaña</a>{% endif %}
+  · <a href="{% url 'anexos:comparativa' version.pk %}">Comparativa</a></p>

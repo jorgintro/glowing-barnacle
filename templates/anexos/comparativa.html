@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load presupuesto_extras %}
+{% block titulo %}Comparativa y desviaciones{% endblock %}
+{% block contenido %}
+<h1>Comparativa y desviaciones</h1>
+{% include "anexos/_cabecera.html" %}
+{% if es_tesorero %}<p><a class="boton secundario" href="{% url 'anexos:ejecucion' version.ejercicio.pk %}">Importar ejecución real</a></p>{% endif %}
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">1 · Presupuesto frente al ejercicio anterior</h2>
+  <div class="tabla-ancha"><table>
+    <thead><tr><th scope="col">Capítulo / línea</th><th scope="col" class="num">Este ejercicio</th><th scope="col" class="num">Anterior</th><th scope="col" class="num">Variación</th><th scope="col" class="num">%</th></tr></thead>
+    <tbody>
+    {% for c in comp.capitulos %}
+      <tr style="background:var(--marca-clara)"><th scope="row">{{ c.codigo }} {{ c.denominacion }}</th><td class="num"><strong>{{ c.anual|euros }}</strong></td>
+        <td class="num">{% if c.anterior is None %}—{% else %}{{ c.anterior|euros }}{% endif %}</td>
+        <td class="num">{% if c.variacion is None %}—{% else %}{{ c.variacion|euros }}{% endif %}</td>
+        <td class="num">{% if c.variacion_pct is None %}—{% else %}{{ c.variacion_pct }} %{% endif %}</td></tr>
+      {% for l in c.lineas %}
+      <tr><td>&nbsp;&nbsp;{{ l.codigo }} · {{ l.denominacion }}</td><td class="num">{{ l.anual|euros }}</td>
+        <td class="num">{% if l.anterior is None %}—{% else %}{{ l.anterior|euros }}{% endif %}</td>
+        <td class="num">{% if l.variacion is None %}—{% else %}{{ l.variacion|euros }}{% endif %}</td>
+        <td class="num">{% if l.variacion_pct is None %}—{% else %}{{ l.variacion_pct }} %{% endif %}</td></tr>
+      {% endfor %}
+    {% empty %}<tr><td colspan="5" class="suave">Esta versión no tiene líneas.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  <p class="sub">El importe del ejercicio anterior lo escribe el Tesorero en cada línea; si falta, aparece un guion.</p>
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">2 · Presupuesto frente a la ejecución real</h2>
+  {% if not comp.importacion %}
+  <p class="aviso-caja">Todavía no hay ejecución real importada para este ejercicio.{% if es_tesorero %} <a href="{% url 'anexos:ejecucion' version.ejercicio.pk %}">Importar un fichero CSV</a>.{% endif %}</p>
+  {% else %}
+  <p>Datos del fichero <strong>{{ comp.importacion.nombre_fichero }}</strong>, importado el {{ comp.importacion.importado_en|date:"d/m/Y H:i" }}. Acumulado hasta el <strong>mes {{ comp.mes_corte }}</strong>.</p>
+  {% if not comp.params.semaforo_configurado %}
+  <p class="aviso-caja">El semáforo <strong>no está configurado</strong>: fija los umbrales en el panel «Anexos». Mientras tanto se muestran las desviaciones sin color.</p>
+  {% endif %}
+  <p class="sub">Desviación <strong>adversa</strong>: en ingresos, quedarse por debajo de lo presupuestado; en gastos, pasarse. Una línea sin datos en el fichero sale como «Sin datos» (no se supone cero).</p>
+  <div class="tabla-ancha"><table>
+    <thead><tr><th scope="col">Capítulo / línea</th><th scope="col" class="num">Presupuesto a corte</th><th scope="col" class="num">Real</th><th scope="col" class="num">Desviación adversa</th><th scope="col" class="num">%</th><th scope="col">Semáforo</th></tr></thead>
+    <tbody>
+    {% for c in comp.capitulos %}
+      <tr style="background:var(--marca-clara)"><th scope="row">{{ c.codigo }} {{ c.denominacion }}</th><td class="num"><strong>{{ c.presupuestado_corte|euros }}</strong></td>
+        <td class="num">{% if c.real is None %}—{% else %}<strong>{{ c.real|euros }}</strong>{% endif %}</td>
+        <td class="num">{% if c.real is None %}—{% else %}{{ c.desviacion|euros }}{% endif %}</td>
+        <td class="num">{% if c.desviacion_pct is None %}—{% else %}{{ c.desviacion_pct }} %{% endif %}</td>
+        <td>{% include "anexos/_semaforo.html" with color=c.color texto=c.etiqueta %}</td></tr>
+      {% for l in c.lineas %}
+      <tr><td>&nbsp;&nbsp;{{ l.codigo }} · {{ l.denominacion }}</td><td class="num">{{ l.presupuestado_corte|euros }}</td>
+        <td class="num">{% if l.real is None %}—{% else %}{{ l.real|euros }}{% endif %}</td>
+        <td class="num">{% if l.real is None %}—{% else %}{{ l.desviacion|euros }}{% endif %}</td>
+        <td class="num">{% if l.desviacion_pct is None %}—{% else %}{{ l.desviacion_pct }} %{% endif %}</td>
+        <td>{% include "anexos/_semaforo.html" with color=l.color texto=l.etiqueta %}</td></tr>
+      {% endfor %}
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+</section>
+{% endblock %}

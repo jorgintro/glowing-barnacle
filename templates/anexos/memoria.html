@@ -39,6 +39,7 @@
     {% if s.clave_auto == "RESUMEN" %}{% include "anexos/_auto_resumen.html" with r=s.auto %}{% endif %}
     {% if s.clave_auto == "HIPOTESIS" %}{% include "anexos/_auto_hipotesis.html" with capitulos=s.auto %}{% endif %}
     {% if s.clave_auto == "RIESGOS" %}{% include "anexos/_auto_riesgos.html" with r=s.auto %}{% endif %}
+    {% if s.clave_auto == "CAMPANA" %}{% include "anexos/_auto_campana.html" with plan=s.auto resumen=True %}{% endif %}
     {% if puede_editar %}
     <p><a class="boton{% if s.estado.completa %} secundario{% endif %}" href="{% url 'anexos:memoria_editar' version.pk s.cfg.clave %}">{% if s.estado.texto %}Editar esta sección{% else %}Redactar esta sección{% endif %}</a></p>
     {% endif %}

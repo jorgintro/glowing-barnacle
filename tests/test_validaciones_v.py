@@ -23,7 +23,7 @@ def test_el_presupuesto_valido_no_tiene_ninguna_incidencia(ok) -> None:
     res = validar(version)
     assert res.incidencias == [], res.incidencias
     assert res.puede_avanzar
-    assert set(res.superadas()) == set(res.reglas_ejecutadas) and len(res.reglas_ejecutadas) == 21
+    assert set(res.superadas()) == set(res.reglas_ejecutadas) and len(res.reglas_ejecutadas) == 26
 
 
 # ---------------------------------------------------------------- V-001 y V-002

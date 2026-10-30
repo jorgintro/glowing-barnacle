@@ -93,6 +93,7 @@ def sincronizar_cuadro_cuentas(cfg: CuadroCuentasCfg | None = None) -> Resultado
                     "denominacion": par.denominacion,
                     "orden": orden_par,
                     "dimension_por_defecto": par.dimension,
+                    "envio_electoral": par.envio_electoral,
                 },
             )
             if creada:
@@ -103,6 +104,7 @@ def sincronizar_cuadro_cuentas(cfg: CuadroCuentasCfg | None = None) -> Resultado
                 denominacion=par.denominacion,
                 orden=orden_par,
                 dimension_por_defecto=par.dimension,
+                envio_electoral=par.envio_electoral,
                 activa=True,
             ):
                 partida.save()
@@ -139,6 +141,8 @@ def sincronizar_parametros_legales(cfg: ParametrosLegalesCfg | None = None) -> R
             "referencia_normativa": p.referencia_normativa,
             "fecha_verificacion": p.fecha_verificacion,
             "verificador": p.verificador,
+            "ambito": p.ambito,
+            "informativo": p.informativo,
             "activo": True,
         }
         parametro, creado = ParametroLegal.objects.get_or_create(clave=p.clave, defaults=campos)

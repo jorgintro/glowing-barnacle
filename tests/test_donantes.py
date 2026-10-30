@@ -233,7 +233,8 @@ def test_la_estructura_del_cuadro_demo_coincide_con_la_real() -> None:
 def test_ninguna_configuracion_real_trae_valores_inventados_ni_verificados() -> None:
     real = cargar_configuracion(False)
     assert sum(bool(p.verificador) for p in real.legales.values()) == 9  # solo los declarados
-    assert sum(p.valor is not None for p in real.legales.values()) == 9  # solo los del extracto
+    # 9 declarados por el Tesorero + 16 electorales del extracto del 30/10/2026 (sin firma)
+    assert sum(p.valor is not None for p in real.legales.values()) == 25
     assert real.internos.umbral_variacion_porcentaje is None
     assert (
         real.organicas.quorum,
