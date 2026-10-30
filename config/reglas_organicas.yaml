@@ -20,3 +20,18 @@ mayoria: null
 
 # O-003: ¿puede votar en la CP quien propone el presupuesto? Vacío = se trata como NO.
 proponente_puede_votar: null
+
+# Quién puede REGISTRAR la ratificación de la Junta General (CLAUDE.md §4).
+# Vacío = solo la Junta General. Valores posibles: JUNTA_GENERAL, TESORERO.
+# Ejemplo: ratificacion_registrada_por: [JUNTA_GENERAL]
+ratificacion_registrada_por: null
+
+# Modificaciones presupuestarias (CLAUDE.md §5.3). Una modificación vuelve a la Junta si supera
+# este umbral. SIN VALOR = toda modificación vuelve a la Junta (opción prudente).
+#   tipo: IMPORTE (en euros, el mayor cambio entre ingresos y gastos) o PORCENTAJE (sobre el total)
+umbral_modificacion_junta: null
+# Ejemplo: umbral_modificacion_junta: {tipo: IMPORTE, valor: "1000.00"}
+
+# Transferencias entre partidas que no cambian los totales: ¿bastan con la Comisión Permanente?
+# Vacío = no (también van a la Junta).
+transferencias_solo_cp: null

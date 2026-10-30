@@ -44,40 +44,56 @@ def _inc(codigo: str, msg: str, g: Gravedad = Gravedad.BLOQUEANTE) -> Incidencia
     return Incidencia(codigo, g, msg)
 
 
-def o001(votacion: DatosVotacion, cfg: ReglasOrganicasCfg) -> list[Incidencia]:
-    """La Comisión Permanente alcanza quórum y mayoría según los estatutos."""
+@dataclass(frozen=True)
+class EvaluacionVotacion:
+    """Resultado detallado de O-001: el flujo necesita saber qué falla (quórum o mayoría)."""
+
+    configurada: bool
+    coherente: bool
+    quorum: bool
+    mayoria: bool
+    incidencias: tuple[Incidencia, ...]
+
+    @property
+    def aprobada(self) -> bool:
+        return self.configurada and self.coherente and self.quorum and self.mayoria
+
+
+def evaluar_votacion(votacion: DatosVotacion, cfg: ReglasOrganicasCfg) -> EvaluacionVotacion:
     if cfg.quorum is None or cfg.mayoria is None:
-        return [
-            _inc(
-                "O-001",
-                "Quórum y mayoría sin configurar (config/reglas_organicas.yaml): la votación "
-                "queda bloqueada hasta que se rellenen según los estatutos.",
-            )
-        ]
+        aviso = _inc(
+            "O-001",
+            "Quórum y mayoría sin configurar (config/reglas_organicas.yaml): la votación "
+            "queda bloqueada hasta que se rellenen según los estatutos.",
+        )
+        return EvaluacionVotacion(False, True, False, False, (aviso,))
     v = votacion
-    salida = []
     emitidos = v.a_favor + v.en_contra + v.abstenciones
     if min(v.miembros, v.asistentes, v.a_favor, v.en_contra, v.abstenciones) < 0:
-        return [_inc("O-001", "Los recuentos no pueden ser negativos.")]
+        malo = _inc("O-001", "Los recuentos no pueden ser negativos.")
+        return EvaluacionVotacion(True, False, False, False, (malo,))
     if v.miembros == 0:
-        return [_inc("O-001", "No hay miembros de la Comisión Permanente con derecho a voto.")]
+        malo = _inc("O-001", "No hay miembros de la Comisión Permanente con derecho a voto.")
+        return EvaluacionVotacion(True, False, False, False, (malo,))
+    incoherencias = []
     if v.asistentes > v.miembros:
-        salida.append(_inc("O-001", "Hay más asistentes que miembros."))
+        incoherencias.append(_inc("O-001", "Hay más asistentes que miembros."))
     if emitidos > v.asistentes:
-        salida.append(_inc("O-001", "Hay más votos emitidos que asistentes."))
-    if salida:
-        return salida
-    if not _alcanza(v.asistentes, v.miembros, cfg.quorum):
-        salida.append(
-            _inc(
-                "O-001",
-                f"No hay quórum: asisten {v.asistentes} de {v.miembros} miembros.",
-            )
+        incoherencias.append(_inc("O-001", "Hay más votos emitidos que asistentes."))
+    if incoherencias:
+        return EvaluacionVotacion(True, False, False, False, tuple(incoherencias))
+
+    incidencias = []
+    quorum = _alcanza(v.asistentes, v.miembros, cfg.quorum)
+    if not quorum:
+        incidencias.append(
+            _inc("O-001", f"No hay quórum: asisten {v.asistentes} de {v.miembros} miembros.")
         )
     m = cfg.mayoria
     if m.tipo == "SIMPLE":
-        if not v.a_favor > v.en_contra:
-            salida.append(
+        mayoria = v.a_favor > v.en_contra
+        if not mayoria:
+            incidencias.append(
                 _inc(
                     "O-001",
                     f"No hay mayoría simple: {v.a_favor} a favor y {v.en_contra} en contra.",
@@ -91,15 +107,21 @@ def o001(votacion: DatosVotacion, cfg: ReglasOrganicasCfg) -> list[Incidencia]:
             "EMITIDOS": emitidos,
             "EMITIDOS_SIN_ABSTENCIONES": v.a_favor + v.en_contra,
         }[m.base]
-        if base == 0 or not _alcanza(v.a_favor, base, m.fraccion):
-            salida.append(
+        mayoria = base != 0 and _alcanza(v.a_favor, base, m.fraccion)
+        if not mayoria:
+            incidencias.append(
                 _inc(
                     "O-001",
                     f"No se alcanza la mayoría exigida: {v.a_favor} votos a favor sobre una "
                     f"base de {base}.",
                 )
             )
-    return salida
+    return EvaluacionVotacion(True, True, quorum, mayoria, tuple(incidencias))
+
+
+def o001(votacion: DatosVotacion, cfg: ReglasOrganicasCfg) -> list[Incidencia]:
+    """La Comisión Permanente alcanza quórum y mayoría según los estatutos."""
+    return list(evaluar_votacion(votacion, cfg).incidencias)
 
 
 def o002(r: DatosRatificacion, hoy: date) -> list[Incidencia]:
