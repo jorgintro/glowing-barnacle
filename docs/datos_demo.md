@@ -55,6 +55,14 @@ completa (las cinco secciones escritas a mano, con texto de relleno) y un saldo 
 inicial, a propósito**, para ver V-008 y V-009. Los parámetros de tesorería de la demo
 (`config/demo/memoria.yaml`) son inventados.
 
+### Campaña y ejecución real de la demostración
+
+Las versiones del ejercicio 2027 (con campaña) llevan datos ficticios del proceso electoral
+(136.000 habitantes: límite de 14.960 € con la tarifa ficticia de 0,11 €), envío directo con
+subvención y previsiones de concejales y votos. El ejercicio 2030 trae una **ejecución real
+ficticia hasta junio** (`ejecucion_ficticia_demo.csv`) con desviaciones de todos los colores y
+algunas líneas sin datos, para ver el semáforo y la comparativa.
+
 ### Defectos deliberados del ejercicio 2031
 
 Se comprueban con la configuración **ficticia** de `config/demo/` (límites inventados: 1.500 € por
@@ -71,6 +79,9 @@ de notificación y 150 € de identificación).
 | V-007 (aviso) | Variación enorme respecto al ejercicio anterior sin justificar |
 | V-008 | Memoria a medias: solo el resumen y el contexto; faltan las demás secciones |
 | V-009 (aviso) | Sin saldo inicial de tesorería |
+| L-012 | Un donante que aporta a las cuentas electorales más del máximo ficticio de 1.000 € |
+| L-013 y L-014 (avisos) | Subvención electoral de 20.000 €, por encima del gasto y de la subvención estimada |
+| L-015 (aviso) | Gasto de campaña repartido en los 12 meses, fuera del periodo electoral |
 | L-001 | Un donante que supera el límite anual, una persona jurídica que dona y un importe sin donante identificado |
 | L-002 | Un ingreso con origen en la lista de fuentes prohibidas |
 | L-003 | Un cargo que supera el límite de aportaciones y una aportación sin identificar |
