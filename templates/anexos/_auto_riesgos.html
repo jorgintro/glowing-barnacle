@@ -1,0 +1,12 @@
+{% load presupuesto_extras %}
+<div class="aviso-caja" style="border-color:var(--marca);background:var(--marca-clara)">
+  <strong>Puntos de atención (se detectan solos)</strong>
+  <p>Ingresos de <strong>confianza baja</strong>:
+    {% if r.baja %}{{ r.total_baja|euros }}{% if r.porcentaje_baja is not None %} ({{ r.porcentaje_baja }} % del total de ingresos){% endif %}.
+    <ul>{% for l in r.baja %}<li>{{ l.codigo }} · {{ l.denominacion }}: {{ l.importe_anual|euros }}</li>{% endfor %}</ul>
+    {% else %}ninguno.{% endif %}</p>
+  <p>Líneas <strong>condicionadas</strong>:
+    {% if r.condicionadas %}{{ r.total_condicionadas|euros }}.
+    <ul>{% for l in r.condicionadas %}<li>{{ l.codigo }} · {{ l.denominacion }}: {{ l.importe_anual|euros }}</li>{% endfor %}</ul>
+    {% else %}ninguna.{% endif %}</p>
+</div>

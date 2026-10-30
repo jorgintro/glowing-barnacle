@@ -61,6 +61,27 @@ CATALOGO: tuple[Regla, ...] = (
         reglas_v.v007,
     ),
     Regla(
+        "V-008",
+        "La memoria explicativa está completa",
+        _B,
+        "CLAUDE.md §5.1 y §7.1",
+        reglas_v.v008,
+    ),
+    Regla(
+        "V-009",
+        "Saldo inicial de tesorería indicado",
+        _A,
+        "CLAUDE.md §7.2",
+        reglas_v.v009,
+    ),
+    Regla(
+        "V-010",
+        "Sin tensión de tesorería en el escenario base",
+        _A,
+        "CLAUDE.md §7.2",
+        reglas_v.v010,
+    ),
+    Regla(
         "L-001",
         "Donaciones: límite por donante, identificación y tipo de persona",
         _B,

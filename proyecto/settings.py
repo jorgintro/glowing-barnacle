@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.presupuesto",
     "apps.organizacion",
     "apps.flujo",
+    "apps.anexos",
     "apps.salidas",
     "apps.validaciones",
     "apps.auditoria",

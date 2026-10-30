@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load presupuesto_extras %}
+{% block titulo %}Memoria explicativa{% endblock %}
+{% block contenido %}
+<h1>Memoria explicativa</h1>
+{% include "anexos/_cabecera.html" %}
+
+{% if memoria.completa %}
+<p class="aviso-caja" style="border-color:var(--ok);background:#e6f2ea"><strong>Memoria completa.</strong> Todas las secciones exigidas están terminadas.</p>
+{% else %}
+<p class="aviso-caja error"><strong>Memoria incompleta:</strong> {{ memoria.faltan }} sección{{ memoria.faltan|pluralize:",es" }} por terminar. Mientras tanto <strong>no se puede proponer la versión</strong> (regla V-008).</p>
+{% endif %}
+{% if version.estado != "BORRADOR" %}<p class="sub">La memoria quedó sellada con la versión: forma parte de su huella y ya no puede cambiarse.</p>{% endif %}
+
+{% for s in memoria.secciones %}
+<section class="tarjeta" id="{{ s.cfg.clave }}">
+  <div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between">
+    <h2 style="margin:0">{{ forloop.counter }}. {{ s.cfg.titulo }}</h2>
+    <span>
+      {% if s.cfg.solo_automatica %}<span class="etiqueta marca">Generada por el sistema</span>
+      {% elif s.estado.completa %}<span class="etiqueta ok">Completa</span>
+      {% else %}<span class="etiqueta error">Por terminar</span>{% endif %}
+      {% if not s.cfg.obligatoria %}<span class="etiqueta">Opcional</span>{% endif %}
+    </span>
+  </div>
+
+  {% if not s.estado.completa %}
+  <ul class="sub">{% for p in s.estado.problemas %}<li>{{ p }}</li>{% endfor %}</ul>
+  {% endif %}
+
+  {% if s.cfg.solo_automatica %}
+    {% include "anexos/_auto_cumplimiento.html" with c=s.auto %}
+  {% else %}
+    {% if s.estado.texto %}
+    <div style="white-space:pre-wrap;margin:.75rem 0">{{ s.estado.texto }}</div>
+    {% else %}
+    <p class="suave">Todavía no se ha escrito.</p>
+    {% endif %}
+    {% if s.clave_auto == "RESUMEN" %}{% include "anexos/_auto_resumen.html" with r=s.auto %}{% endif %}
+    {% if s.clave_auto == "HIPOTESIS" %}{% include "anexos/_auto_hipotesis.html" with capitulos=s.auto %}{% endif %}
+    {% if s.clave_auto == "RIESGOS" %}{% include "anexos/_auto_riesgos.html" with r=s.auto %}{% endif %}
+    {% if puede_editar %}
+    <p><a class="boton{% if s.estado.completa %} secundario{% endif %}" href="{% url 'anexos:memoria_editar' version.pk s.cfg.clave %}">{% if s.estado.texto %}Editar esta sección{% else %}Redactar esta sección{% endif %}</a></p>
+    {% endif %}
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

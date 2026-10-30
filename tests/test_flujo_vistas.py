@@ -1,5 +1,6 @@
 """Pantallas del flujo: proponer, votar, Junta, historial, comentarios y auditoría."""
 
+import re
 from datetime import timedelta
 
 import pytest
@@ -374,4 +375,4 @@ def test_la_auditoria_no_muestra_datos_personales_de_donantes(esc) -> None:
     version_valida(esc)
     pagina = tesorero(esc).get("/auditoria/?entidad=Donante").content.decode()
     assert "donante.crear" in pagina
-    assert "Donante 1" not in pagina and "00000001R" not in pagina
+    assert not re.search(r"Donante 1(?!\d)", pagina) and "00000001R" not in pagina

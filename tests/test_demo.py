@@ -254,7 +254,7 @@ def test_las_versiones_correctas_superan_todas_las_validaciones(
     """Con la configuración ficticia de demostración, las versiones buenas no tienen incidencias."""
     res = validar_version(_version(anio, numero))
     assert res.incidencias == [], res.incidencias
-    assert res.puede_avanzar and len(res.reglas_ejecutadas) == 18
+    assert res.puede_avanzar and len(res.reglas_ejecutadas) == 21
 
 
 def test_el_caso_que_incumple_dispara_cada_regla_prevista(cargada: dict[str, str]) -> None:
@@ -268,6 +268,8 @@ def test_el_caso_que_incumple_dispara_cada_regla_prevista(cargada: dict[str, str
         "V-005",
         "V-006",
         "V-007",
+        "V-008",
+        "V-009",
         "L-001",
         "L-002",
         "L-003",
@@ -281,8 +283,9 @@ def test_el_caso_que_incumple_dispara_cada_regla_prevista(cargada: dict[str, str
     }
     assert res.codigos_incumplidos() == esperadas
     assert not res.puede_avanzar
-    assert {i.codigo for i in res.avisos} == {"V-007", "L-008"}  # solo avisos
-    assert res.superadas() == ["L-007"]  # parámetros ficticios verificados en config/demo/
+    assert {i.codigo for i in res.avisos} == {"V-007", "V-009", "L-008"}  # solo avisos
+    # V-010 no se evalúa sin saldo inicial; L-007: parámetros ficticios verificados en config/demo/
+    assert res.superadas() == ["V-010", "L-007"]
 
 
 def test_los_donantes_demo_son_ficticios_y_se_borran(

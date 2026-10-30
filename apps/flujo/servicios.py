@@ -14,6 +14,9 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from apps.anexos.configuracion import parametros_actuales
+from apps.anexos.memoria import instantanea_parametros_legales
+from apps.anexos.servicios import copiar_anexos
 from apps.auditoria.servicios import Contexto, registrar
 from apps.presupuesto.calculos import resumen_version
 from apps.presupuesto.configuracion import ConfiguracionVersion, cargar_configuracion
@@ -54,7 +57,7 @@ from .models import (
     Voto,
     VotoNominal,
 )
-from .sello import calcular_hash, hash_encadenado, iso_utc, verificar_integridad
+from .sello import HUELLA_ACTUAL, calcular_hash, hash_encadenado, iso_utc, verificar_integridad
 
 VIGENTES = (EstadoVersion.RATIFICADO_JG, EstadoVersion.MODIFICADO)
 ABIERTAS = (EstadoVersion.BORRADOR, EstadoVersion.PROPUESTO, EstadoVersion.APROBADO_CP)
@@ -217,13 +220,19 @@ def proponer(
             + ", ".join(sorted(sin_aceptar))
             + ". Acéptalos para dejar constancia."
         )
+    # Toda versión nueva se sella con la huella actual (cubre también la memoria).
+    VersionPresupuesto.objects.filter(pk=version.pk).update(version_huella=HUELLA_ACTUAL)
+    version.refresh_from_db()
     sello = calcular_hash(version)
+    snapshot = _snapshot(resultado)
+    snapshot["parametros_anexos"] = parametros_actuales(version.es_demo).a_json()
+    snapshot["parametros_legales"] = instantanea_parametros_legales(version.es_demo)
     t = _transitar(
         contexto,
         version,
         EstadoVersion.PROPUESTO,
         motivo="Propuesta a la Comisión Permanente",
-        validacion=_snapshot(resultado),
+        validacion=snapshot,
         avisos=avisos,
         cambios={"hash": sello, "proponente": contexto.usuario},
     )
@@ -707,6 +716,7 @@ def nuevo_borrador_desde(
             es_demo=origen.es_demo,
         )
         n = _copiar_contenido(origen, nueva)
+        copiar_anexos(origen, nueva, saldo=True)
         registrar(
             contexto,
             accion="version.crear_borrador",
@@ -788,6 +798,9 @@ def crear_prorroga(
             and ln.partida.capitulo.codigo != "G.7"
         ),
     )
+    copiar_anexos(
+        origen, nueva, saldo=False
+    )  # el saldo inicial es el de otro año: se vuelve a poner
     registrar(
         contexto,
         accion="version.prorroga",

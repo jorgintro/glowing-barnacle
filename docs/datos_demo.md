@@ -47,6 +47,14 @@ Usuarios (contraseñas aleatorias que se muestran **una sola vez** al cargar):
 También hay personas ficticias en el panel de la organización (con DNI de prueba y cargos «(demo)»)
 para poder probar los certificados.
 
+### Memoria y tesorería de la demostración
+
+Las versiones de demostración correctas (2027 a 2030 y 2032) llevan una memoria **ficticia**
+completa (las cinco secciones escritas a mano, con texto de relleno) y un saldo inicial ficticio de
+200.000,00 €. El ejercicio 2031 (el de los defectos) tiene la memoria **a medias y sin saldo
+inicial, a propósito**, para ver V-008 y V-009. Los parámetros de tesorería de la demo
+(`config/demo/memoria.yaml`) son inventados.
+
 ### Defectos deliberados del ejercicio 2031
 
 Se comprueban con la configuración **ficticia** de `config/demo/` (límites inventados: 1.500 € por
@@ -61,6 +69,8 @@ de notificación y 150 € de identificación).
 | V-005 | Un importe negativo marcado como ajuste sin justificación |
 | V-006 | Sin explicación del resultado y déficit sin plan de financiación |
 | V-007 (aviso) | Variación enorme respecto al ejercicio anterior sin justificar |
+| V-008 | Memoria a medias: solo el resumen y el contexto; faltan las demás secciones |
+| V-009 (aviso) | Sin saldo inicial de tesorería |
 | L-001 | Un donante que supera el límite anual, una persona jurídica que dona y un importe sin donante identificado |
 | L-002 | Un ingreso con origen en la lista de fuentes prohibidas |
 | L-003 | Un cargo que supera el límite de aportaciones y una aportación sin identificar |
@@ -71,7 +81,7 @@ de notificación y 150 € de identificación).
 | L-010 | Donación de un «contratista público» ficticio |
 | L-011 | Una donación finalista y otra revocable |
 
-Las demás versiones de demostración (2027–2030) **superan todas las reglas V y L (18 reglas)** con esa
+Las demás versiones de demostración (2027–2030) **superan todas las reglas V y L (21 reglas)** con esa
 configuración. Las reglas orgánicas (O-) se demuestran en la Fase 4 con la votación y la
 ratificación.
 

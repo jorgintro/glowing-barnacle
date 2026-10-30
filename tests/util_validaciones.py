@@ -5,6 +5,8 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
+from apps.anexos import servicios as anexos
+from apps.anexos.configuracion import parametros_actuales
 from apps.auditoria.servicios import Contexto
 from apps.presupuesto import donantes as dn
 from apps.presupuesto import servicios as ps
@@ -90,6 +92,17 @@ def donante(ctx: Contexto, n: int, tipo: str = "FISICA", nombre: str | None = No
     return dn.crear_donante(ctx, nombre=nombre or f"Donante {n}", nif=nif(n))
 
 
+def completar_anexos(ctx: Contexto, version: VersionPresupuesto) -> None:
+    """Memoria escrita en todas sus secciones y saldo inicial de tesorería."""
+    params = parametros_actuales(version.es_demo)
+    for cfg in params.aplicables(version.ejercicio.hay_proceso_electoral):
+        if not cfg.solo_automatica:
+            anexos.guardar_seccion(ctx, version, cfg.clave, "Texto de prueba. " * 20)
+    anexos.guardar_saldo_inicial(ctx, version, Decimal("100000"))
+    if params.saldo_minimo is None:  # la configuración real no trae ningún valor
+        anexos.guardar_parametros(ctx, demo=version.es_demo, saldo_minimo_tesoreria=Decimal("500"))
+
+
 def presupuesto_valido(
     ctx: Contexto, version: VersionPresupuesto, campana: bool = False
 ) -> dict[str, Linea]:
@@ -124,4 +137,5 @@ def presupuesto_valido(
         plan_financiacion="",
         endeudamiento=Decimal("0"),
     )
+    completar_anexos(ctx, version)
     return ls

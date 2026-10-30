@@ -57,6 +57,13 @@ Ajustes del sistema que no son normativa legal. **Sin valores a propósito**:
   justificar. Se escribe como texto, p. ej. `"20"`.
 * `exigir_ventana_verificacion` (L-007): verificación en el año del ejercicio o el anterior.
 
+## `config/memoria.yaml`
+
+Valores **propuestos** de la memoria explicativa (secciones, ayudas, plantillas, mínimos) y del plan
+de tesorería. No es normativa: solo **siembra** la base de datos la primera vez y, a partir de ahí,
+todo se edita desde el panel **Anexos** (los cambios no se pisan al reiniciar). Detalle en
+`docs/anexos.md`. `config/demo/memoria.yaml` trae los parámetros ficticios de la demostración.
+
 ## `config/reglas_organicas.yaml`
 
 Quórum, mayorías y funciones (CLAUDE.md §16.2). **Sin valores a propósito**: salen de los

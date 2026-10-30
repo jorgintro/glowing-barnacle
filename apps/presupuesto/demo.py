@@ -20,6 +20,9 @@ from decimal import Decimal
 from django.db import connection, transaction
 from django.utils import timezone
 
+from apps.anexos import servicios as anexos
+from apps.anexos.configuracion import parametros_actuales
+from apps.anexos.models import ParametrosAnexosCfg, SeccionMemoria, SeccionMemoriaCfg
 from apps.auditoria.servicios import Contexto, registrar
 from apps.flujo import servicios as flujo
 from apps.flujo.models import (
@@ -826,6 +829,29 @@ def _ctx(usuarios: dict[str, Usuario], nombre: str, rol: str) -> Contexto:
     return Contexto(usuarios[nombre], rol, None)
 
 
+SALDO_INICIAL_DEMO = Decimal("200000.00")
+
+
+def _redactar_memoria(
+    version: VersionPresupuesto, usuarios: dict[str, Usuario], *, solo: tuple[str, ...] = ()
+) -> None:
+    """Escribe una memoria ficticia (y el saldo inicial) con los servicios reales."""
+    tesorero = _ctx(usuarios, "demo_tesorero", Rol.TESORERO)
+    params = parametros_actuales(True)
+    for cfg in params.aplicables(version.ejercicio.hay_proceso_electoral):
+        if cfg.solo_automatica or (solo and cfg.clave not in solo):
+            continue
+        texto = (
+            f"[Texto ficticio de demostración] {cfg.titulo} del ejercicio "
+            f"{version.ejercicio.anio}. Este párrafo no describe a ninguna organización real: "
+            "sirve solo para probar que la memoria se redacta, se sella con la versión y se "
+            "muestra completa en pantalla."
+        )
+        anexos.guardar_seccion(tesorero, version, cfg.clave, texto)
+    if not solo:
+        anexos.guardar_saldo_inicial(tesorero, version, SALDO_INICIAL_DEMO)
+
+
 def _recorrer_flujo(
     version: VersionPresupuesto,
     usuarios: dict[str, Usuario],
@@ -841,6 +867,7 @@ def _recorrer_flujo(
     """Lleva la versión por el flujo REAL (así la demo también prueba el flujo)."""
     hoy = timezone.localdate()
     tesorero = _ctx(usuarios, "demo_tesorero", Rol.TESORERO)
+    _redactar_memoria(version, usuarios)
     votacion = flujo.proponer(
         tesorero, version, avisos_aceptados=["V-007", "L-008"], confirmar=True
     )
@@ -957,6 +984,7 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
     e2028 = _ejercicio(2028, "Ejercicio de demostración sin campaña (Borrador)", False, autor)
     v = _version(e2028, 1, "Borrador de trabajo del Tesorero", autor)
     _rellenar(v, campana=False, factor=Decimal("1.00"), anterior=False)
+    _redactar_memoria(v, usuarios)  # borrador completo: supera todas las reglas
 
     e2029 = _ejercicio(2029, "Ejercicio de demostración sin campaña (Propuesto)", False, autor)
     v2029 = _version(e2029, 1, "Propuesto a la Comisión Permanente (votación abierta)", autor)
@@ -982,6 +1010,8 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
     e2031 = _ejercicio(2031, "Casos que incumplen reglas", True, autor)
     v = _version(e2031, 1, "Borrador con errores deliberados para probar los bloqueos", autor)
     _casos_incumplidos(v)
+    # Memoria a medias y sin saldo inicial, a propósito (V-008 y V-009).
+    _redactar_memoria(v, usuarios, solo=("resumen", "contexto"))
 
     # 2032 · rechazada por la Comisión Permanente (y nuevo borrador automático).
     e2032 = _ejercicio(2032, "Ejercicio de demostración rechazado por la CP", False, autor)
@@ -1027,8 +1057,13 @@ def borrar_demo(contexto: Contexto) -> dict[str, int]:
         "donaciones": Donacion.objects.filter(version__es_demo=True).delete()[0],
         "hipotesis": Hipotesis.objects.filter(linea_id__in=ids_lineas).delete()[0],
         "comentarios": Comentario.objects.filter(es_demo=True).delete()[0],
+        "secciones_memoria": SeccionMemoria.objects.filter(es_demo=True).delete()[0],
         "lineas": Linea.objects.filter(pk__in=ids_lineas).delete()[0],
     }
+    cuentas["configuracion_anexos"] = (
+        SeccionMemoriaCfg.objects.filter(es_demo=True).delete()[0]
+        + ParametrosAnexosCfg.objects.filter(es_demo=True).delete()[0]
+    )
     cuentas["donantes"] = Donante.objects.filter(es_demo=True).delete()[0]
     # Las versiones derivadas se borran antes que su origen (no se puede «desenlazar» una versión
     # sellada: el disparador lo impediría).

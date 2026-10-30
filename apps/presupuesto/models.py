@@ -205,6 +205,19 @@ class VersionPresupuesto(models.Model):
         default=0,
         help_text="Endeudamiento nuevo previsto en el ejercicio (regla L-005).",
     )
+    saldo_inicial_tesoreria = models.DecimalField(
+        "saldo inicial de tesorería",
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Saldo de caja y bancos a 1 de enero. Lo introduce el Tesorero.",
+    )
+    version_huella = models.PositiveSmallIntegerField(
+        default=2,
+        help_text="Qué contenido cubre la huella: 1 = líneas y donaciones; 2 = además memoria y "
+        "saldo inicial de tesorería.",
+    )
     es_demo = models.BooleanField(default=False)
 
     class Meta:

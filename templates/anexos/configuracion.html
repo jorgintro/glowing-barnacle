@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}Anexos · configuración{% endblock %}
+{% block contenido %}
+<h1>Memoria explicativa y plan de tesorería: configuración</h1>
+<p class="aviso-caja">Aquí decides cómo se redacta la memoria y qué parámetros usa el plan de tesorería. Solo el Tesorero ve esta pantalla y todos los cambios quedan en la auditoría. Las versiones ya propuestas conservan la configuración con la que se sellaron.
+  {% if demo %}<br><strong>Estás viendo la configuración de la DEMOSTRACIÓN</strong> (ficticia), no la real.{% endif %}</p>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">1 · Secciones de la memoria</h2>
+  <p class="suave">Los textos de ayuda y las plantillas vienen <strong>propuestos</strong>; cámbialos a tu gusto. Cada «[COMPLETAR: …]» de una plantilla marca algo que quien redacta debe escribir.</p>
+  <table>
+    <thead><tr><th scope="col">Nº</th><th scope="col">Sección</th><th scope="col">Contenido</th><th scope="col">Exigencias</th><th scope="col"></th></tr></thead>
+    <tbody>
+    {% for s in secciones %}
+      <tr>
+        <td>{{ s.orden }}</td>
+        <td>{{ s.titulo }}{% if not s.activa %} <span class="etiqueta error">Desactivada</span>{% endif %}</td>
+        <td class="sub">{{ s.get_contenido_display }}</td>
+        <td class="sub">{% if s.solo_automatica %}Automática{% else %}{% if s.obligatoria %}Obligatoria{% else %}Opcional{% endif %}{% if s.longitud_minima %} · mín. {{ s.longitud_minima }} car.{% endif %}{% endif %}{% if s.solo_con_proceso_electoral %} · solo con elecciones{% endif %}</td>
+        <td class="acciones"><a href="{% url 'anexos:seccion_cfg' s.pk %}">Editar</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <form method="post" action="{% url 'anexos:seccion_cfg_nueva' %}" style="margin-top:1rem">{% csrf_token %}
+    <div class="campo"><label for="{{ form_nueva.titulo.id_for_label }}">{{ form_nueva.titulo.label }}</label>{{ form_nueva.titulo }}
+      <div class="ayuda">Añade una sección propia (por ejemplo «Plan de actividades»). Después ajustas su ayuda y su plantilla.</div></div>
+    <button class="boton secundario" type="submit">Añadir sección</button>
+  </form>
+</section>
+
+<form method="post" class="tarjeta">{% csrf_token %}
+  <h2 style="margin-top:0">2 · Parámetros de la memoria y del plan de tesorería</h2>
+  {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+  {% for campo in form %}
+  <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+    {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}</div>
+  {% endfor %}
+  <p class="sub">Los porcentajes se escriben con coma decimal (por ejemplo 12,5). Un escenario sin ningún porcentaje no se calcula. No hay valores por defecto en los de tesorería: dependen de la situación de la organización.</p>
+  <button class="boton" type="submit">Guardar parámetros</button>
+</form>
+{% endblock %}

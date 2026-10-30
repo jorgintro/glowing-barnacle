@@ -17,7 +17,7 @@ No hay saltos de estado: ni la aplicación ni la base de datos los permiten.
 
 | Paso | Quién | Qué ocurre |
 |---|---|---|
-| **Proponer** | Tesorero | Se ejecutan las 18 reglas. Si hay bloqueos, no avanza. Los avisos hay que aceptarlos (queda constancia). Se **sella** con una huella (SHA-256), deja de poder editarse y se abre la votación. |
+| **Proponer** | Tesorero | Se ejecutan las 21 reglas (incluida la memoria completa, V-008). Si hay bloqueos, no avanza. Los avisos hay que aceptarlos (queda constancia). Se **sella** con una huella (SHA-256), deja de poder editarse y se abre la votación. |
 | **Devolver** | Comisión Permanente | Con motivos. La versión vuelve a borrador y la votación se anula. |
 | **Votar** | Cada miembro de la CP | Voto **nominal** (a favor, en contra o abstención). Se puede cambiar mientras la votación esté abierta. |
 | **Cerrar la votación** | Un miembro de la CP | Sin quórum no se puede cerrar. Con quórum y mayoría, se aprueba; con quórum sin mayoría, se rechaza y se abre un nuevo borrador. |
@@ -47,7 +47,9 @@ No hay saltos de estado: ni la aplicación ni la base de datos los permiten.
 ## La huella y la integridad
 
 * La huella cubre el ejercicio, la versión, todas las líneas (con hipótesis e importes
-  mensuales) y las donaciones. Cualquier cambio de contenido cambia la huella.
+  mensuales), las donaciones y, desde la Fase 5 (huella de tipo 2), la **memoria explicativa** y el
+  **saldo inicial de tesorería**. Cualquier cambio de contenido cambia la huella. Las versiones
+  selladas antes siguen verificándose con su tipo de huella (1). Ver `docs/anexos.md`.
 * Cada transición se anota en la **hoja de control** encadenando la anterior: quitar o alterar una
   entrada rompe la cadena.
 * La pantalla **Historial y huella** (y el comando `verificar_integridad`) recalculan todo y avisan

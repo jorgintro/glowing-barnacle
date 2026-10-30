@@ -1,7 +1,7 @@
 # Presupuesto anual · Iniciativa Complutense
 
 Sistema de elaboración, aprobación y ratificación del presupuesto anual. El documento rector
-es [`CLAUDE.md`](CLAUDE.md). **Estado: Fase 4 de 8 (flujo de aprobación).**
+es [`CLAUDE.md`](CLAUDE.md). **Estado: Fase 5 (memoria explicativa y plan de tesorería).** Las fases 6 (campaña y comparativa) y 7 (Excel e informe HTML) siguen.
 
 ## Arranque con Docker (un solo comando)
 

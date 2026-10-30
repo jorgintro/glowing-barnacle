@@ -1,0 +1,18 @@
+{% load presupuesto_extras %}
+<div class="aviso-caja" style="border-color:var(--marca);background:var(--marca-clara)">
+  <strong>Hipótesis de cada línea (se recogen solas)</strong>
+  {% for c in capitulos %}
+  <details>
+    <summary>{{ c.capitulo.codigo }} {{ c.capitulo.denominacion }} · <span class="num">{{ c.total|euros }}</span></summary>
+    <table>
+      <thead><tr><th scope="col">Línea</th><th scope="col" class="num">Importe</th><th scope="col">Hipótesis y fuente</th><th scope="col">Confianza</th><th scope="col">Responsable</th></tr></thead>
+      <tbody>
+      {% for l in c.lineas %}
+        <tr><td>{{ l.codigo }} · {{ l.denominacion }}</td><td class="num">{{ l.importe|euros }}</td>
+          <td>{{ l.hipotesis }}<div class="sub">Fuente: {{ l.fuente }}</div></td><td>{{ l.confianza|default:"—" }}</td><td>{{ l.responsable }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </details>
+  {% empty %}<p class="suave">Todavía no hay líneas.</p>{% endfor %}
+</div>

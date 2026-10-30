@@ -1,0 +1,124 @@
+# Valores PROPUESTOS por defecto de la memoria explicativa y del plan de tesorería.
+#
+# Este fichero NO es normativa: solo siembra la base de datos la primera vez. A partir de ahí
+# todo se cambia desde el panel «Anexos» (solo el Tesorero) y los cambios quedan en la auditoría.
+# Lo que ya editaste en el panel NO se pisa al volver a arrancar el sistema.
+#
+# Los textos de ayuda y las plantillas son guías neutras para redactar: no contienen contenido
+# jurídico ni cifras de la organización. Cada «[COMPLETAR: …]» marca algo que hay que escribir;
+# mientras quede alguna marca, la memoria se considera incompleta y bloquea la propuesta (V-008).
+#
+# Marcadores que se rellenan solos en las plantillas:
+#   {organizacion} {ejercicio} {version} {total_ingresos} {total_gastos} {resultado}
+#   {tipo_resultado} {proceso_electoral}
+version: 1
+
+parametros:
+  # Cuántas variaciones respecto al ejercicio anterior destaca el resumen ejecutivo.
+  variaciones_destacadas: 5
+  # Textos que, si quedan en una sección, indican que sigue sin terminar.
+  marcas_pendiente:
+    - "[COMPLETAR"
+    - "PENDIENTE DE REVISAR"
+  # Plan de tesorería. Se dejan SIN VALOR a propósito: dependen de la situación de la
+  # organización. Sin valor, la comprobación correspondiente avisa de que no puede hacerse.
+  saldo_minimo_tesoreria: null
+  # Escenario prudente: % que se descuenta a los ingresos según la confianza de cada línea.
+  reduccion_ingresos_prudente:
+    ALTA: null
+    MEDIA: null
+    BAJA: null
+  # Escenario ajustado: % que se descuenta a los gastos según el tipo de cada línea.
+  reduccion_gastos_ajustado:
+    RECURRENTE: null
+    EXTRAORDINARIO: null
+    CONDICIONADO: null
+
+secciones:
+  - clave: resumen
+    titulo: Resumen ejecutivo
+    contenido: RESUMEN
+    obligatoria: true
+    longitud_minima: 150
+    ayuda: >-
+      Valora en pocas líneas el presupuesto: el resultado (superávit o déficit), de dónde vienen
+      los ingresos principales y a qué se destina la mayor parte del gasto. Las cifras totales y
+      las principales variaciones aparecen debajo automáticamente: no hace falta copiarlas.
+    plantilla: |-
+      El presupuesto de {organizacion} para {ejercicio} prevé unos ingresos de {total_ingresos}
+      y unos gastos de {total_gastos}, con un resultado presupuestario de {resultado}
+      ({tipo_resultado}).
+
+      [COMPLETAR: valoración general del presupuesto y de sus principales variaciones]
+
+  - clave: contexto
+    titulo: Contexto del ejercicio
+    contenido: NINGUNO
+    obligatoria: true
+    longitud_minima: 150
+    ayuda: >-
+      Explica qué actividad se prevé en el ejercicio: actos, campañas, hitos de la organización
+      y si hay elecciones. Es lo que permite entender por qué las cifras son las que son.
+    plantilla: |-
+      Ejercicio {ejercicio}. {proceso_electoral}
+
+      [COMPLETAR: actividad prevista de la organización durante el ejercicio]
+
+      [COMPLETAR: hitos y actos relevantes (asambleas, jornadas, aniversarios…)]
+
+  - clave: criterios
+    titulo: Criterios de elaboración e hipótesis por capítulo
+    contenido: HIPOTESIS
+    obligatoria: true
+    longitud_minima: 150
+    ayuda: >-
+      Cuenta cómo se han estimado los ingresos y los gastos: qué se ha tomado como base (histórico,
+      compromisos, presupuestos recibidos) y qué criterio de prudencia se ha seguido. Debajo
+      aparece automáticamente, capítulo a capítulo, la hipótesis escrita en cada línea.
+    plantilla: |-
+      [COMPLETAR: criterio general para estimar los ingresos]
+
+      [COMPLETAR: criterio general para estimar los gastos y reserva de imprevistos]
+
+  - clave: riesgos
+    titulo: Riesgos e incertidumbres
+    contenido: RIESGOS
+    obligatoria: true
+    longitud_minima: 100
+    ayuda: >-
+      Señala qué podría hacer que las cifras no se cumplan: subvenciones aún sin resolución,
+      bajas de afiliados, retrasos de cobro, campaña. Debajo aparecen automáticamente las líneas
+      de ingresos de confianza baja y las condicionadas.
+    plantilla: |-
+      [COMPLETAR: principales riesgos para los ingresos]
+
+      [COMPLETAR: principales riesgos para los gastos]
+
+      [COMPLETAR: medidas previstas si los riesgos se materializan]
+
+  - clave: cumplimiento
+    titulo: Cumplimiento normativo
+    contenido: CUMPLIMIENTO
+    obligatoria: true
+    longitud_minima: null
+    ayuda: >-
+      Esta sección la genera el sistema sola: lista las comprobaciones superadas, los avisos
+      aceptados y los parámetros legales usados (con su referencia y quién los verificó).
+      No se escribe a mano.
+    plantilla: ""
+
+  - clave: acuerdo
+    titulo: Propuesta de acuerdo
+    contenido: NINGUNO
+    obligatoria: true
+    longitud_minima: 100
+    ayuda: >-
+      Redacta el texto exacto que se somete a votación. Ajústalo a lo que dispongan los
+      estatutos sobre quién aprueba y quién ratifica; el sistema no puede saberlo.
+    plantilla: |-
+      Se propone aprobar el presupuesto del ejercicio {ejercicio} (versión {version}), con unos
+      ingresos de {total_ingresos}, unos gastos de {total_gastos} y un resultado presupuestario de
+      {resultado}.
+
+      [COMPLETAR: indica, si procede conforme a los estatutos, que se eleva a la Junta General
+      para su ratificación]

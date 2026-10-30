@@ -20,9 +20,17 @@ que la rompe (`tests/test_validaciones_v.py`, `_l.py` y `_o.py`).
 | V-005 | Importes con dos decimales y sin negativos, salvo ajustes con justificación | Bloqueante |
 | V-006 | El resultado está explicado; un déficit exige plan de financiación | Bloqueante |
 | V-007 | Una variación mayor que el umbral respecto al ejercicio anterior está justificada | Aviso |
+| V-008 | La memoria explicativa está completa (secciones obligatorias escritas, mínimos, sin marcas de pendiente ni secciones por revisar) | Bloqueante |
+| V-009 | Está indicado el saldo inicial de tesorería | Aviso |
+| V-010 | Ningún mes del plan de tesorería base tiene saldo negativo o por debajo del mínimo | Aviso |
 
 V-007 usa `umbral_variacion_porcentaje` de `config/parametros_internos.yaml`. Mientras esté vacío
 avisa de que no se puede comprobar.
+
+V-008 a V-010 (Fase 5) usan la configuración del panel «Anexos» (ver `docs/anexos.md`): secciones y
+mínimos de la memoria, marcas de «pendiente» y saldo mínimo de tesorería. Fuente: CLAUDE.md §5.1,
+§7.1 y §7.2. Si el saldo mínimo no está configurado, V-010 avisa de que solo puede comprobar que el
+saldo no sea negativo.
 
 ## Reglas legales (L)
 

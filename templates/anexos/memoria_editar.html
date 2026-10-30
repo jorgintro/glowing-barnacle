@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Redactar · {{ cfg.titulo }}{% endblock %}
+{% block contenido %}
+<h1>{{ cfg.titulo }}</h1>
+{% include "anexos/_cabecera.html" %}
+{% if cfg.ayuda %}<div class="aviso-caja" style="border-color:var(--marca);background:var(--marca-clara)"><strong>Qué debe contar esta sección</strong><br>{{ cfg.ayuda }}</div>{% endif %}
+{% if usando_plantilla %}<p class="aviso-caja">Texto de partida <strong>propuesto por la plantilla</strong>. Sustituye cada «[COMPLETAR: …]» por tu texto: mientras quede alguna, la memoria no se da por terminada.</p>{% endif %}
+{% if pendiente %}<p class="aviso-caja error">Este texto viene de otra versión y está <strong>pendiente de revisar</strong>. Al guardar quedará revisado: léelo antes.</p>{% endif %}
+{% if cfg.longitud_minima %}<p class="sub">Mínimo exigido: {{ cfg.longitud_minima }} caracteres.</p>{% endif %}
+<form method="post" class="tarjeta">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="campo"><label for="{{ form.texto.id_for_label }}">{{ form.texto.label }}</label>{{ form.texto }}{{ form.texto.errors }}</div>
+  <button class="boton" type="submit">Guardar la sección</button>
+  <a class="boton secundario" href="{% url 'anexos:memoria' version.pk %}">Cancelar</a>
+  {% if cfg.plantilla %}<a class="boton secundario" href="{% url 'anexos:memoria_editar' version.pk cfg.clave %}?plantilla=1">Volver a la plantilla (descarta lo escrito)</a>{% endif %}
+</form>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load presupuesto_extras %}
+{% block titulo %}Plan de tesorería{% endblock %}
+{% block contenido %}
+<h1>Plan de tesorería mensual</h1>
+{% include "anexos/_cabecera.html" %}
+<p class="aviso-caja"><strong>Hipótesis de partida:</strong> cada importe se cobra o se paga en el mes en que está presupuestado. El saldo inicial lo pone el Tesorero: el sistema no lleva contabilidad y no puede conocerlo.</p>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">Saldo inicial</h2>
+  {% if plan.saldo_inicial is None %}<p><span class="etiqueta aviso">Sin indicar</span> No se pueden calcular los saldos mensuales (aviso V-009).</p>
+  {% else %}<p>Saldo a 1 de enero: <strong class="num">{{ plan.saldo_inicial|euros }}</strong></p>{% endif %}
+  <p class="sub">Saldo mínimo configurado: {% if plan.saldo_minimo is None %}no configurado (se avisa solo si el saldo es negativo){% else %}<span class="num">{{ plan.saldo_minimo|euros }}</span>{% endif %}
+    {% if es_tesorero %}· se cambia en <a href="{% url 'anexos:configuracion' %}">Anexos</a>{% endif %}</p>
+  {% if form %}
+  <form method="post">{% csrf_token %}
+    <div class="campo"><label for="{{ form.saldo.id_for_label }}">{{ form.saldo.label }}</label>{{ form.saldo }}{{ form.saldo.errors }}
+      <div class="ayuda">Escribe el importe con coma decimal, por ejemplo 12.500,00. Déjalo vacío si aún no lo sabes.</div></div>
+    <button class="boton" type="submit">Guardar saldo inicial</button>
+  </form>
+  {% endif %}
+</section>
+
+{% for e in plan.escenarios %}
+<section class="tarjeta">
+  <h2 style="margin-top:0">Escenario {{ e.nombre|lower }}</h2>
+  {% if not e.configurado %}
+  <p class="suave">Sin configurar: faltan los porcentajes de este escenario en el panel «Anexos». No se calcula.</p>
+  {% else %}
+  {% if e.meses_en_tension %}<div class="aviso-caja error"><strong>Alerta de tensión de tesorería</strong> en {{ e.meses_en_tension|length }} mes{{ e.meses_en_tension|length|pluralize:",es" }}: {% for m in e.meses_en_tension %}{{ m.nombre|lower }} ({{ m.motivo_tension }}){% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+  <div class="tabla-ancha"><table>
+    <thead><tr><th scope="col">Mes</th><th scope="col" class="num">Cobros</th><th scope="col" class="num">Pagos</th><th scope="col" class="num">Flujo neto</th><th scope="col" class="num">Saldo final</th><th scope="col">Estado</th></tr></thead>
+    <tbody>
+    {% for m in e.meses %}
+      <tr><th scope="row">{{ m.nombre }}</th><td class="num">{{ m.cobros|euros }}</td><td class="num">{{ m.pagos|euros }}</td><td class="num">{{ m.flujo|euros }}</td>
+        <td class="num">{% if m.saldo is None %}—{% else %}{{ m.saldo|euros }}{% endif %}</td>
+        <td>{% if m.en_tension %}<span class="etiqueta error">{{ m.motivo_tension }}</span>{% elif m.saldo is not None %}<span class="etiqueta ok">Correcto</span>{% else %}—{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr><th scope="row">Total</th><td class="num"><strong>{{ e.total_cobros|euros }}</strong></td><td class="num"><strong>{{ e.total_pagos|euros }}</strong></td><td class="num"><strong>{{ e.flujo_total|euros }}</strong></td><td class="num"><strong>{% if e.saldo_final is None %}—{% else %}{{ e.saldo_final|euros }}{% endif %}</strong></td><td></td></tr></tfoot>
+  </table></div>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}
