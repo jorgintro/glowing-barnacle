@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Certificados de aprobación{% endblock %}
+{% block contenido %}
+<h1>Certificados de aprobación</h1>
+<p class="suave">{{ version.ejercicio }} · versión {{ version.numero }} · {{ version.get_estado_display }}
+  {% if version.es_demo %}<span class="etiqueta aviso">DEMO · el certificado saldrá marcado como sin validez</span>{% endif %}</p>
+{% if not tipos %}
+<div class="aviso-caja">Esta versión todavía no tiene nada que certificar: hace falta que la Comisión Permanente la apruebe.</div>
+{% elif not hay_personas %}
+<div class="aviso-caja error">Para emitir un certificado hace falta al menos una persona con cargo en el
+  <a href="{% url 'organizacion:panel' %}">panel de la organización</a> (nombre, apellidos, DNI y cargo). Solo el Tesorero puede darlas de alta.</div>
+{% else %}
+<form method="get" action="{% url 'salidas:certificado' version.pk %}" class="tarjeta">
+  {% for campo in form %}
+  <div class="campo">
+    {% if campo.field.widget.input_type == "checkbox" %}<label for="{{ campo.id_for_label }}">{{ campo }} {{ campo.label }}</label>
+    {% else %}<label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}{% endif %}
+  </div>
+  {% endfor %}
+  <button class="boton" type="submit" name="formato" value="html">Ver en pantalla (HTML)</button>
+  <button class="boton secundario" type="submit" name="formato" value="pdf">Descargar en PDF</button>
+</form>
+<p class="sub">El certificado incluye líneas para firmarlo a mano; no es una firma electrónica. Cada emisión queda en la auditoría.</p>
+{% endif %}
+<p><a href="{% url 'presupuesto:version' version.pk %}">← Volver al presupuesto</a></p>
+{% endblock %}

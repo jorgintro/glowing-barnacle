@@ -36,3 +36,7 @@ testpaths = ["tests"]
 module = "tests.*"
 disallow_untyped_defs = false
 warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = ["reportlab", "reportlab.*"]
+ignore_missing_imports = true
