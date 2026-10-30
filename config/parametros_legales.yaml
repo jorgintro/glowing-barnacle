@@ -16,7 +16,12 @@
 #  * Los cinco siguientes (umbrales de 25.000 € y 300 €, contratistas, finalistas o revocables e
 #    inmuebles) se verificaron después, por la misma vía: declaración del Tesorero en la sesión
 #    del 29/10/2026. También sin posibilidad de comprobación por el sistema.
-#  * Aportaciones de cargos, gasto electoral y endeudamiento no figuran en el extracto: sin valor.
+#  * Aportaciones de cargos y endeudamiento no figuran en ningún extracto: sin valor.
+#  * Los parámetros ELECTORALES (límite y subvenciones, aportaciones a campaña, plazos) proceden del
+#    extracto aportado el 30/10/2026 (docs/fuentes_normativas/LOREG_gastos_electorales_...). Figuran
+#    SIN verificar a propósito: el Tesorero no los ha declarado verificados. Solo bloquean (L-007)
+#    en ejercicios con proceso electoral. Los marcados «informativo» (importes de subvención y
+#    plazos) no bloquean: solo alimentan el calendario y las estimaciones, con aviso de «sin verificar».
 #
 # Los importes se escriben como texto: valor: "1234.56".
 version: 1
@@ -153,13 +158,194 @@ parametros:
     fecha_verificacion: null
     verificador: null
 
-  - clave: limite_gasto_electoral
-    descripcion: "Límite legal de gasto electoral del proceso previsto en el ejercicio."
+  # ---- Gasto y financiación electorales (extracto del 30/10/2026): PENDIENTES de verificar.
+  # Los importes de subvención y límite son los de las elecciones locales de 28/05/2023.
+  - clave: gasto_electoral_euros_por_habitante
+    descripcion: "Límite de gasto electoral municipal: euros por habitante de derecho de las circunscripciones donde se concurre."
     unidad: EUR
     regla: L-004
-    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1); artículo por verificar"
-    valor: null
-    referencia_normativa: null
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    valor: "0.11"
+    referencia_normativa: "Disposición de subvenciones, art. 2, y LOREG art. 193.2 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: gasto_electoral_adicional_por_provincia
+    descripcion: "Gasto electoral adicional por cada provincia en la que se concurre al menos al 50 % de sus municipios."
+    unidad: EUR
+    regla: L-004
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    valor: "150301.11"
+    referencia_normativa: "Disposición de subvenciones, art. 2 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: limite_aportacion_electoral_por_persona
+    descripcion: "Importe máximo que una persona, física o jurídica, puede aportar a las cuentas electorales de un partido en las elecciones convocadas."
+    unidad: EUR
+    regla: L-012
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    valor: "10000.00"
+    referencia_normativa: "LOREG art. 129 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: subvencion_electoral_por_concejal
+    descripcion: "Subvención por cada concejal electo."
+    unidad: EUR
+    regla: L-013
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "270.90"
+    referencia_normativa: "Disposición de subvenciones, art. 1.a (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: subvencion_electoral_por_voto
+    descripcion: "Subvención por cada voto de una candidatura con al menos un concejal proclamado."
+    unidad: EUR
+    regla: L-013
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "0.54"
+    referencia_normativa: "Disposición de subvenciones, art. 1.b (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: subvencion_envio_por_elector
+    descripcion: "Subvención por envío directo y personal de propaganda: euros por elector."
+    unidad: EUR
+    regla: L-004
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "0.23"
+    referencia_normativa: "Disposición de subvenciones, art. 3.a (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: umbral_informe_empresas_gasto_electoral
+    descripcion: "Facturación electoral a partir de la cual las empresas informan al Tribunal de Cuentas."
+    unidad: EUR
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "10000.00"
+    referencia_normativa: "LOREG art. 133.5 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: plazo_contabilidad_electoral_desde_dias
+    descripcion: "Días posteriores a las elecciones a partir de los cuales se presenta la contabilidad electoral al Tribunal de Cuentas."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "100"
+    referencia_normativa: "LOREG art. 133.1 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: plazo_contabilidad_electoral_hasta_dias
+    descripcion: "Días posteriores a las elecciones hasta los cuales se presenta la contabilidad electoral."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "125"
+    referencia_normativa: "LOREG art. 133.1 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: adelanto_solicitud_desde_dias
+    descripcion: "Día posterior a la convocatoria desde el que se puede solicitar el adelanto de subvenciones."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "21"
+    referencia_normativa: "LOREG art. 127 bis.2 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: adelanto_solicitud_hasta_dias
+    descripcion: "Día posterior a la convocatoria hasta el que se puede solicitar el adelanto de subvenciones."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "23"
+    referencia_normativa: "LOREG art. 127 bis.2 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: adelanto_disponible_desde_dias
+    descripcion: "Día posterior a la convocatoria desde el que se pone a disposición el adelanto."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "29"
+    referencia_normativa: "LOREG art. 127 bis.4 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: adelanto_porcentaje_maximo
+    descripcion: "Porcentaje máximo del adelanto sobre la subvención de las últimas elecciones equivalentes."
+    unidad: PORCENTAJE
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "30"
+    referencia_normativa: "LOREG art. 127 bis.1 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: adelanto_tras_contabilidad_porcentaje
+    descripcion: "Porcentaje de la subvención que el Estado adelanta tras presentar la contabilidad."
+    unidad: PORCENTAJE
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "90"
+    referencia_normativa: "LOREG art. 133.4 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: adelanto_aval_porcentaje
+    descripcion: "Aval bancario exigido sobre la subvención percibida como adelanto."
+    unidad: PORCENTAJE
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "10"
+    referencia_normativa: "LOREG art. 133.4 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
+    fecha_verificacion: null
+    verificador: null
+
+  - clave: adelanto_plazo_entrega_dias
+    descripcion: "Plazo, en días tras presentar la contabilidad, en que el Estado entrega el adelanto."
+    unidad: DIAS
+    regla: 
+    norma_orientativa: "LOREG, LO 5/1985 (CLAUDE.md §3.1)"
+    ambito: ELECTORAL
+    informativo: true
+    valor: "30"
+    referencia_normativa: "LOREG art. 133.4 (extracto aportado por el Tesorero el 30/10/2026; importes de las elecciones locales de 2023)"
     fecha_verificacion: null
     verificador: null
 

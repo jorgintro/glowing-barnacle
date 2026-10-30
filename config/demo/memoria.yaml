@@ -9,6 +9,10 @@ parametros:
     - "[COMPLETAR"
     - "PENDIENTE DE REVISAR"
   saldo_minimo_tesoreria: "500.00"
+  porcentaje_aviso_limite_campana: "90"
+  semaforo_ambar_pct: "10"
+  semaforo_rojo_pct: "25"
+  semaforo_importe_minimo: "50.00"
   reduccion_ingresos_prudente:
     ALTA: "5"
     MEDIA: "15"

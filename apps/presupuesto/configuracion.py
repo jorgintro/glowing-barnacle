@@ -13,7 +13,8 @@ from typing import Any
 import yaml
 from django.conf import settings
 
-UNIDADES_VALIDAS = {"EUR", "PORCENTAJE", "BOOLEANO", "LISTA", "TEXTO"}
+UNIDADES_VALIDAS = {"EUR", "PORCENTAJE", "BOOLEANO", "LISTA", "TEXTO", "DIAS"}
+AMBITOS_VALIDOS = {"GENERAL", "ELECTORAL"}
 DIMENSIONES_VALIDAS = {"ORDINARIO", "CAMPANA", "GRUPO_MUNICIPAL"}
 TIPOS_VALIDOS = {"INGRESO", "GASTO"}
 
@@ -34,6 +35,8 @@ class PartidaCfg:
     denominacion: str
     cuentas: tuple[str, ...]
     dimension: str
+    # Gasto de envío directo y personal a electores (su subvención queda fuera del límite).
+    envio_electoral: bool = False
 
 
 @dataclass(frozen=True)
@@ -68,6 +71,10 @@ class ParametroCfg:
     referencia_normativa: str
     fecha_verificacion: date | None
     verificador: str
+    # ELECTORAL: solo se exige verificarlo en ejercicios con proceso electoral (L-007).
+    ambito: str = "GENERAL"
+    # Informativo: alimenta estimaciones y calendarios, pero no condiciona ninguna regla (L-007).
+    informativo: bool = False
 
 
 @dataclass(frozen=True)
@@ -135,8 +142,13 @@ def cargar_cuadro_cuentas(directorio: Path | None = None) -> CuadroCuentasCfg:
             dimension = p.get("dimension", "ORDINARIO")
             if dimension not in DIMENSIONES_VALIDAS:
                 raise ErrorConfiguracion(f"Partida {cod_p}: dimensión desconocida «{dimension}».")
+            envio = p.get("envio_electoral", False)
+            if not isinstance(envio, bool):
+                raise ErrorConfiguracion(
+                    f"Partida {cod_p}: «envio_electoral» debe ser true o false."
+                )
             partidas.append(
-                PartidaCfg(cod_p, _texto(p.get("denominacion"), cod_p), usadas, dimension)
+                PartidaCfg(cod_p, _texto(p.get("denominacion"), cod_p), usadas, dimension, envio)
             )
         if not partidas:
             raise ErrorConfiguracion(f"Capítulo {cod_cap}: no tiene partidas.")
@@ -173,6 +185,12 @@ def cargar_parametros_legales(directorio: Path | None = None) -> ParametrosLegal
         unidad = p.get("unidad")
         if unidad not in UNIDADES_VALIDAS:
             raise ErrorConfiguracion(f"Parámetro {clave}: unidad desconocida «{unidad}».")
+        ambito = str(p.get("ambito") or "GENERAL")
+        if ambito not in AMBITOS_VALIDOS:
+            raise ErrorConfiguracion(f"Parámetro {clave}: ámbito desconocido «{ambito}».")
+        informativo = p.get("informativo", False)
+        if not isinstance(informativo, bool):
+            raise ErrorConfiguracion(f"Parámetro {clave}: «informativo» debe ser true o false.")
         valor = p.get("valor")
         if isinstance(valor, float):
             raise ErrorConfiguracion(
@@ -190,6 +208,8 @@ def cargar_parametros_legales(directorio: Path | None = None) -> ParametrosLegal
                 referencia_normativa=str(p.get("referencia_normativa") or ""),
                 fecha_verificacion=_fecha(p.get("fecha_verificacion"), clave),
                 verificador=str(p.get("verificador") or ""),
+                ambito=ambito,
+                informativo=informativo,
             )
         )
     return ParametrosLegalesCfg(tuple(resultado))
