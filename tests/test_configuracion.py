@@ -23,15 +23,38 @@ def test_los_nueve_parametros_declarados_verificados_figuran_como_tales() -> Non
     from apps.validaciones.contexto import parametro_verificado
 
     p = cfg.cargar_parametros_legales()
-    assert len(p.parametros) == 12
+    assert len(p.parametros) == 27
     verificados = {x.clave for x in p.parametros if parametro_verificado(x)}
-    assert verificados == {x.clave for x in p.parametros if x.valor is not None}
     assert len(verificados) == 9
     for x in p.parametros:
         if x.clave in verificados:
             assert "declaración" in x.verificador  # es una declaración del Tesorero, no un hecho
-        else:  # aportaciones de cargos, gasto electoral, endeudamiento: sin valor, sin firma
-            assert x.valor is None and x.fecha_verificacion is None and x.verificador == ""
+        else:  # sin verificar: sin fecha ni verificador
+            assert x.fecha_verificacion is None and x.verificador == ""
+        if x.ambito != "ELECTORAL" and x.clave not in verificados:
+            assert x.valor is None  # aportaciones de cargos y endeudamiento: no se inventan
+
+
+def test_los_parametros_electorales_figuran_sin_verificar_y_con_su_origen() -> None:
+    """Valores del extracto del 30/10/2026 (elecciones locales de 2023): sin verificar."""
+    from apps.validaciones.contexto import parametro_verificado
+
+    por_clave = {x.clave: x for x in cfg.cargar_parametros_legales().parametros}
+    electorales = [x for x in por_clave.values() if x.ambito == "ELECTORAL"]
+    assert len(electorales) == 16
+    assert not any(parametro_verificado(x) for x in electorales)
+    assert por_clave["gasto_electoral_euros_por_habitante"].valor == "0.11"
+    assert por_clave["gasto_electoral_adicional_por_provincia"].valor == "150301.11"
+    assert por_clave["limite_aportacion_electoral_por_persona"].valor == "10000.00"
+    assert por_clave["subvencion_electoral_por_concejal"].valor == "270.90"
+    assert por_clave["subvencion_electoral_por_voto"].valor == "0.54"
+    assert por_clave["subvencion_envio_por_elector"].valor == "0.23"
+    assert por_clave["plazo_contabilidad_electoral_hasta_dias"].valor == "125"
+    assert all("extracto aportado por el Tesorero" in x.referencia_normativa for x in electorales)
+    # los de solo cálculo informativo no condicionan ninguna regla
+    assert por_clave["subvencion_electoral_por_voto"].informativo
+    assert not por_clave["gasto_electoral_euros_por_habitante"].informativo
+    assert not por_clave["limite_aportacion_electoral_por_persona"].informativo
 
 
 def test_los_valores_del_extracto_de_la_ley_estan_cargados_con_su_referencia() -> None:
@@ -62,7 +85,6 @@ def test_los_valores_del_extracto_de_la_ley_estan_cargados_con_su_referencia() -
     # lo que el extracto no dice sigue sin valor (no se inventa)
     for clave in (
         "limite_aportaciones_cargos_anual",
-        "limite_gasto_electoral",
         "limite_endeudamiento",
     ):
         assert por_clave[clave].valor is None and por_clave[clave].referencia_normativa == ""
@@ -140,7 +162,9 @@ def test_sincronizacion_es_idempotente_y_audita() -> None:
     assert Capitulo.objects.count() == 13
     assert Partida.objects.get(codigo="G.7.1").dimension_por_defecto == "CAMPANA"
     assert CuentaPGC.objects.filter(codigo="720").exists()
-    assert ParametroLegal.objects.filter(valor__isnull=False).count() == 9  # los del extracto
+    assert ParametroLegal.objects.filter(valor__isnull=False).count() == 25  # 9 + 16 electorales
+    assert ParametroLegal.objects.filter(ambito="ELECTORAL").count() == 16
+    assert Partida.objects.filter(envio_electoral=True).count() == 4  # G.7.11 a G.7.14
     assert (
         sum(p.verificado for p in ParametroLegal.objects.all()) == 9
     )  # declarados por el Tesorero

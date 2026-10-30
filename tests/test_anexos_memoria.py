@@ -59,14 +59,22 @@ def v008(version):
 # ------------------------------------------------------------------ configuración
 
 
-def test_se_siembran_las_seis_secciones_propuestas(db) -> None:
+def test_se_siembran_las_siete_secciones_propuestas(db) -> None:
     asegurar_configuracion(False)
     claves = list(
         SeccionMemoriaCfg.objects.filter(es_demo=False)
         .order_by("orden")
         .values_list("clave", flat=True)
     )
-    assert claves == ["resumen", "contexto", "criterios", "riesgos", "cumplimiento", "acuerdo"]
+    assert claves == [
+        "resumen",
+        "contexto",
+        "criterios",
+        "riesgos",
+        "cumplimiento",
+        "acuerdo",
+        "campana",
+    ]
     p = parametros_actuales(False)
     assert p.variaciones_destacadas == 5 and p.saldo_minimo is None
     assert p.marcas_pendiente == ("[COMPLETAR", "PENDIENTE DE REVISAR")
@@ -87,7 +95,7 @@ def test_la_demo_tiene_su_propio_juego_de_valores_ficticios(db) -> None:
     assert real.saldo_minimo is None and demo.saldo_minimo == Decimal("500.00")
     assert demo.reduccion_ingresos["BAJA"] == Decimal("40")
     assert real.prudente_configurado is False and demo.prudente_configurado is True
-    assert SeccionMemoriaCfg.objects.filter(es_demo=True).count() == 6
+    assert SeccionMemoriaCfg.objects.filter(es_demo=True).count() == 7
 
 
 def test_la_instantanea_de_parametros_es_fiel(db) -> None:
@@ -149,7 +157,7 @@ def test_la_seccion_de_campana_solo_se_pide_con_proceso_electoral(esc) -> None:
     sin = version_valida(esc, 2062)
     con = version_valida(esc, 2063, campana=True)
     SeccionMemoriaCfg.objects.create(
-        clave="campana",
+        clave="plan-de-campana",
         titulo="Plan de campaña",
         orden=7,
         solo_con_proceso_electoral=True,
@@ -216,7 +224,7 @@ def test_proponer_sella_con_la_huella_nueva_y_guarda_la_instantanea(esc) -> None
     v = version_valida(esc)
     proponer(esc, v)
     v.refresh_from_db()
-    assert v.version_huella == 2 and verificar_integridad(v).ok
+    assert v.version_huella == 3 and verificar_integridad(v).ok
     t = v.transiciones.get()
     guardado = dict(t.validacion or {})
     assert guardado["parametros_anexos"]["secciones"][0]["clave"] == "resumen"
@@ -366,7 +374,7 @@ def test_el_bloque_de_riesgos_detecta_la_confianza_baja(esc) -> None:
 def test_la_seccion_de_cumplimiento_usa_la_instantanea_al_estar_sellada(esc) -> None:
     v = version_valida(esc)
     viva = construir_memoria(v).secciones[4].auto
-    assert "ahora mismo" in viva["origen"] and len(viva["superadas"]) == 21
+    assert "ahora mismo" in viva["origen"] and len(viva["superadas"]) == 26
     proponer(esc, v)
     v.refresh_from_db()
     sellada = construir_memoria(v).secciones[4].auto

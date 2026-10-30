@@ -14,7 +14,7 @@ Casos que cubre (los que dependen de reglas aún no construidas llegan con su fa
 import secrets
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.db import connection, transaction
@@ -22,7 +22,15 @@ from django.utils import timezone
 
 from apps.anexos import servicios as anexos
 from apps.anexos.configuracion import parametros_actuales
-from apps.anexos.models import ParametrosAnexosCfg, SeccionMemoria, SeccionMemoriaCfg
+from apps.anexos.ejecucion import importar_ejecucion
+from apps.anexos.models import (
+    EjecucionReal,
+    ImportacionEjecucion,
+    ParametrosAnexosCfg,
+    ProcesoElectoral,
+    SeccionMemoria,
+    SeccionMemoriaCfg,
+)
 from apps.auditoria.servicios import Contexto, registrar
 from apps.flujo import servicios as flujo
 from apps.flujo.models import (
@@ -347,7 +355,7 @@ def _lineas_campana() -> list[LineaDemo]:
     ext = "EXTRAORDINARIO"
     return [
         LineaDemo(
-            "I.3.3",
+            "I.3.4",
             "Subvención electoral prevista",
             "9000",
             "BAJA",
@@ -359,7 +367,7 @@ def _lineas_campana() -> list[LineaDemo]:
             dimension="CAMPANA",
         ),
         LineaDemo(
-            "I.4.1",
+            "I.4.3",
             "Donaciones para la campaña",
             "3200",
             "BAJA",
@@ -371,7 +379,7 @@ def _lineas_campana() -> list[LineaDemo]:
             dimension="CAMPANA",
         ),
         LineaDemo(
-            "G.7.1",
+            "G.7.9",
             "Cartelería y propaganda electoral",
             "6000",
             "",
@@ -382,7 +390,7 @@ def _lineas_campana() -> list[LineaDemo]:
             tipo=ext,
         ),
         LineaDemo(
-            "G.7.1",
+            "G.7.2",
             "Actos de campaña",
             "2500",
             "",
@@ -393,7 +401,7 @@ def _lineas_campana() -> list[LineaDemo]:
             tipo=ext,
         ),
         LineaDemo(
-            "G.7.1",
+            "G.7.13",
             "Buzoneo",
             "3500",
             "",
@@ -492,7 +500,7 @@ class _Constructor:
         )
         if donantes is None:
             donantes = _DONANTES_POR_PARTIDA.get(spec.partida, ())
-            if spec.dimension == "CAMPANA" and spec.partida == "I.4.1":
+            if spec.dimension == "CAMPANA" and spec.partida == "I.4.3":
                 donantes = _DONANTES_CAMPANA
         if donantes:
             repartos = repartir_proporcional(importe, [1] * len(donantes))
@@ -666,10 +674,10 @@ def _casos_incumplidos(version: VersionPresupuesto) -> None:
         ),
         donantes=(),
     )
-    # L-004: el gasto de campaña, con este gasto extra, supera el límite ficticio de 15.000 €.
+    # L-004: el gasto de campaña, con este gasto extra, supera el límite ficticio de 14.960 €.
     c.anadir(
         LineaDemo(
-            "G.7.1",
+            "G.7.3",
             "Gasto de campaña adicional",
             "4000",
             "",
@@ -677,6 +685,35 @@ def _casos_incumplidos(version: VersionPresupuesto) -> None:
             "Estimación ficticia",
             "Campaña",
             tipo="EXTRAORDINARIO",
+        ),
+    )
+    # L-012: una persona aporta a las cuentas electorales más del máximo ficticio (1.000 €).
+    c.anadir(
+        LineaDemo(
+            "I.4.3",
+            "Aportación de campaña excesiva",
+            "1500",
+            "BAJA",
+            "Aportación ficticia que, sumada a las demás del mismo donante, supera el máximo.",
+            "Estimación ficticia",
+            "Tesorería",
+            tipo="EXTRAORDINARIO",
+            dimension="CAMPANA",
+        ),
+        donantes=("D5",),
+    )
+    # L-013 y L-014 (avisos): subvención electoral por encima del gasto y de la estimada.
+    c.anadir(
+        LineaDemo(
+            "I.3.4",
+            "Subvención electoral excesiva",
+            "20000",
+            "BAJA",
+            "Importe ficticio muy superior a lo que cabría esperar.",
+            "Estimación ficticia",
+            "Tesorería",
+            tipo="CONDICIONADO",
+            dimension="CAMPANA",
         ),
     )
     # L-005: endeudamiento superior al límite ficticio de 5.000 €.
@@ -695,7 +732,7 @@ def _casos_incumplidos(version: VersionPresupuesto) -> None:
         LineaDemo(
             "G.3.4",
             "Gira de actos sin financiación prevista",
-            "10000",
+            "40000",
             "",
             "Gasto ficticio que deja el presupuesto en déficit, sin plan de financiación.",
             "Estimación ficticia",
@@ -832,6 +869,33 @@ def _ctx(usuarios: dict[str, Usuario], nombre: str, rol: str) -> Contexto:
 SALDO_INICIAL_DEMO = Decimal("200000.00")
 
 
+def _proceso_demo(
+    version: VersionPresupuesto,
+    usuarios: dict[str, Usuario],
+    *,
+    anio: int,
+    envio: bool,
+    concejales: int,
+    votos: int,
+) -> None:
+    """Datos ficticios del proceso electoral (140.000 habitantes dan 14.960 € de límite demo)."""
+    anexos.guardar_proceso_electoral(
+        _ctx(usuarios, "demo_tesorero", Rol.TESORERO),
+        version,
+        denominacion="Elecciones locales (ficticias)",
+        fecha_convocatoria=date(anio, 8, 25),
+        fecha_elecciones=date(anio, 9, 26),
+        fecha_proclamacion=date(anio, 10, 15),
+        habitantes_derecho=136000,
+        provincias_adicional=0,
+        subvencion_envio_aplicable=envio,
+        electores_envio=20000 if envio else None,
+        concejales_previstos=concejales,
+        votos_previstos=votos,
+        observaciones="Datos ficticios de demostración.",
+    )
+
+
 def _redactar_memoria(
     version: VersionPresupuesto, usuarios: dict[str, Usuario], *, solo: tuple[str, ...] = ()
 ) -> None:
@@ -850,6 +914,26 @@ def _redactar_memoria(
         anexos.guardar_seccion(tesorero, version, cfg.clave, texto)
     if not solo:
         anexos.guardar_saldo_inicial(tesorero, version, SALDO_INICIAL_DEMO)
+
+
+def _importar_ejecucion_demo(version: VersionPresupuesto, usuarios: dict[str, Usuario]) -> None:
+    """Carga una ejecución real ficticia (hasta junio) con desviaciones de todos los colores."""
+    factores = [Decimal(x) for x in ("1.00", "0.97", "1.12", "0.80", "1.30", "1.04")]
+    filas = ["codigo;mes;importe"]
+    for i, ln in enumerate(Linea.objects.filter(version=version, anulada=False).order_by("codigo")):
+        if i % 7 == 6:
+            continue  # sin datos en el fichero, a propósito
+        factor = factores[i % len(factores)]
+        for m in ImporteMensual.objects.filter(linea=ln, mes__lte=6).order_by("mes"):
+            importe = f"{redondear(m.importe * factor):.2f}".replace(".", ",")
+            filas.append(f"{ln.codigo};{m.mes};{importe}")
+    importar_ejecucion(
+        _ctx(usuarios, "demo_tesorero", Rol.TESORERO),
+        version.ejercicio,
+        nombre_fichero="ejecucion_ficticia_demo.csv",
+        contenido=("\n".join(filas) + "\n").encode("utf-8"),
+        mes_corte=6,
+    )
 
 
 def _recorrer_flujo(
@@ -942,6 +1026,7 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
     e2027 = _ejercicio(2027, "Ejercicio de demostración con campaña", True, autor)
     v1 = _version(e2027, 1, "Primera propuesta (rechazada por la Junta en la demostración)", autor)
     _rellenar(v1, campana=True, factor=Decimal("0.90"), anterior=False)
+    _proceso_demo(v1, usuarios, anio=2027, envio=True, concejales=20, votos=10000)
     _recorrer_flujo(
         v1,
         usuarios,
@@ -953,6 +1038,7 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
     )
     v2 = _version(e2027, 2, "Versión corregida tras el rechazo", autor, v1, TipoOrigen.TRAS_RECHAZO)
     _rellenar(v2, campana=True, factor=Decimal("1.00"), anterior=False)
+    _proceso_demo(v2, usuarios, anio=2027, envio=True, concejales=20, votos=10000)
     _recorrer_flujo(
         v2,
         usuarios,
@@ -966,6 +1052,7 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
         e2027, 3, "Modificación: reforma ficticia de la sede", autor, v2, TipoOrigen.MODIFICACION
     )
     c3 = _rellenar(v3, campana=True, factor=Decimal("1.00"), anterior=False)
+    _proceso_demo(v3, usuarios, anio=2027, envio=True, concejales=20, votos=10000)
     c3.anadir(
         LineaDemo(
             "G.2.5",
@@ -1005,11 +1092,13 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
         votos={"demo_tesorero": A, "demo_cp1": A, "demo_cp2": A, "demo_cp3": C},
         convocar="CONV-DEMO-03",
     )
+    _importar_ejecucion_demo(v2030, usuarios)
 
     # 2031 · con campaña y defectos deliberados.
     e2031 = _ejercicio(2031, "Casos que incumplen reglas", True, autor)
     v = _version(e2031, 1, "Borrador con errores deliberados para probar los bloqueos", autor)
     _casos_incumplidos(v)
+    _proceso_demo(v, usuarios, anio=2031, envio=False, concejales=5, votos=2000)
     # Memoria a medias y sin saldo inicial, a propósito (V-008 y V-009).
     _redactar_memoria(v, usuarios, solo=("resumen", "contexto"))
 
@@ -1058,6 +1147,9 @@ def borrar_demo(contexto: Contexto) -> dict[str, int]:
         "hipotesis": Hipotesis.objects.filter(linea_id__in=ids_lineas).delete()[0],
         "comentarios": Comentario.objects.filter(es_demo=True).delete()[0],
         "secciones_memoria": SeccionMemoria.objects.filter(es_demo=True).delete()[0],
+        "procesos_electorales": ProcesoElectoral.objects.filter(es_demo=True).delete()[0],
+        "ejecucion_real": EjecucionReal.objects.filter(es_demo=True).delete()[0],
+        "importaciones": ImportacionEjecucion.objects.filter(es_demo=True).delete()[0],
         "lineas": Linea.objects.filter(pk__in=ids_lineas).delete()[0],
     }
     cuentas["configuracion_anexos"] = (
