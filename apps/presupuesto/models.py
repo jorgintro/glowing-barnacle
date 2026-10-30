@@ -160,6 +160,13 @@ class Ejercicio(models.Model):
         return self.versiones.order_by("-numero").first()
 
 
+class TipoOrigen(models.TextChoices):
+    NUEVA = "NUEVA", "Versión nueva"
+    TRAS_RECHAZO = "TRAS_RECHAZO", "Nuevo borrador tras un rechazo"
+    MODIFICACION = "MODIFICACION", "Modificación presupuestaria"
+    PRORROGA = "PRORROGA", "Prórroga del ejercicio anterior"
+
+
 class VersionPresupuesto(models.Model):
     ejercicio = models.ForeignKey(Ejercicio, on_delete=models.PROTECT, related_name="versiones")
     numero = models.PositiveSmallIntegerField()
@@ -176,6 +183,16 @@ class VersionPresupuesto(models.Model):
         "self", null=True, blank=True, on_delete=models.PROTECT, related_name="derivadas"
     )
     es_prorroga = models.BooleanField(default=False)
+    tipo_origen = models.CharField(
+        max_length=20, choices=TipoOrigen.choices, default=TipoOrigen.NUEVA
+    )
+    proponente = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    requiere_junta = models.BooleanField(
+        default=True,
+        help_text="Si la versión debe ser ratificada por la Junta General (§5.3 de CLAUDE.md).",
+    )
     explicacion_resultado = models.TextField(
         blank=True, help_text="Explica el resultado presupuestario (regla V-006)."
     )

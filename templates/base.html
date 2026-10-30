@@ -17,7 +17,7 @@
         <span class="sesion">{{ user.nombre_visible }}{% if rol_activo_nombre %} · <strong>{{ rol_activo_nombre }}</strong>{% endif %}</span>
         <a href="{% url 'presupuesto:lista' %}">Presupuestos</a>
         <a href="{% url 'presupuesto:configuracion' %}">Configuración</a>
-        {% if es_tesorero %}<a href="{% url 'presupuesto:donantes' %}">Donantes</a><a href="{% url 'usuarios:lista' %}">Usuarios</a>{% endif %}
+        {% if es_tesorero %}<a href="{% url 'presupuesto:donantes' %}">Donantes</a><a href="{% url 'organizacion:panel' %}">Organización</a><a href="{% url 'flujo:auditoria' %}">Auditoría</a><a href="{% url 'usuarios:lista' %}">Usuarios</a>{% endif %}
         <a href="{% url 'usuarios:seleccionar_rol' %}">Cambiar de rol</a>
         <form method="post" action="{% url 'usuarios:salir' %}">{% csrf_token %}
           <button class="boton enlace" type="submit">Salir</button></form>

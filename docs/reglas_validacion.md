@@ -83,7 +83,9 @@ se citan de memoria. El sistema solo aplica lo que figure verificado en `paramet
 
 ## Reglas orgánicas (O)
 
-Son funciones puras: la votación y la ratificación (Fase 4) les pasarán sus datos.
+Son funciones puras que el flujo (`apps/flujo`) conecta a la votación y a la ratificación: ya se
+aplican al cerrar la votación (O-001, O-003) y al registrar el acuerdo de la Junta (O-002, O-004).
+O-001 y O-003 se comprueban también al votar. Ver `docs/flujo.md`.
 
 | Código | Qué comprueba | Tipo |
 |---|---|---|

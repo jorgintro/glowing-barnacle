@@ -5,3 +5,9 @@ version: 1
 quorum: {base: MIEMBROS, minimo: "1/2", estricto: true}
 mayoria: {tipo: SIMPLE}
 proponente_puede_votar: true
+
+# DEMOSTRACIÓN: el Tesorero registra la ratificación (y la Junta también puede hacerlo).
+ratificacion_registrada_por: [JUNTA_GENERAL, TESORERO]
+# FICTICIO: una modificación de más de 500 € vuelve a la Junta.
+umbral_modificacion_junta: {tipo: IMPORTE, valor: "500.00"}
+transferencias_solo_cp: true

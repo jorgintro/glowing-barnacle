@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titulo %}Registrar el acuerdo de la Junta{% endblock %}
+{% block contenido %}
+<h1>Registrar el acuerdo de la Junta General</h1>
+<p class="suave">{{ version.ejercicio }} · versión {{ version.numero }}{% if aprobacion %} · aprobada por la CP el {{ aprobacion|date:"d/m/Y" }}{% endif %}</p>
+{% if sin_convocatoria %}<div class="aviso-caja"><strong>No consta la convocatoria de la Junta.</strong> Regístrala antes
+  (<a href="{% url 'flujo:convocatoria' version.pk %}">registrar convocatoria</a>) o acepta el aviso abajo y deja constancia.</div>{% endif %}
+<form method="post" class="tarjeta">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+  {% for campo in form %}
+    {% if campo.name != "acepto_aviso" or sin_convocatoria %}
+    <div class="campo">
+      {% if campo.field.widget.input_type == "checkbox" %}<label for="{{ campo.id_for_label }}">{{ campo }} {{ campo.label }}</label>
+      {% else %}<label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}{% endif %}
+      {{ campo.errors }}</div>
+    {% endif %}
+  {% endfor %}
+  <button class="boton" type="submit">Registrar el acuerdo</button>
+  <a class="boton secundario" href="{% url 'presupuesto:version' version.pk %}">Cancelar</a>
+</form>
+{% endblock %}

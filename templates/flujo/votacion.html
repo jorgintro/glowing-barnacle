@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block titulo %}Votación{% endblock %}
+{% block contenido %}
+<h1>Votación de la Comisión Permanente</h1>
+<p class="suave">{{ version.ejercicio }} · versión {{ version.numero }} ·
+  <span class="etiqueta {% if votacion.estado == 'ABIERTA' %}aviso{% else %}marca{% endif %}">{{ votacion.get_estado_display }}</span>
+  {% if votacion.resultado %}<span class="etiqueta {% if votacion.resultado == 'APROBADA' %}ok{% elif votacion.resultado == 'RECHAZADA' %}error{% else %}aviso{% endif %}">{{ votacion.get_resultado_display }}</span>{% endif %}
+  {% if version.es_demo %}<span class="etiqueta aviso">DEMO</span>{% endif %}</p>
+
+<div class="cifras">
+  <div class="cifra"><div class="rotulo">Miembros</div><div class="valor">{% if votacion.estado == "CERRADA" and votacion.miembros is not None %}{{ votacion.miembros }}{% else %}{{ datos.miembros }}{% endif %}</div></div>
+  <div class="cifra"><div class="rotulo">Han votado</div><div class="valor">{% if votacion.estado == "CERRADA" and votacion.asistentes is not None %}{{ votacion.asistentes }}{% else %}{{ datos.asistentes }}{% endif %}</div></div>
+  <div class="cifra"><div class="rotulo">A favor</div><div class="valor">{% if votacion.estado == "CERRADA" and votacion.a_favor is not None %}{{ votacion.a_favor }}{% else %}{{ datos.a_favor }}{% endif %}</div></div>
+  <div class="cifra"><div class="rotulo">En contra</div><div class="valor">{% if votacion.estado == "CERRADA" and votacion.en_contra is not None %}{{ votacion.en_contra }}{% else %}{{ datos.en_contra }}{% endif %}</div></div>
+  <div class="cifra"><div class="rotulo">Abstenciones</div><div class="valor">{% if votacion.estado == "CERRADA" and votacion.abstenciones is not None %}{{ votacion.abstenciones }}{% else %}{{ datos.abstenciones }}{% endif %}</div></div>
+</div>
+
+{% if votacion.estado == "ABIERTA" %}
+  {% if evaluacion %}
+    {% if evaluacion.aprobada %}<p class="aviso-caja" style="border-color:var(--ok);background:#e6f2ea">Con los votos actuales <strong>hay quórum y mayoría</strong>: se podría cerrar y aprobar.</p>
+    {% else %}<div class="aviso-caja"><strong>Con los votos actuales todavía no se puede aprobar:</strong>
+      <ul>{% for i in evaluacion.incidencias %}<li>{{ i.mensaje }}</li>{% endfor %}</ul></div>{% endif %}
+  {% endif %}
+  {% for i in prohibido %}<div class="aviso-caja error">{{ i.mensaje }}</div>{% endfor %}
+{% elif votacion.observaciones %}<p><strong>Observaciones:</strong> {{ votacion.observaciones }}</p>{% endif %}
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">Voto de cada miembro</h2>
+  <table>
+    <thead><tr><th scope="col">Miembro</th><th scope="col">Voto</th><th scope="col">Cuándo</th></tr></thead>
+    <tbody>
+    {% for f in filas %}
+      <tr><td>{{ f.nombre }}{% if f.es_proponente %} <span class="etiqueta marca">Propone</span>{% endif %}</td>
+        <td>{% if f.voto %}{{ f.voto.get_voto_display }}{% else %}<span class="suave">sin votar</span>{% endif %}</td>
+        <td>{% if f.voto %}{{ f.voto.emitido_en|date:"d/m/Y H:i" }}{% else %}—{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if flujo.puede_votar %}
+<form method="post" action="{% url 'flujo:votar' version.pk %}" class="tarjeta">{% csrf_token %}
+  <h2 style="margin-top:0">{% if mi_voto %}Cambiar mi voto{% else %}Emitir mi voto{% endif %}</h2>
+  {{ form_votar.voto }}
+  <p><button class="boton" type="submit">Registrar mi voto</button></p>
+</form>
+{% endif %}
+{% if flujo.puede_cerrar %}
+<form method="post" action="{% url 'flujo:cerrar' version.pk %}" class="tarjeta">{% csrf_token %}
+  <h2 style="margin-top:0">Cerrar la votación</h2>
+  {% for campo in form_cerrar %}<div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}{{ campo.errors }}</div>{% endfor %}
+  <button class="boton" type="submit">Cerrar la votación</button>
+</form>
+{% endif %}
+<p><a href="{% url 'presupuesto:version' version.pk %}">← Volver al presupuesto</a></p>
+{% endblock %}

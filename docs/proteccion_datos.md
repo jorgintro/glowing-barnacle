@@ -6,6 +6,8 @@
 |---|---|---|
 | Nombre y NIF/NIE/CIF del donante, y tipo de persona | Comprobar el límite anual por donante y la identificación (L-001, L-003) | Tesorero (completo). Los demás roles solo ven el NIF enmascarado (`****678Z`) en los avisos |
 | Si el donante es parte de un contrato público vigente (sí/no, declarado por el Tesorero) | Aplicar la regla L-010 | Tesorero |
+| Nombre, apellidos, DNI y cargo de las personas del panel de la organización | Los certificados necesitan identificar a quien certifica | Tesorero (el panel); salen en los certificados |
+| Voto nominal de cada miembro de la CP, con su nombre | Dejar constancia de la votación | Tesorero y CP; en el certificado solo si se pide |
 | Nombre de usuario y nombre de los miembros | Acceso nominal y auditoría | Tesorero |
 
 **Decisión del Tesorero:** los donantes se identifican (esto prima sobre la recomendación de datos
@@ -18,6 +20,7 @@ mínimos de `CLAUDE.md` §13.3). Se guarda solo lo indicado: no hay dirección, 
   la auditoría no se puede borrar y así no impide atender un derecho de supresión.
 * **Nada se borra**: un donante se da de baja con motivo y deja de poder recibir donaciones.
 * **Acceso restringido**: solo el Tesorero ve y gestiona los donantes.
+* **Auditoría sin DNI ni nombres** de personas del panel: solo identificadores internos.
 * **Sin envío a terceros**: el sistema no envía datos a servicios externos.
 
 ## Pendiente de definir por la organización (no lo decide el sistema)

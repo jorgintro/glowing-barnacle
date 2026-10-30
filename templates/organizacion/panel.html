@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Organización{% endblock %}
+{% block contenido %}
+<h1>Panel de administración de la organización</h1>
+<p class="aviso-caja">Aquí se escriben los datos que aparecen en los certificados. Las personas llevan DNI: son datos personales
+  (consulta <code>docs/proteccion_datos.md</code>). Solo el Tesorero ve esta pantalla.</p>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">1 · Datos de la organización</h2>
+  <form method="post" action="{% url 'organizacion:guardar_datos' %}">{% csrf_token %}
+    {% for campo in form_org %}
+    <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+      {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}</div>
+    {% endfor %}
+    <button class="boton" type="submit">Guardar datos</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">2 · Cargos, ocupaciones y denominaciones</h2>
+  <p class="suave">Ejemplos de lo que puedes escribir: Tesorero, Gerente, Secretaria, Presidente, Vocal… Pon los que use tu organización.</p>
+  <form method="post" action="{% url 'organizacion:guardar_cargos' %}">{% csrf_token %}
+    {% for campo in form_cargos %}
+    <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+      {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}</div>
+    {% endfor %}
+    <button class="boton" type="submit">Guardar la lista de cargos</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">3 · Personas</h2>
+  <p><a class="boton" href="{% url 'organizacion:persona_nueva' %}">Añadir persona</a></p>
+  <table>
+    <thead><tr><th scope="col">Nombre y apellidos</th><th scope="col">DNI</th><th scope="col">Cargo o cargos</th><th scope="col">Cuenta</th><th scope="col">Estado</th><th scope="col"></th></tr></thead>
+    <tbody>
+    {% for p in personas %}
+      <tr>
+        <td>{{ p.nombre_completo }}</td><td>{{ p.dni }}</td><td>{{ p.cargos_texto|default:"—" }}</td>
+        <td>{{ p.usuario.username|default:"—" }}</td>
+        <td>{% if p.activa %}<span class="etiqueta ok">Activa</span>{% else %}<span class="etiqueta error">De baja</span><div class="sub">{{ p.motivo_baja }}</div>{% endif %}</td>
+        <td class="acciones">{% if p.activa %}<a href="{% url 'organizacion:persona_editar' p.pk %}">Editar</a> · <a href="{% url 'organizacion:persona_baja' p.pk %}">Dar de baja</a>{% endif %}</td>
+      </tr>
+    {% empty %}<tr><td colspan="6" class="suave">Todavía no hay personas.</td></tr>{% endfor %}
+    {% for p in personas_demo %}
+      <tr><td>{{ p.nombre_completo }} <span class="etiqueta aviso">DEMO</span></td><td>{{ p.dni }}</td><td>{{ p.cargos_texto|default:"—" }}</td><td>{{ p.usuario.username|default:"—" }}</td><td colspan="2">Datos ficticios</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -12,8 +12,10 @@ añadir las reglas que sugería. No está contrastado con el BOE.
    extracto. Sin parámetro verificado, la regla no se da por cumplida.
 3. **Verificación declarada, no comprobada.** El Tesorero indicó «verificado» sobre los cuatro
    parámetros que se le mostraron. Se registran como verificados con fecha 29/10/2026 y verificador
-   «Tesorero (declaración en la sesión)». **El sistema no puede comprobar esa verificación**, y los
-   cinco parámetros añadidos después quedan pendientes hasta que el Tesorero los confirme.
+   «Tesorero (declaración en la sesión)». **El sistema no puede comprobar esa verificación**. Los
+   cinco parámetros añadidos después se registraron también como verificados cuando el Tesorero lo
+   confirmó expresamente (29/10/2026). Quedan sin valor, y pendientes, solo las aportaciones de
+   cargos, el gasto electoral y el endeudamiento.
 4. **Datos nuevos**: en el donante, si es parte de un contrato público; en la donación, tipo (dinero,
    especie, inmueble), finalista y revocable; en las líneas de I.5, el importe de operaciones
    individuales altas. Todos los declara el Tesorero.

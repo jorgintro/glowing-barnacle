@@ -217,10 +217,24 @@ class MayoriaCfg:
 
 
 @dataclass(frozen=True)
+class UmbralModificacion:
+    """Importe o porcentaje a partir del cual una modificación debe volver a la Junta."""
+
+    tipo: str  # IMPORTE | PORCENTAJE
+    valor: Decimal
+
+
+@dataclass(frozen=True)
 class ReglasOrganicasCfg:
     quorum: Fraccion | None
     mayoria: MayoriaCfg | None
     proponente_puede_votar: bool | None
+    # Quién registra la ratificación: por defecto solo la Junta General (CLAUDE.md §4).
+    ratificacion_registrada_por: tuple[str, ...] = ("JUNTA_GENERAL",)
+    # Sin umbral configurado, toda modificación vuelve a la Junta (opción prudente).
+    umbral_modificacion_junta: UmbralModificacion | None = None
+    # Si las transferencias entre partidas (sin cambiar los totales) bastan con la CP.
+    transferencias_solo_cp: bool = False
 
 
 @dataclass(frozen=True)
@@ -297,7 +311,36 @@ def cargar_reglas_organicas(directorio: Path | None = None) -> ReglasOrganicasCf
     puede = datos.get("proponente_puede_votar")
     if puede is not None and not isinstance(puede, bool):
         raise ErrorConfiguracion("proponente_puede_votar debe ser true, false o estar vacío.")
-    return ReglasOrganicasCfg(quorum, mayoria, puede)
+
+    quien = datos.get("ratificacion_registrada_por")
+    registran: tuple[str, ...] = ("JUNTA_GENERAL",)
+    if quien is not None:
+        if (
+            not isinstance(quien, list)
+            or not quien
+            or any(r not in {"JUNTA_GENERAL", "TESORERO"} for r in quien)
+        ):
+            raise ErrorConfiguracion(
+                "ratificacion_registrada_por debe ser una lista con JUNTA_GENERAL y/o TESORERO."
+            )
+        registran = tuple(dict.fromkeys(quien))
+
+    umbral = None
+    if datos.get("umbral_modificacion_junta") is not None:
+        u = datos["umbral_modificacion_junta"]
+        if u.get("tipo") not in {"IMPORTE", "PORCENTAJE"}:
+            raise ErrorConfiguracion("umbral_modificacion_junta: el tipo es IMPORTE o PORCENTAJE.")
+        valor = _decimal(u.get("valor"), "umbral_modificacion_junta")
+        if valor is None or valor < 0:
+            raise ErrorConfiguracion("umbral_modificacion_junta: falta un valor no negativo.")
+        umbral = UmbralModificacion(u["tipo"], valor)
+
+    solo_cp = datos.get("transferencias_solo_cp")
+    if solo_cp is None:
+        solo_cp = False
+    if not isinstance(solo_cp, bool):
+        raise ErrorConfiguracion("transferencias_solo_cp debe ser true o false.")
+    return ReglasOrganicasCfg(quorum, mayoria, puede, registran, umbral, solo_cp)
 
 
 def cargar_parametros_internos(directorio: Path | None = None) -> ParametrosInternosCfg:

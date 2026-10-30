@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titulo %}Comentarios{% endblock %}
+{% block contenido %}
+<h1>Comentarios</h1>
+<p class="suave">{{ version.ejercicio }} · versión {{ version.numero }}. Los comentarios no son cifras: se pueden hacer en cualquier momento tras proponer.</p>
+<section class="tarjeta">
+  {% for c in lista %}
+  <div style="border-bottom:1px solid var(--linea);padding:.6rem 0">
+    <strong>{{ c.autor.nombre_visible }}</strong> <span class="sub">({{ c.rol_autor }}) · {{ c.fecha|date:"d/m/Y H:i" }}{% if c.linea %} · línea {{ c.linea.codigo }}{% endif %}</span>
+    {% if c.resuelto %}<span class="etiqueta ok">Resuelto</span>{% else %}<span class="etiqueta aviso">Abierto</span>{% endif %}
+    <div>{{ c.texto }}</div>
+    {% if not c.resuelto %}<form method="post" action="{% url 'flujo:resolver_comentario' version.pk c.pk %}" style="display:inline">{% csrf_token %}<button class="boton secundario" type="submit">Marcar como resuelto</button></form>{% endif %}
+  </div>
+  {% empty %}<p class="suave">Todavía no hay comentarios.</p>{% endfor %}
+</section>
+<form method="post" class="tarjeta">{% csrf_token %}
+  <h2 style="margin-top:0">Nuevo comentario</h2>
+  {% for campo in form %}<div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}{{ campo.errors }}</div>{% endfor %}
+  <button class="boton" type="submit">Añadir comentario</button>
+</form>
+<p><a href="{% url 'presupuesto:version' version.pk %}">← Volver al presupuesto</a></p>
+{% endblock %}

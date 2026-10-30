@@ -17,7 +17,7 @@ from apps.presupuesto.estados import EstadoVersion
 from apps.presupuesto.models import Donacion, Donante, TipoPersona
 from apps.presupuesto.nif import normalizar_nif, validar_nif
 from apps.usuarios.roles import Rol
-from tests.conftest import crear
+from tests.conftest import crear, poner_estado
 from tests.util_validaciones import donante, linea, nif
 
 pytestmark = pytest.mark.django_db
@@ -166,8 +166,7 @@ def test_version_no_borrador_no_admite_donaciones(borrador, ctx_tesorero: Contex
     ln = linea(ctx_tesorero, borrador, "I.4.1", "100", confianza="BAJA")
     d = donante(ctx_tesorero, 1)
     don = dn.registrar_donacion(ctx_tesorero, borrador, ln, d, Decimal("10"))
-    borrador.estado = EstadoVersion.PROPUESTO
-    borrador.save()
+    poner_estado(borrador, EstadoVersion.PROPUESTO)
     with pytest.raises(VersionNoEditable):
         dn.registrar_donacion(ctx_tesorero, borrador, ln, d, Decimal("10"))
     with pytest.raises(VersionNoEditable):
@@ -233,7 +232,7 @@ def test_la_estructura_del_cuadro_demo_coincide_con_la_real() -> None:
 
 def test_ninguna_configuracion_real_trae_valores_inventados_ni_verificados() -> None:
     real = cargar_configuracion(False)
-    assert sum(bool(p.verificador) for p in real.legales.values()) == 4  # solo los declarados
+    assert sum(bool(p.verificador) for p in real.legales.values()) == 9  # solo los declarados
     assert sum(p.valor is not None for p in real.legales.values()) == 9  # solo los del extracto
     assert real.internos.umbral_variacion_porcentaje is None
     assert (

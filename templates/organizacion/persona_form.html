@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block titulo %}{% if persona %}Editar persona{% else %}Nueva persona{% endif %}{% endblock %}
+{% block contenido %}
+<h1>{% if persona %}Editar a {{ persona.nombre_completo }}{% else %}Nueva persona{% endif %}</h1>
+<form method="post" class="tarjeta">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+  {% for campo in form %}
+  <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+    {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}</div>
+  {% endfor %}
+  <p class="ayuda">¿Falta un cargo? Añádelo antes en <a href="{% url 'organizacion:panel' %}">la lista de cargos</a>.</p>
+  <button class="boton" type="submit">Guardar</button>
+  <a class="boton secundario" href="{% url 'organizacion:panel' %}">Cancelar</a>
+</form>
+{% endblock %}

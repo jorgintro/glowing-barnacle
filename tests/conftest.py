@@ -56,3 +56,25 @@ def borrador(catalogo: None, ctx_tesorero: Contexto):
 
     _, version = ps.crear_ejercicio(ctx_tesorero, anio=2040, nombre="Ejercicio de prueba")
     return version
+
+
+CAMINOS = {
+    "PROPUESTO": ["PROPUESTO"],
+    "APROBADO_CP": ["PROPUESTO", "APROBADO_CP"],
+    "RATIFICADO_JG": ["PROPUESTO", "APROBADO_CP", "RATIFICADO_JG"],
+    "RECHAZADO": ["PROPUESTO", "RECHAZADO"],
+    "MODIFICADO": ["PROPUESTO", "APROBADO_CP", "MODIFICADO"],
+}
+
+
+def poner_estado(version, estado: str) -> None:  # type: ignore[no-untyped-def]
+    """Lleva un borrador a otro estado por el camino legal (la base de datos no admite saltos)."""
+    from apps.presupuesto.models import VersionPresupuesto
+
+    if estado == "BORRADOR":
+        return
+    if estado == "MODIFICADO":
+        VersionPresupuesto.objects.filter(pk=version.pk).update(tipo_origen="MODIFICACION")
+    for paso in CAMINOS[str(estado)]:
+        VersionPresupuesto.objects.filter(pk=version.pk).update(estado=paso)
+    version.refresh_from_db()

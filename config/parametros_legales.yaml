@@ -13,7 +13,9 @@
 #  * Los cuatro primeros parámetros figuran como verificados porque el Tesorero declaró en la
 #    sesión de desarrollo del 29/10/2026 que los había verificado. Es una DECLARACIÓN: el sistema
 #    no puede comprobarla. El Tesorero debe sustituir el verificador por su nombre.
-#  * Los cinco siguientes se añadieron después de esa declaración y están PENDIENTES.
+#  * Los cinco siguientes (umbrales de 25.000 € y 300 €, contratistas, finalistas o revocables e
+#    inmuebles) se verificaron después, por la misma vía: declaración del Tesorero en la sesión
+#    del 29/10/2026. También sin posibilidad de comprobación por el sistema.
 #  * Aportaciones de cargos, gasto electoral y endeudamiento no figuran en el extracto: sin valor.
 #
 # Los importes se escriben como texto: valor: "1234.56".
@@ -80,7 +82,7 @@ parametros:
     fecha_verificacion: 2026-10-29
     verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
 
-  # ------------------------------------------------ añadidos después: PENDIENTES de verificar
+  # ------------------------------------------------ añadidos después (verificados también por declaración)
   - clave: umbral_notificacion_tribunal_cuentas
     descripcion: "Importe a partir del cual una donación o aportación debe notificarse al Tribunal de Cuentas."
     unidad: EUR
@@ -90,8 +92,8 @@ parametros:
     # Art. 8.Tres: aportaciones «de forma individual o acumulada, superiores a 25.000 euros».
     valor: "25000.00"
     referencia_normativa: "LO 8/2007, arts. 5.Dos y 8.Tres (extracto aportado por el Tesorero)"
-    fecha_verificacion: null
-    verificador: null
+    fecha_verificacion: 2026-10-29
+    verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
 
   - clave: umbral_identificacion_actividades_propias
     descripcion: "Importe de una operación individual de actividades propias a partir del cual hay que identificar al transmitente."
@@ -102,8 +104,8 @@ parametros:
     # sea «igual o superior a 300 euros».
     valor: "300.00"
     referencia_normativa: "LO 8/2007, art. 6.Tres (extracto aportado por el Tesorero)"
-    fecha_verificacion: null
-    verificador: null
+    fecha_verificacion: 2026-10-29
+    verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
 
   - clave: donaciones_contratistas_publicos_permitidas
     descripcion: "Si se admiten donaciones de personas físicas que sean parte de un contrato público vigente (true/false)."
@@ -114,8 +116,8 @@ parametros:
     # actividad económica o profesional, sean parte de un contrato vigente del sector público.
     valor: false
     referencia_normativa: "LO 8/2007, art. 4.Dos.a (extracto aportado por el Tesorero)"
-    fecha_verificacion: null
-    verificador: null
+    fecha_verificacion: 2026-10-29
+    verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
 
   - clave: donaciones_finalistas_o_revocables_permitidas
     descripcion: "Si se admiten donaciones finalistas o revocables (true/false)."
@@ -125,8 +127,8 @@ parametros:
     # Art. 5.Uno.a: no se pueden aceptar «donaciones anónimas, finalistas o revocables».
     valor: false
     referencia_normativa: "LO 8/2007, art. 5.Uno.a (extracto aportado por el Tesorero)"
-    fecha_verificacion: null
-    verificador: null
+    fecha_verificacion: 2026-10-29
+    verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
 
   - clave: donaciones_inmuebles_exentas_de_limite
     descripcion: "Si las donaciones en especie de bienes inmuebles quedan fuera del límite anual por donante (true/false)."
@@ -137,8 +139,8 @@ parametros:
     # inmuebles, siempre que se cumplan los requisitos del art. 4.Dos.e.
     valor: true
     referencia_normativa: "LO 8/2007, art. 5.Uno (excepción) y 4.Dos.e (extracto aportado por el Tesorero)"
-    fecha_verificacion: null
-    verificador: null
+    fecha_verificacion: 2026-10-29
+    verificador: "Tesorero de Iniciativa Complutense (declaración en la sesión del 29/10/2026)"
 
   # ------------------------------------------------------- sin valor: no figuran en el extracto
   - clave: limite_aportaciones_cargos_anual

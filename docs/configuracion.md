@@ -26,10 +26,11 @@ Límites y prohibiciones legales (donaciones, gasto electoral, endeudamiento…)
     prohibidas) figuran **verificados** porque el Tesorero lo **declaró** en la sesión del
     29/10/2026. El sistema no puede comprobarlo. El campo «verificador» dice «Tesorero de
     Iniciativa Complutense (declaración…)»: **sustitúyelo por tu nombre**.
-  * 5 parámetros nuevos del mismo extracto (umbral de notificación 25.000 €, umbral de
+  * Otros 5 parámetros del mismo extracto (umbral de notificación 25.000 €, umbral de
     identificación 300 €, contratistas públicos, finalistas o revocables, exención de inmuebles)
-    están **pendientes**: se añadieron después de esa declaración.
-  * Aportaciones de cargos, gasto electoral y endeudamiento siguen **sin valor**.
+    se verificaron después, también por **declaración del Tesorero** (29/10/2026).
+  * Aportaciones de cargos, gasto electoral y endeudamiento siguen **sin valor**, y por tanto
+    pendientes: mientras sigan así, L-007 bloquea toda versión real.
 * Cuatro parámetros llevan ya **valor y referencia** tomados del extracto de la ley que aportó el
   Tesorero (`docs/fuentes_normativas/`): 50.000 € por donante y año (art. 5.Uno.b), donaciones
   anónimas no permitidas (art. 5.Uno.a), donaciones de personas jurídicas no permitidas (art.
@@ -60,7 +61,15 @@ Ajustes del sistema que no son normativa legal. **Sin valores a propósito**:
 
 Quórum, mayorías y funciones (CLAUDE.md §16.2). **Sin valores a propósito**: salen de los
 estatutos. Mientras estén vacíos, **la votación de la Comisión Permanente queda bloqueada** (O-001).
-El fichero incluye ejemplos comentados con la forma de cada dato.
+El fichero incluye ejemplos comentados con la forma de cada dato. Claves:
+
+| Clave | Para qué | Si está vacía |
+|---|---|---|
+| `quorum` y `mayoria` | Votación de la CP (regla O-001) | La votación queda bloqueada |
+| `proponente_puede_votar` | Regla O-003 | Quien propone no puede votar |
+| `ratificacion_registrada_por` | Quién registra la ratificación (`JUNTA_GENERAL`, `TESORERO`) | Solo la Junta General |
+| `umbral_modificacion_junta` | A partir de cuánto una modificación vuelve a la Junta (`IMPORTE` o `PORCENTAJE`) | Toda modificación vuelve a la Junta |
+| `transferencias_solo_cp` | Si las transferencias entre partidas bastan con la CP | No: también van a la Junta |
 
 ## Carpeta `config/demo/` (FICTICIA)
 

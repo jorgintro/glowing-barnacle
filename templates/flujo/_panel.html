@@ -1,0 +1,22 @@
+{% load presupuesto_extras %}
+<section class="tarjeta">
+  <h2 style="margin-top:0">Flujo de aprobación</h2>
+  <p>Estado: <span class="etiqueta {{ version.estado|clase_estado }}">{{ version.get_estado_display }}</span>
+    {% if version.estado == "APROBADO_CP" and version.requiere_junta %}<span class="etiqueta aviso">Pendiente de ratificar por la Junta</span>{% endif %}
+    {% if version.estado == "MODIFICADO" %}<span class="etiqueta ok">Aprobada solo por la Comisión Permanente</span>{% endif %}
+    {% if version.tipo_origen == "MODIFICACION" %}<span class="etiqueta marca">Modificación</span>{% endif %}
+    {% if version.tipo_origen == "TRAS_RECHAZO" %}<span class="etiqueta marca">Tras un rechazo</span>{% endif %}
+    {% if version.es_prorroga %}<span class="etiqueta aviso">Prórroga provisional</span>{% endif %}</p>
+  {% if version.hash %}<p class="sub">Huella (SHA-256): <code>{{ version.hash }}</code></p>{% endif %}
+  <div class="acciones" style="display:flex;flex-wrap:wrap;gap:.6rem">
+    {% if flujo.puede_proponer %}<a class="boton" href="{% url 'flujo:proponer' version.pk %}">Proponer a la Comisión Permanente</a>{% endif %}
+    {% if flujo.ver_votacion %}<a class="boton{% if not flujo.puede_votar and not flujo.puede_cerrar %} secundario{% endif %}" href="{% url 'flujo:votacion' version.pk %}">{% if flujo.puede_votar %}Votar{% else %}Ver la votación{% endif %}</a>{% endif %}
+    {% if flujo.puede_devolver %}<a class="boton secundario" href="{% url 'flujo:devolver' version.pk %}">Devolver al Tesorero</a>{% endif %}
+    {% if flujo.puede_convocar %}<a class="boton secundario" href="{% url 'flujo:convocatoria' version.pk %}">Registrar convocatoria de la Junta</a>{% endif %}
+    {% if flujo.puede_ratificar %}<a class="boton" href="{% url 'flujo:ratificar' version.pk %}">Registrar el acuerdo de la Junta</a>{% endif %}
+    {% if flujo.puede_modificar %}<a class="boton secundario" href="{% url 'flujo:modificar' version.pk %}">Crear una modificación</a>{% endif %}
+    {% if flujo.puede_comentar %}<a class="boton secundario" href="{% url 'flujo:comentarios' version.pk %}">Comentarios{% if flujo.ultimo_comentario_abierto %} ({{ flujo.ultimo_comentario_abierto }} sin resolver){% endif %}</a>{% endif %}
+    {% if flujo.certificables %}<a class="boton secundario" href="{% url 'salidas:certificados' version.pk %}">Certificados de aprobación</a>{% endif %}
+    {% if version.estado != "BORRADOR" %}<a class="boton secundario" href="{% url 'flujo:historial' version.pk %}">Historial y huella</a>{% endif %}
+  </div>
+</section>

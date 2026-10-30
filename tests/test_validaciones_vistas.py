@@ -9,7 +9,7 @@ from apps.presupuesto import donantes as dn
 from apps.presupuesto.estados import EstadoVersion
 from apps.presupuesto.models import Donacion, Donante, Linea, VersionPresupuesto
 from apps.usuarios.roles import Rol
-from tests.conftest import CLAVE, crear
+from tests.conftest import CLAVE, crear, poner_estado
 from tests.util_validaciones import donante, linea, nif
 
 pytestmark = pytest.mark.django_db
@@ -72,7 +72,7 @@ def test_el_panel_respeta_la_visibilidad_por_rol(demo_cargada) -> None:
 
 def test_la_cp_solo_ve_el_nif_enmascarado(demo_cargada) -> None:
     v = _demo(2031)
-    VersionPresupuesto.objects.filter(pk=v.pk).update(estado=EstadoVersion.PROPUESTO)
+    poner_estado(v, EstadoVersion.PROPUESTO)
     crear("vocal", Rol.COMISION_PERMANENTE)
     pagina = _cliente("vocal").get(f"/presupuestos/version/{v.pk}/validaciones/").content.decode()
     assert "Donante ficticio D1" in pagina
@@ -115,8 +115,7 @@ def test_solo_el_tesorero_edita_el_resultado_y_solo_en_borrador(borrador, client
     crear("vocal", Rol.COMISION_PERMANENTE)
     url = f"/presupuestos/version/{borrador.pk}/resultado/"
     assert _cliente("vocal").get(url).status_code == 403
-    borrador.estado = EstadoVersion.PROPUESTO
-    borrador.save()
+    poner_estado(borrador, EstadoVersion.PROPUESTO)
     assert cliente_tesorero.get(url).status_code == 302
 
 

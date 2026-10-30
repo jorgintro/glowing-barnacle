@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block titulo %}Baja de persona{% endblock %}
+{% block contenido %}
+<h1>Dar de baja a {{ persona.nombre_completo }}</h1>
+<p>No se borra: se conserva en el historial con su motivo.</p>
+<form method="post" class="tarjeta">{% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="campo"><label for="{{ form.motivo.id_for_label }}">{{ form.motivo.label }}</label>{{ form.motivo }}{{ form.motivo.errors }}</div>
+  <button class="boton" type="submit">Dar de baja</button>
+  <a class="boton secundario" href="{% url 'organizacion:panel' %}">Cancelar</a>
+</form>
+{% endblock %}

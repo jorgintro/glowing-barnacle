@@ -367,10 +367,10 @@ def test_con_la_configuracion_real_ninguna_version_puede_avanzar(ok) -> None:
     res = validar_version(version, cfg=cargar_configuracion(False), hoy=HOY)
     assert not res.puede_avanzar
     assert {"L-003", "L-006", "L-007"} <= codigos(res)
-    # 12 parámetros: 8 pendientes y 4 verificados en 2026, que no valen para un ejercicio de 2040
+    # 12 parámetros: 3 sin valor y 9 verificados en 2026, que no valen para un ejercicio de 2040
     mensajes = _mensajes(res, "L-007")
-    assert sum("pendiente de verificación" in m for m in mensajes) == 8
-    assert sum("no es vigente" in m for m in mensajes) == 4
+    assert sum("pendiente de verificación" in m for m in mensajes) == 3
+    assert sum("no es vigente" in m for m in mensajes) == 9
 
 
 def test_los_parametros_declarados_verificados_ya_se_aplican_en_la_configuracion_real(ok) -> None:
