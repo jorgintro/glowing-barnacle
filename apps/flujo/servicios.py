@@ -798,9 +798,8 @@ def crear_prorroga(
             and ln.partida.capitulo.codigo != "G.7"
         ),
     )
-    copiar_anexos(
-        origen, nueva, saldo=False
-    )  # el saldo inicial es el de otro año: se vuelve a poner
+    # El saldo inicial es el de otro año y la campaña no se prorroga: se vuelven a indicar.
+    copiar_anexos(origen, nueva, saldo=False, campana=False)
     registrar(
         contexto,
         accion="version.prorroga",

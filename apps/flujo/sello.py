@@ -2,7 +2,8 @@
 
 La huella cubre todo el contenido que importa: ejercicio, versión, líneas, hipótesis, importes
 mensuales y donaciones. Desde la huella de tipo 2 cubre además la memoria explicativa y el saldo
-inicial de tesorería; las versiones selladas antes (tipo 1) se siguen verificando como entonces.
+inicial de tesorería y, desde la de tipo 3, los datos del proceso electoral; las versiones selladas
+antes se siguen verificando con su tipo.
 Se calcula con una representación canónica (claves y listas ordenadas, importes como texto),
 así que no cambia por el orden en que se guardaron los datos.
 """
@@ -17,7 +18,7 @@ from apps.presupuesto.models import Donacion, ImporteMensual, Linea, VersionPres
 
 from .models import TransicionEstado
 
-HUELLA_ACTUAL = 2
+HUELLA_ACTUAL = 3
 
 
 def contenido_canonico(version: VersionPresupuesto) -> dict[str, Any]:
@@ -85,7 +86,34 @@ def contenido_canonico(version: VersionPresupuesto) -> dict[str, Any]:
         }
         saldo = version.saldo_inicial_tesoreria
         contenido["tesoreria"] = {"saldo_inicial": None if saldo is None else str(saldo)}
+    if version.version_huella >= 3:
+        contenido["campana"] = _proceso_electoral_canonico(version)
     return contenido
+
+
+def _proceso_electoral_canonico(version: VersionPresupuesto) -> dict[str, Any] | None:
+    from apps.anexos.models import ProcesoElectoral
+
+    pe = ProcesoElectoral.objects.filter(version=version).first()
+    if pe is None:
+        return None
+
+    def f(valor: Any) -> str | None:
+        return None if valor is None else str(valor)
+
+    return {
+        "denominacion": pe.denominacion,
+        "fecha_convocatoria": f(pe.fecha_convocatoria),
+        "fecha_elecciones": f(pe.fecha_elecciones),
+        "fecha_proclamacion": f(pe.fecha_proclamacion),
+        "habitantes_derecho": pe.habitantes_derecho,
+        "provincias_adicional": pe.provincias_adicional,
+        "subvencion_envio_aplicable": pe.subvencion_envio_aplicable,
+        "electores_envio": pe.electores_envio,
+        "concejales_previstos": pe.concejales_previstos,
+        "votos_previstos": pe.votos_previstos,
+        "observaciones": pe.observaciones,
+    }
 
 
 def _contenido_base(
