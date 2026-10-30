@@ -131,3 +131,6 @@ versiones que no son borrador.
 | Tesorero | Ve todo; escribe en borradores | Sí |
 | Comisión Permanente | Ve lo propuesto o posterior | No |
 | Junta General | Ve lo aprobado por la CP o posterior | No |
+
+> Fase 6b: cada sección de la memoria tiene un ámbito (todos, ordinario o electoral) en lugar de
+> la marca «solo si hay proceso electoral». «Presupuesto de campaña» es solo electoral.

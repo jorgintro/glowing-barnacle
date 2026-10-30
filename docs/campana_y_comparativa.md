@@ -1,5 +1,14 @@
 # Presupuesto de campaña y comparativa con la ejecución real
 
+> **Fase 6b · presupuesto electoral separado** (decisión 0008). La campaña ya no es un capítulo
+> dentro del presupuesto ordinario: es un **presupuesto electoral propio**, con su cadena de
+> versiones y su flujo (propuesta, Comisión Permanente, Junta General, modificaciones). Sus
+> capítulos son I.6 (ingresos electorales públicos), I.7 (privados, con donantes) y G.7 (gastos).
+> Se crea desde la lista de presupuestos del ejercicio, solo si hay proceso electoral. Las reglas
+> L-004, L-012 a L-015 y V-011 y la sección «Presupuesto de campaña» de la memoria se aplican
+> únicamente a la versión electoral. Donde abajo se lea «la versión», en campaña es la electoral.
+
+
 Fase 6 (CLAUDE.md §7.3 y §7.4). No hay PDF ni Word: todo se ve en pantalla.
 
 > Los importes legales de esta fase proceden del texto que aportó el Tesorero el 30/10/2026

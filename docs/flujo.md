@@ -81,3 +81,10 @@ a la regla de salir solo en Excel y HTML** (petición expresa del Tesorero).
 Solo el Tesorero. Aquí se escriben: el nombre de la organización y la localidad, cómo se llama el
 cargo de Tesorería (Tesorero, Gerente…), la **lista de cargos** (uno por línea) y las **personas**
 (nombre, apellidos, DNI y cargo o cargos, con su cuenta de usuario si tienen).
+
+## Dos cadenas por ejercicio (Fase 6b)
+
+Cada ejercicio puede tener una cadena **ordinaria** y, si hay proceso electoral, una cadena
+**electoral**. Cada una sigue el mismo ciclo (borrador, propuesto, aprobado por la Comisión
+Permanente, ratificado por la Junta) con numeración, votaciones, ratificaciones y modificaciones
+propias. La prórroga solo existe para el presupuesto ordinario. Ver decisión 0008.

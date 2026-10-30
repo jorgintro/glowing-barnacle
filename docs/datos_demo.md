@@ -101,3 +101,10 @@ empresa, todos ficticios (NIF de prueba, no pertenecen a nadie).
 
 > Las versiones demo en estado `PROPUESTO`, `APROBADO_CP` y `RATIFICADO_JG` se han sembrado
 > directamente, sin huella (hash). Se sellarán cuando exista el flujo de la Fase 4.
+
+### Presupuesto electoral separado
+
+El ejercicio 2027 tiene además un **presupuesto electoral** ratificado (cadena propia, con
+convocatoria `CONV-DEMO-ELECTORAL` y acta `ACTA-DEMO-ELECTORAL`). El ejercicio 2031 tiene una
+versión electoral con los defectos de campaña (L-004, L-012 a L-015); sus defectos ordinarios ya no
+incluyen esas reglas.
