@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load presupuesto_extras %}
+{% block titulo %}Historial{% endblock %}
+{% block contenido %}
+<h1>Historial y huella</h1>
+<p class="suave">{{ version.ejercicio }} · versión {{ version.numero }} · <span class="etiqueta {{ version.estado|clase_estado }}">{{ version.get_estado_display }}</span></p>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">Integridad</h2>
+  {% if integridad.ok %}<p><span class="etiqueta ok">Íntegra</span> La huella del contenido y la cadena de transiciones se han comprobado ahora mismo y son correctas.</p>
+  {% else %}<p class="aviso-caja error"><strong>¡Atención! Posible manipulación:</strong></p>
+    <ul>{% for p in integridad.problemas %}<li>{{ p }}</li>{% endfor %}</ul>{% endif %}
+  {% if version.hash %}<p class="sub">Huella (SHA-256): <code>{{ version.hash }}</code></p>{% endif %}
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">Hoja de control de versiones</h2>
+  <table>
+    <thead><tr><th scope="col">Fecha</th><th scope="col">Cambio</th><th scope="col">Quién</th><th scope="col">Motivo</th><th scope="col">Huella encadenada</th></tr></thead>
+    <tbody>
+    {% for t in transiciones %}
+      <tr><td>{{ t.fecha|date:"d/m/Y H:i" }}</td>
+        <td>{{ t.get_de_estado_display }} → <strong>{{ t.get_a_estado_display }}</strong></td>
+        <td>{{ t.usuario.username|default:"sistema" }}{% if t.rol %} <span class="sub">({{ t.rol }})</span>{% endif %}</td>
+        <td>{{ t.motivo|default:"—" }}{% if t.avisos_aceptados %}<div class="sub">Avisos aceptados: {{ t.avisos_aceptados|join:", " }}</div>{% endif %}</td>
+        <td><code>{{ t.hash_encadenado|slice:":12" }}…</code></td></tr>
+    {% empty %}<tr><td colspan="5" class="suave">Todavía no hay transiciones.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% for v in votaciones %}
+<section class="tarjeta">
+  <h2 style="margin-top:0">Votación del {{ v.abierta_en|date:"d/m/Y" }} · {{ v.get_estado_display }}{% if v.resultado %} · {{ v.get_resultado_display }}{% endif %}</h2>
+  {% if v.estado == "CERRADA" and v.asistentes is not None %}<p>{{ v.asistentes }} de {{ v.miembros }} miembros · {{ v.a_favor }} a favor · {{ v.en_contra }} en contra · {{ v.abstenciones }} abstenciones. {{ v.observaciones }}</p>{% endif %}
+  <a href="{% url 'flujo:votacion' version.pk %}">Ver el detalle nominal</a>
+</section>
+{% endfor %}
+{% for c in convocatorias %}<p class="sub">Convocatoria registrada el {{ c.registrada_en|date:"d/m/Y" }}: convocada el {{ c.fecha_convocatoria|date:"d/m/Y" }} para la sesión del {{ c.fecha_sesion|date:"d/m/Y" }}. {{ c.referencia }}</p>{% endfor %}
+{% if ratificacion %}<section class="tarjeta"><h2 style="margin-top:0">Junta General</h2>
+  <p>{{ ratificacion.get_resultado_display }} en la sesión del {{ ratificacion.fecha_sesion|date:"d/m/Y" }}. Acta: <strong>{{ ratificacion.referencia_acta }}</strong>. {{ ratificacion.observaciones }}</p></section>{% endif %}
+<p><a href="{% url 'presupuesto:version' version.pk %}">← Volver al presupuesto</a></p>
+{% endblock %}

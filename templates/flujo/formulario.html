@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<h1>{{ titulo }}</h1>
+<p class="suave">{{ version.ejercicio }} · versión {{ version.numero }}</p>
+<p>{{ intro }}</p>
+<form method="post" class="tarjeta">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+  {% for campo in form %}
+  <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+    {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}</div>
+  {% endfor %}
+  <button class="boton" type="submit">{{ boton }}</button>
+  <a class="boton secundario" href="{% url 'presupuesto:version' version.pk %}">Cancelar</a>
+</form>
+{% endblock %}

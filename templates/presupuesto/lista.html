@@ -24,6 +24,9 @@
     {% endfor %}
     </tbody>
   </table>
+  {% if fila.prorroga.0 %}<form method="post" action="{% url 'flujo:prorroga' fila.ejercicio.pk %}">{% csrf_token %}
+    <p class="aviso-caja">Este ejercicio ha empezado y no tiene presupuesto aprobado. Puedes generar una <strong>prórroga provisional</strong> del ejercicio anterior (sin la campaña ni lo extraordinario).
+      <button class="boton secundario" type="submit">Generar la prórroga</button></p></form>{% endif %}
 </section>
 {% empty %}
 <div class="tarjeta"><p>No hay presupuestos disponibles con tu rol todavía.</p></div>

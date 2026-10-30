@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Proponer{% endblock %}
+{% block contenido %}
+<h1>Proponer a la Comisión Permanente</h1>
+<p class="suave">{{ version.ejercicio }} · versión {{ version.numero }}</p>
+
+{% if resultado.bloqueantes %}
+<div class="aviso-caja error"><strong>No se puede proponer todavía:</strong> hay {{ resultado.bloqueantes|length }} bloqueo{{ resultado.bloqueantes|length|pluralize }}.
+  <ul>{% for i in resultado.bloqueantes %}<li><strong>{{ i.codigo }}</strong>{% if i.linea %} · {{ i.linea }}{% endif %}: {{ i.mensaje }}</li>{% endfor %}</ul>
+  <a href="{% url 'presupuesto:validaciones' version.pk %}">Ver todas las validaciones</a></div>
+{% else %}
+<p class="aviso-caja" style="border-color:var(--ok);background:#e6f2ea"><strong>Sin bloqueos.</strong> Se han superado {{ resultado.superadas|length }} reglas.</p>
+<p>Al proponer: la versión <strong>se sella</strong> (huella digital), <strong>deja de poder editarse</strong> y se abre la votación de la Comisión Permanente.</p>
+<form method="post" class="tarjeta">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+  {% if resultado.avisos %}
+  <div class="aviso-caja"><strong>Avisos</strong> (no bloquean, pero hay que aceptarlos y queda constancia):</div>
+  <div class="campo">{{ form.avisos }}{{ form.avisos.errors }}</div>
+  {% endif %}
+  <div class="campo"><label for="{{ form.confirmar.id_for_label }}">{{ form.confirmar }} {{ form.confirmar.label }}</label>{{ form.confirmar.errors }}</div>
+  <button class="boton" type="submit">Proponer y sellar</button>
+  <a class="boton secundario" href="{% url 'presupuesto:version' version.pk %}">Cancelar</a>
+</form>
+{% endif %}
+{% endblock %}

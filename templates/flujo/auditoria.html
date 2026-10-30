@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Auditoría{% endblock %}
+{% block contenido %}
+<h1>Auditoría</h1>
+<p class="suave">Registro inalterable de todas las acciones. No se puede modificar ni borrar. No contiene nombres ni DNI de donantes o miembros.</p>
+<form method="get" class="tarjeta" style="display:grid;gap:.5rem 1rem;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr))">
+  {% for campo in form %}<div class="campo" style="margin:0"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}</div>{% endfor %}
+  <div style="align-self:end"><button class="boton" type="submit">Filtrar</button> <a class="boton secundario" href="{% url 'flujo:auditoria' %}">Limpiar</a></div>
+</form>
+<section class="tarjeta" style="overflow-x:auto">
+  <table>
+    <thead><tr><th scope="col">Fecha</th><th scope="col">Usuario</th><th scope="col">Rol</th><th scope="col">Acción</th><th scope="col">Entidad</th><th scope="col">Detalle</th></tr></thead>
+    <tbody>
+    {% for r in pagina %}
+      <tr><td>{{ r.fecha|date:"d/m/Y H:i:s" }}</td><td>{{ r.usuario_texto|default:"—" }}</td><td>{{ r.rol_activo|default:"—" }}</td>
+        <td>{{ r.accion }}{% if r.es_demo %} <span class="etiqueta aviso">DEMO</span>{% endif %}</td>
+        <td>{{ r.entidad }} {{ r.entidad_id }}</td>
+        <td class="sub">{% if r.motivo %}{{ r.motivo }}{% endif %}{% if r.despues %} {{ r.despues }}{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="6" class="suave">No hay registros con esos filtros.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <p class="sub">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }} · {{ pagina.paginator.count }} registro{{ pagina.paginator.count|pluralize }}
+    {% if pagina.has_previous %}· <a href="?{{ consulta }}&pagina={{ pagina.previous_page_number }}">anterior</a>{% endif %}
+    {% if pagina.has_next %}· <a href="?{{ consulta }}&pagina={{ pagina.next_page_number }}">siguiente</a>{% endif %}</p>
+</section>
+{% endblock %}

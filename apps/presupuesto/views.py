@@ -7,6 +7,8 @@ from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.auditoria.servicios import Contexto
+from apps.flujo.panel import contexto_flujo
+from apps.flujo.servicios import prorroga_disponible as flujo_prorroga
 from apps.usuarios.decoradores import requiere_rol
 from apps.usuarios.roles import Rol
 from apps.validaciones.motor import CATALOGO, validar_version
@@ -60,7 +62,15 @@ def lista(request: HttpRequest) -> HttpResponse:
     for v in visibles:
         por_ejercicio.setdefault(v.ejercicio_id, []).append(v)
     ejercicios = Ejercicio.objects.filter(pk__in=por_ejercicio).order_by("-anio", "es_demo")
-    filas = [{"ejercicio": e, "versiones": por_ejercicio[e.pk]} for e in ejercicios]
+    es_tesorero = request.rol_activo == Rol.TESORERO  # type: ignore[attr-defined]
+    filas = [
+        {
+            "ejercicio": e,
+            "versiones": por_ejercicio[e.pk],
+            "prorroga": flujo_prorroga(e) if es_tesorero else (False, ""),
+        }
+        for e in ejercicios
+    ]
     sin_versiones = []
     if request.rol_activo == Rol.TESORERO:  # type: ignore[attr-defined]
         sin_versiones = list(Ejercicio.objects.exclude(pk__in=por_ejercicio))
@@ -116,6 +126,7 @@ def version(request: HttpRequest, pk: int) -> HttpResponse:
             "puede_editar": puede_editar,
             "validacion": validacion,
             "con_donantes": dn.CAPITULOS_CON_DONANTES,
+            "flujo": contexto_flujo(request, v),
             "otras_versiones": v.ejercicio.versiones.exclude(pk=v.pk),
         },
     )
