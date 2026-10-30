@@ -122,12 +122,29 @@ def test_importe_negativo_solo_como_ajuste_justificado(borrador, ctx_tesorero: C
     assert linea.importe_anual == Decimal("-50.00")
 
 
-def test_capitulo_electoral_solo_con_proceso_electoral(borrador, ctx_tesorero: Contexto) -> None:
-    with pytest.raises(ValidationError, match="proceso electoral"):
-        _linea(ctx_tesorero, borrador, partida="G.7.1")
+def test_cada_presupuesto_solo_admite_sus_capitulos(borrador, ctx_tesorero: Contexto) -> None:
+    with pytest.raises(ValidationError, match="propio flujo"):
+        _linea(ctx_tesorero, borrador, partida="G.7.1")  # gasto electoral en el ordinario
     borrador.ejercicio.hay_proceso_electoral = True
     borrador.ejercicio.save()
-    assert _linea(ctx_tesorero, borrador, partida="G.7.1").dimension == "CAMPANA"
+    electoral = ps.crear_presupuesto_electoral(ctx_tesorero, borrador.ejercicio)
+    assert _linea(ctx_tesorero, electoral, partida="G.7.1").dimension == "CAMPANA"
+    with pytest.raises(ValidationError, match="propio flujo"):
+        _linea(ctx_tesorero, electoral, partida="G.2.1")  # gasto ordinario en el electoral
+
+
+def test_el_presupuesto_electoral_se_crea_una_vez_y_solo_con_proceso_electoral(
+    borrador, ctx_tesorero: Contexto
+) -> None:
+    with pytest.raises(ValidationError, match="no tiene proceso electoral"):
+        ps.crear_presupuesto_electoral(ctx_tesorero, borrador.ejercicio)
+    borrador.ejercicio.hay_proceso_electoral = True
+    borrador.ejercicio.save()
+    electoral = ps.crear_presupuesto_electoral(ctx_tesorero, borrador.ejercicio)
+    assert electoral.ambito == "ELECTORAL" and electoral.numero == 1 and borrador.numero == 1
+    with pytest.raises(ValidationError, match="ya tiene"):
+        ps.crear_presupuesto_electoral(ctx_tesorero, borrador.ejercicio)
+    assert str(electoral).endswith("electoral · v1")
 
 
 def test_modificar_guarda_antes_y_despues(borrador, ctx_tesorero: Contexto) -> None:
@@ -208,10 +225,15 @@ def test_totales_resultado_y_mensual(borrador, ctx_tesorero: Contexto) -> None:
     assert all(isinstance(t.total, Decimal) for t in r.capitulos)
 
 
-def test_gasto_de_campana_se_totaliza_aparte(borrador, ctx_tesorero: Contexto) -> None:
+def test_el_resumen_solo_cuenta_los_capitulos_de_su_presupuesto(
+    borrador, ctx_tesorero: Contexto
+) -> None:
     borrador.ejercicio.hay_proceso_electoral = True
     borrador.ejercicio.save()
-    _linea(ctx_tesorero, borrador, "G.7.1", "5000")
+    electoral = ps.crear_presupuesto_electoral(ctx_tesorero, borrador.ejercicio)
+    _linea(ctx_tesorero, electoral, "G.7.1", "5000")
     _linea(ctx_tesorero, borrador, "G.2.1", "100")
-    r = resumen_version(borrador)
-    assert r.gasto_campana == Decimal("5000.00") and r.gastos == Decimal("5100.00")
+    r_ord, r_ele = resumen_version(borrador), resumen_version(electoral)
+    assert r_ord.gastos == Decimal("100.00") and r_ele.gastos == Decimal("5000.00")
+    assert {t.capitulo.ambito for t in r_ord.capitulos} == {"ORDINARIO"}
+    assert {t.capitulo.ambito for t in r_ele.capitulos} == {"ELECTORAL"}

@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.db.models import Count, Q, Sum
 
 from .dinero import CERO
-from .models import Capitulo, Dimension, ImporteMensual, Linea, Tipo, VersionPresupuesto
+from .models import Capitulo, ImporteMensual, Linea, Tipo, VersionPresupuesto
 
 
 @dataclass
@@ -24,7 +24,6 @@ class Resumen:
     gastos: Decimal
     ingresos_mensual: list[Decimal]
     gastos_mensual: list[Decimal]
-    gasto_campana: Decimal
 
     @property
     def resultado(self) -> Decimal:
@@ -44,7 +43,9 @@ def resumen_version(version: VersionPresupuesto) -> Resumen:
     con_lineas = set(activas.values_list("partida__capitulo__codigo", flat=True))
     por_capitulo = {
         c.codigo: TotalCapitulo(c)
-        for c in Capitulo.objects.filter(Q(activo=True) | Q(codigo__in=con_lineas))
+        for c in Capitulo.objects.filter(
+            Q(ambito=version.ambito) & (Q(activo=True) | Q(codigo__in=con_lineas))
+        )
     }
 
     totales = (
@@ -73,14 +74,10 @@ def resumen_version(version: VersionPresupuesto) -> Resumen:
 
     ingresos, ing_m = _sumar(Tipo.INGRESO)
     gastos, gas_m = _sumar(Tipo.GASTO)
-    campana = activas.filter(
-        partida__capitulo__tipo=Tipo.GASTO, dimension=Dimension.CAMPANA
-    ).aggregate(t=Sum("importe_anual"))["t"]
     return Resumen(
         capitulos=sorted(por_capitulo.values(), key=lambda t: (t.capitulo.tipo, t.capitulo.orden)),
         ingresos=ingresos,
         gastos=gastos,
         ingresos_mensual=ing_m,
         gastos_mensual=gas_m,
-        gasto_campana=campana or CERO,
     )

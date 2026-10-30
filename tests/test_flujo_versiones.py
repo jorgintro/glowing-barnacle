@@ -182,7 +182,17 @@ def test_una_version_nueva_siempre_va_a_la_junta(esc) -> None:
 
 @pytest.fixture
 def ejercicio_siguiente(esc):
-    base = vigente(esc, anio=2061, campana=True)  # con campaña: para ver qué se excluye
+    base = vigente(esc, anio=2061)
+    # El mismo ejercicio tiene además su presupuesto electoral, también ratificado: la prórroga
+    # solo recoge el ordinario.
+    base.ejercicio.hay_proceso_electoral = True
+    base.ejercicio.save()
+    from tests.util_validaciones import presupuesto_valido
+
+    electoral = ps.crear_presupuesto_electoral(esc.tesorero(), base.ejercicio)
+    presupuesto_valido(esc.tesorero(), electoral)
+    aprobar_cp(esc, electoral)
+    ratificar(esc, electoral)
     _, v = ps.crear_ejercicio(esc.tesorero(), anio=2062, es_demo=True)
     return base, v.ejercicio
 
@@ -194,11 +204,13 @@ def test_la_prorroga_solo_se_ofrece_a_partir_del_1_de_enero(esc, ejercicio_sigui
     assert fs.prorroga_disponible(ej, date(2062, 1, 1)) == (True, "")
 
 
-def test_la_prorroga_copia_solo_lo_recurrente_y_excluye_la_campana(
+def test_la_prorroga_copia_solo_lo_recurrente_y_no_prorroga_el_electoral(
     esc, ejercicio_siguiente
 ) -> None:
     base, ej = ejercicio_siguiente
-    assert Linea.objects.filter(version=base, partida__codigo="G.7.1").exists()
+    electoral = base.ejercicio.presupuesto_electoral
+    assert electoral is not None and fs.vigente(base.ejercicio, "ELECTORAL") == electoral
+    assert Linea.objects.filter(version=electoral, partida__codigo="G.7.1").exists()
     p = fs.crear_prorroga(esc.tesorero(), ej, hoy=date(2062, 1, 15))
     assert p.es_prorroga and p.tipo_origen == TipoOrigen.PRORROGA and p.version_origen == base
     assert (
@@ -206,10 +218,9 @@ def test_la_prorroga_copia_solo_lo_recurrente_y_excluye_la_campana(
     )
     copiadas = Linea.objects.filter(version=p)
     assert copiadas.exists()
-    assert not copiadas.filter(partida__codigo="G.7.1").exists()  # la campaña no se prorroga
-    assert not copiadas.filter(dimension="CAMPANA").exists()
+    assert p.ambito == "ORDINARIO" and not copiadas.filter(partida__capitulo__ambito="ELECTORAL")
     assert not copiadas.exclude(tipo="RECURRENTE").exists()
-    assert copiadas.count() < Linea.objects.filter(version=base).count()
+    assert copiadas.count() == Linea.objects.filter(version=base).count()
     # las donaciones de las líneas copiadas acompañan, y cada una cuelga de una línea de la prórroga
     donaciones = Donacion.objects.filter(version=p)
     assert donaciones.count() == Donacion.objects.filter(version=base).count() == 4

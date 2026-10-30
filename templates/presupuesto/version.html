@@ -7,7 +7,8 @@
   <h1>{{ version.ejercicio.anio|unlocalize }} · versión {{ version.numero }}</h1>
   <span class="etiqueta {{ version.estado|clase_estado }}">{{ version.get_estado_display }}</span>
   {% if version.es_demo %}<span class="etiqueta aviso">DEMO · datos ficticios</span>{% endif %}
-  {% if version.ejercicio.hay_proceso_electoral %}<span class="etiqueta marca">Con campaña</span>{% endif %}
+  {% if version.es_electoral %}<span class="etiqueta marca">Presupuesto electoral (extraordinario)</span>
+  {% else %}<span class="etiqueta">Presupuesto ordinario</span>{% endif %}
   {% if version.es_prorroga %}<span class="etiqueta aviso">Prórroga provisional</span>{% endif %}
 </div>
 <p class="suave">{{ version.ejercicio }} · {{ version.motivo|default:"" }}
@@ -23,10 +24,10 @@
   <div class="cifra resultado"><div class="rotulo">Resultado presupuestario</div>
     <div class="valor">{{ resumen.resultado|euros }}</div>
     <span class="etiqueta {% if resumen.es_deficit %}error{% else %}ok{% endif %}">{% if resumen.es_deficit %}Déficit{% elif resumen.resultado == 0 %}Equilibrado{% else %}Superávit{% endif %}</span></div>
-  {% if version.ejercicio.hay_proceso_electoral %}
-  <div class="cifra"><div class="rotulo">De ello, campaña</div><div class="valor">{{ resumen.gasto_campana|euros }}</div></div>
-  {% endif %}
 </div>
+
+{% if version.es_electoral %}<p class="aviso-caja">Este es el <strong>presupuesto electoral</strong> del ejercicio: está <strong>separado del ordinario</strong> y tiene sus propias versiones, memoria, votación, ratificación y huella.
+  {% if version.ejercicio.versiones.count > 1 %}<a href="{% url 'presupuesto:lista' %}">Ver el presupuesto ordinario</a>.{% endif %}</p>{% endif %}
 
 {% include "flujo/_panel.html" %}
 

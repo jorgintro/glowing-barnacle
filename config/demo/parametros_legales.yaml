@@ -18,6 +18,7 @@ parametros:
     unidad: BOOLEANO
     regla: L-001
     norma_orientativa: "FICTICIO"
+    ambito: AMBOS
     valor: false
     referencia_normativa: "FICTICIO: no es una norma"
     fecha_verificacion: 2026-10-29
@@ -28,6 +29,7 @@ parametros:
     unidad: BOOLEANO
     regla: L-001
     norma_orientativa: "FICTICIO"
+    ambito: AMBOS
     valor: false
     referencia_normativa: "FICTICIO: no es una norma"
     fecha_verificacion: 2026-10-29
@@ -38,6 +40,7 @@ parametros:
     unidad: LISTA
     regla: L-002
     norma_orientativa: "FICTICIO"
+    ambito: AMBOS
     valor: ["ORIGEN_PROHIBIDO_DEMO"]
     referencia_normativa: "FICTICIO: no es una norma"
     fecha_verificacion: 2026-10-29
@@ -247,6 +250,7 @@ parametros:
     unidad: EUR
     regla: L-005
     norma_orientativa: "FICTICIO"
+    ambito: AMBOS
     valor: "5000.00"
     referencia_normativa: "FICTICIO: no es una norma"
     fecha_verificacion: 2026-10-29
@@ -277,6 +281,7 @@ parametros:
     unidad: BOOLEANO
     regla: L-010
     norma_orientativa: "FICTICIO"
+    ambito: AMBOS
     valor: false
     referencia_normativa: "FICTICIO: no es una norma"
     fecha_verificacion: 2026-10-29
@@ -287,6 +292,7 @@ parametros:
     unidad: BOOLEANO
     regla: L-011
     norma_orientativa: "FICTICIO"
+    ambito: AMBOS
     valor: false
     referencia_normativa: "FICTICIO: no es una norma"
     fecha_verificacion: 2026-10-29

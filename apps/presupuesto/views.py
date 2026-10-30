@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.auditoria.servicios import Contexto
 from apps.flujo.panel import contexto_flujo
@@ -30,6 +31,7 @@ from .forms import (
     ResultadoForm,
 )
 from .models import (
+    Ambito,
     Capitulo,
     Donacion,
     Donante,
@@ -67,6 +69,11 @@ def lista(request: HttpRequest) -> HttpResponse:
         {
             "ejercicio": e,
             "versiones": por_ejercicio[e.pk],
+            "ordinarias": [v for v in por_ejercicio[e.pk] if v.ambito == Ambito.ORDINARIO],
+            "electorales": [v for v in por_ejercicio[e.pk] if v.ambito == Ambito.ELECTORAL],
+            "puede_crear_electoral": es_tesorero
+            and e.hay_proceso_electoral
+            and not e.versiones.filter(ambito=Ambito.ELECTORAL).exists(),
             "prorroga": flujo_prorroga(e) if es_tesorero else (False, ""),
         }
         for e in ejercicios
@@ -75,6 +82,20 @@ def lista(request: HttpRequest) -> HttpResponse:
     if request.rol_activo == Rol.TESORERO:  # type: ignore[attr-defined]
         sin_versiones = list(Ejercicio.objects.exclude(pk__in=por_ejercicio))
     return render(request, "presupuesto/lista.html", {"filas": filas, "vacios": sin_versiones})
+
+
+@requiere_rol(Rol.TESORERO)
+@require_POST
+def crear_electoral(request: HttpRequest, pk: int) -> HttpResponse:
+    ejercicio = get_object_or_404(Ejercicio, pk=pk)
+    try:
+        version = servicios.crear_presupuesto_electoral(Contexto.desde_request(request), ejercicio)
+    except ValidationError as error:
+        for m in error.messages:
+            messages.error(request, m)
+        return redirect("presupuesto:lista")
+    messages.success(request, "Presupuesto electoral creado, con su propio flujo.")
+    return redirect("presupuesto:version", pk=version.pk)
 
 
 @requiere_rol(Rol.TESORERO)
@@ -88,7 +109,17 @@ def ejercicio_nuevo(request: HttpRequest) -> HttpResponse:
         except ValidationError as error:
             form.add_error(None, error)
         else:
-            messages.success(request, "Ejercicio creado con su primer borrador.")
+            if version.ejercicio.hay_proceso_electoral:
+                servicios.crear_presupuesto_electoral(
+                    Contexto.desde_request(request), version.ejercicio
+                )
+                messages.success(
+                    request,
+                    "Ejercicio creado con su borrador ordinario y su presupuesto electoral, "
+                    "que tiene un flujo propio y separado.",
+                )
+            else:
+                messages.success(request, "Ejercicio creado con su primer borrador.")
             return redirect("presupuesto:version", pk=version.pk)
     return render(request, "presupuesto/ejercicio_nuevo.html", {"form": form})
 
@@ -108,9 +139,7 @@ def version(request: HttpRequest, pk: int) -> HttpResponse:
     bloques: list[dict[str, Any]] = [
         {"total": t, "lineas": por_capitulo.get(t.capitulo.codigo, [])}
         for t in resumen.capitulos
-        if not t.capitulo.solo_con_proceso_electoral
-        or v.ejercicio.hay_proceso_electoral
-        or por_capitulo.get(t.capitulo.codigo)
+        if t.capitulo.ambito == v.ambito
     ]
     puede_editar = request.rol_activo == Rol.TESORERO and v.editable  # type: ignore[attr-defined]
     validacion = validar_version(v)
@@ -127,7 +156,7 @@ def version(request: HttpRequest, pk: int) -> HttpResponse:
             "validacion": validacion,
             "con_donantes": dn.CAPITULOS_CON_DONANTES,
             "flujo": contexto_flujo(request, v),
-            "otras_versiones": v.ejercicio.versiones.exclude(pk=v.pk),
+            "otras_versiones": v.ejercicio.versiones.filter(ambito=v.ambito).exclude(pk=v.pk),
         },
     )
 
@@ -138,9 +167,7 @@ def linea_elegir_partida(request: HttpRequest, pk: int) -> HttpResponse:
     if not v.editable:
         messages.error(request, "Esta versión es de solo lectura.")
         return redirect("presupuesto:version", pk=v.pk)
-    capitulos = Capitulo.objects.filter(activo=True).prefetch_related("partidas")
-    if not v.ejercicio.hay_proceso_electoral:
-        capitulos = capitulos.filter(solo_con_proceso_electoral=False)
+    capitulos = Capitulo.objects.filter(activo=True, ambito=v.ambito).prefetch_related("partidas")
     return render(
         request, "presupuesto/elegir_partida.html", {"version": v, "capitulos": capitulos}
     )

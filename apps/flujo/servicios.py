@@ -23,6 +23,7 @@ from apps.presupuesto.configuracion import ConfiguracionVersion, cargar_configur
 from apps.presupuesto.dinero import CERO, formatear_euros
 from apps.presupuesto.estados import EstadoVersion
 from apps.presupuesto.models import (
+    Ambito,
     Comentario,
     Donacion,
     Ejercicio,
@@ -185,9 +186,11 @@ def _exigir_integridad(contexto: Contexto, version: VersionPresupuesto) -> None:
         raise IntegridadRota(" ".join(res.problemas))
 
 
-def vigente(ejercicio: Ejercicio) -> VersionPresupuesto | None:
-    """Última versión aprobada del ejercicio (ratificada o modificación aprobada)."""
-    return ejercicio.versiones.filter(estado__in=VIGENTES).order_by("-numero").first()
+def vigente(ejercicio: Ejercicio, ambito: str = Ambito.ORDINARIO) -> VersionPresupuesto | None:
+    """Última versión aprobada del ejercicio en ese presupuesto (ratificada o modificación)."""
+    return (
+        ejercicio.versiones.filter(ambito=ambito, estado__in=VIGENTES).order_by("-numero").first()
+    )
 
 
 # ------------------------------------------------------------------------- proponer
@@ -685,8 +688,8 @@ def _copiar_contenido(
     return len(copiadas)
 
 
-def _siguiente_numero(ejercicio: Ejercicio) -> int:
-    ultimo = ejercicio.versiones.order_by("-numero").first()
+def _siguiente_numero(ejercicio: Ejercicio, ambito: str = Ambito.ORDINARIO) -> int:
+    ultimo = ejercicio.versiones.filter(ambito=ambito).order_by("-numero").first()
     return (ultimo.numero if ultimo else 0) + 1
 
 
@@ -704,7 +707,8 @@ def nuevo_borrador_desde(
     with transaction.atomic():
         nueva = VersionPresupuesto.objects.create(
             ejercicio=origen.ejercicio,
-            numero=_siguiente_numero(origen.ejercicio),
+            ambito=origen.ambito,
+            numero=_siguiente_numero(origen.ejercicio, origen.ambito),
             estado=EstadoVersion.BORRADOR,
             autor=contexto.usuario,
             motivo=motivo,
@@ -738,9 +742,11 @@ def crear_modificacion(
     _exigir_estado(version, *VIGENTES)
     if not motivo.strip():
         raise ValidationError("Una modificación presupuestaria exige justificación.")
-    if version.ejercicio.versiones.filter(estado__in=ABIERTAS).exists():
-        raise ValidationError("Ya hay una versión en curso en este ejercicio: termínala antes.")
-    if vigente(version.ejercicio) != version:
+    if version.ejercicio.versiones.filter(ambito=version.ambito, estado__in=ABIERTAS).exists():
+        raise ValidationError(
+            "Ya hay una versión en curso en este presupuesto del ejercicio: termínala antes."
+        )
+    if vigente(version.ejercicio, version.ambito) != version:
         raise ValidationError("Solo se puede modificar la versión vigente del ejercicio.")
     return nuevo_borrador_desde(contexto, version, TipoOrigen.MODIFICACION, motivo.strip())
 
@@ -766,8 +772,8 @@ def crear_prorroga(
 ) -> VersionPresupuesto:
     """Presupuesto prorrogado del ejercicio anterior, marcado como provisional.
 
-    Solo se copian las líneas recurrentes y se excluye todo lo de campaña: una campaña electoral
-    es un gasto puntual y no se prorroga.
+    Solo se copian las líneas recurrentes. Solo se prorroga el presupuesto ordinario: el
+    electoral es un presupuesto extraordinario y puntual, y no se prorroga.
     """
     _exigir_rol(contexto, Rol.TESORERO)
     posible, motivo = prorroga_disponible(ejercicio, hoy)
@@ -792,11 +798,7 @@ def crear_prorroga(
     n = _copiar_contenido(
         origen,
         nueva,
-        filtro=lambda ln: (
-            ln.tipo == TipoLinea.RECURRENTE
-            and ln.dimension != "CAMPANA"
-            and ln.partida.capitulo.codigo != "G.7"
-        ),
+        filtro=lambda ln: ln.tipo == TipoLinea.RECURRENTE,
     )
     # El saldo inicial es el de otro año y la campaña no se prorroga: se vuelven a indicar.
     copiar_anexos(origen, nueva, saldo=False, campana=False)

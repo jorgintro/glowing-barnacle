@@ -31,7 +31,7 @@ def estado_secciones(
     params = params or parametros_de_version(version)
     guardadas = textos_de(version)
     salida = []
-    for cfg in params.aplicables(version.ejercicio.hay_proceso_electoral):
+    for cfg in params.aplicables(version.ambito):
         g = guardadas.get(cfg.clave)
         texto = g.texto.strip() if g else ""
         estado = EstadoSeccion(cfg, texto, bool(g and g.pendiente_revision))

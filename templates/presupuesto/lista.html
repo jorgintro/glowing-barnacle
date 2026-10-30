@@ -9,23 +9,18 @@
 <section class="tarjeta">
   <h2>{{ fila.ejercicio.anio|unlocalize }}{% if fila.ejercicio.nombre %} · {{ fila.ejercicio.nombre }}{% endif %}
     {% if fila.ejercicio.es_demo %}<span class="etiqueta aviso">DEMO · datos ficticios</span>{% endif %}
-    {% if fila.ejercicio.hay_proceso_electoral %}<span class="etiqueta marca">Con campaña</span>{% endif %}</h2>
-  <table>
-    <thead><tr><th scope="col">Versión</th><th scope="col">Estado</th><th scope="col">Motivo</th><th scope="col">Fecha</th><th scope="col"></th></tr></thead>
-    <tbody>
-    {% for v in fila.versiones %}
-      <tr>
-        <td>v{{ v.numero }}</td>
-        <td><span class="etiqueta {{ v.estado|clase_estado }}">{{ v.get_estado_display }}</span></td>
-        <td>{{ v.motivo|default:"—" }}</td>
-        <td>{{ v.fecha|date:"d/m/Y" }}</td>
-        <td><a href="{% url 'presupuesto:version' v.pk %}">Abrir</a></td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+    {% if fila.ejercicio.hay_proceso_electoral %}<span class="etiqueta marca">Con proceso electoral</span>{% endif %}</h2>
+  <h3>Presupuesto ordinario</h3>
+  {% include "presupuesto/_tabla_versiones.html" with versiones=fila.ordinarias %}
+  {% if fila.ejercicio.hay_proceso_electoral %}
+  <h3>Presupuesto electoral <span class="sub">(extraordinario: flujo propio y separado)</span></h3>
+  {% include "presupuesto/_tabla_versiones.html" with versiones=fila.electorales %}
+  {% if fila.puede_crear_electoral %}<form method="post" action="{% url 'presupuesto:crear_electoral' fila.ejercicio.pk %}">{% csrf_token %}
+    <p class="aviso-caja">Este ejercicio tiene proceso electoral pero todavía no tiene su presupuesto electoral.
+      <button class="boton secundario" type="submit">Crear el presupuesto electoral</button></p></form>{% endif %}
+  {% endif %}
   {% if fila.prorroga.0 %}<form method="post" action="{% url 'flujo:prorroga' fila.ejercicio.pk %}">{% csrf_token %}
-    <p class="aviso-caja">Este ejercicio ha empezado y no tiene presupuesto aprobado. Puedes generar una <strong>prórroga provisional</strong> del ejercicio anterior (sin la campaña ni lo extraordinario).
+    <p class="aviso-caja">Este ejercicio ha empezado y no tiene presupuesto aprobado. Puedes generar una <strong>prórroga provisional</strong> del ejercicio anterior (sin lo extraordinario; el presupuesto electoral no se prorroga).
       <button class="boton secundario" type="submit">Generar la prórroga</button></p></form>{% endif %}
 </section>
 {% empty %}

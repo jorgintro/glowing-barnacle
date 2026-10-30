@@ -34,9 +34,9 @@ def cargada(catalogo: None, tesorero: Usuario) -> dict[str, str]:
     return demo.cargar_demo(Contexto(tesorero, Rol.TESORERO, "127.0.0.1"))
 
 
-def _version(anio: int, numero: int = 1) -> VersionPresupuesto:
+def _version(anio: int, numero: int = 1, ambito: str = "ORDINARIO") -> VersionPresupuesto:
     return VersionPresupuesto.objects.get(
-        ejercicio__anio=anio, ejercicio__es_demo=True, numero=numero
+        ejercicio__anio=anio, ejercicio__es_demo=True, numero=numero, ambito=ambito
     )
 
 
@@ -61,33 +61,59 @@ def test_todo_esta_marcado_como_ficticio(cargada: dict[str, str]) -> None:
 
 
 def test_los_cinco_capitulos_de_ingresos_y_los_ocho_de_gastos(cargada: dict[str, str]) -> None:
-    v = _version(2027, 2)  # con campaña: usa todos los capítulos
+    v = _version(2027, 2)
     usados = set(
         Linea.objects.filter(version=v).values_list("partida__capitulo__codigo", flat=True)
     )
-    esperados = set(Capitulo.objects.values_list("codigo", flat=True)) - {"G.7"} | {"G.7"}
-    assert usados == esperados
+    assert usados == set(
+        Capitulo.objects.filter(ambito="ORDINARIO").values_list("codigo", flat=True)
+    )
     assert {c for c in usados if c.startswith("I.")} == {f"I.{i}" for i in range(1, 6)}
-    assert {c for c in usados if c.startswith("G.")} == {f"G.{i}" for i in range(1, 9)}
+    assert {c for c in usados if c.startswith("G.")} == {
+        "G.1",
+        "G.2",
+        "G.3",
+        "G.4",
+        "G.5",
+        "G.6",
+        "G.8",
+    }
 
 
-def test_con_y_sin_campana(cargada: dict[str, str]) -> None:
-    assert _version(2027, 2).ejercicio.hay_proceso_electoral
-    assert resumen_version(_version(2027, 2)).gasto_campana == Decimal("12000.00")
-    sin = _version(2029)
-    assert not sin.ejercicio.hay_proceso_electoral
-    assert not Linea.objects.filter(version=sin, partida__capitulo__codigo="G.7").exists()
-    assert resumen_version(sin).gasto_campana == Decimal("0.00")
+def test_el_presupuesto_electoral_es_una_cadena_separada(cargada: dict[str, str]) -> None:
+    ev = _version(2027, 1, "ELECTORAL")
+    assert ev.es_electoral and ev.ejercicio.hay_proceso_electoral
+    assert ev.estado == EstadoVersion.RATIFICADO_JG
+    usados = set(
+        Linea.objects.filter(version=ev).values_list("partida__capitulo__codigo", flat=True)
+    )
+    assert usados and usados <= {"I.6", "I.7", "G.7"}
+    assert "G.7" in usados
+    assert not Linea.objects.filter(
+        version=_version(2027, 2), partida__capitulo__ambito="ELECTORAL"
+    ).exists()
+    assert not VersionPresupuesto.objects.filter(
+        ejercicio__anio=2029, ejercicio__es_demo=True, ambito="ELECTORAL"
+    ).exists()
 
 
 @pytest.mark.parametrize(
-    ("anio", "numero"), [(2027, 1), (2027, 2), (2027, 3), (2028, 1), (2029, 1), (2030, 1)]
+    ("anio", "numero", "ambito"),
+    [
+        (2027, 1, "ORDINARIO"),
+        (2027, 2, "ORDINARIO"),
+        (2027, 3, "ORDINARIO"),
+        (2028, 1, "ORDINARIO"),
+        (2029, 1, "ORDINARIO"),
+        (2030, 1, "ORDINARIO"),
+        (2027, 1, "ELECTORAL"),
+    ],
 )
 def test_las_versiones_correctas_son_coherentes(
-    cargada: dict[str, str], anio: int, numero: int
+    cargada: dict[str, str], anio: int, numero: int, ambito: str
 ) -> None:
     """Meses = anual, hipótesis y responsable presentes, cuenta válida y superávit."""
-    v = _version(anio, numero)
+    v = _version(anio, numero, ambito)
     for linea in Linea.objects.filter(version=v):
         suma = ImporteMensual.objects.filter(linea=linea).aggregate(t=Sum("importe"))["t"]
         assert suma == linea.importe_anual, linea.codigo
@@ -97,7 +123,8 @@ def test_las_versiones_correctas_son_coherentes(
         assert linea.partida.cuentas.filter(pk=linea.cuenta_pgc.pk).exists()
         h = Hipotesis.objects.get(linea=linea)
         assert h.texto and h.fuente
-    assert resumen_version(v).resultado >= 0
+    if ambito == "ORDINARIO":
+        assert resumen_version(v).resultado >= 0
 
 
 def test_la_cadena_de_versiones_de_2027(cargada: dict[str, str]) -> None:
@@ -246,13 +273,22 @@ def test_la_interfaz_muestra_la_marca_demo(cargada: dict[str, str], cliente_teso
 
 
 @pytest.mark.parametrize(
-    ("anio", "numero"), [(2027, 1), (2027, 2), (2027, 3), (2028, 1), (2029, 1), (2030, 1)]
+    ("anio", "numero", "ambito"),
+    [
+        (2027, 1, "ORDINARIO"),
+        (2027, 2, "ORDINARIO"),
+        (2027, 3, "ORDINARIO"),
+        (2028, 1, "ORDINARIO"),
+        (2029, 1, "ORDINARIO"),
+        (2030, 1, "ORDINARIO"),
+        (2027, 1, "ELECTORAL"),
+    ],
 )
 def test_las_versiones_correctas_superan_todas_las_validaciones(
-    cargada: dict[str, str], anio: int, numero: int
+    cargada: dict[str, str], anio: int, numero: int, ambito: str
 ) -> None:
     """Con la configuración ficticia de demostración, las versiones buenas no tienen incidencias."""
-    res = validar_version(_version(anio, numero))
+    res = validar_version(_version(anio, numero, ambito))
     assert res.incidencias == [], res.incidencias
     assert res.puede_avanzar and len(res.reglas_ejecutadas) == 26
 

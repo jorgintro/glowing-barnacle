@@ -102,7 +102,7 @@ def proceso_electoral(ctx: Contexto, version: VersionPresupuesto, **cambios: Any
 def completar_anexos(ctx: Contexto, version: VersionPresupuesto) -> None:
     """Memoria escrita en todas sus secciones y saldo inicial de tesorería."""
     params = parametros_actuales(version.es_demo)
-    for cfg in params.aplicables(version.ejercicio.hay_proceso_electoral):
+    for cfg in params.aplicables(version.ambito):
         if not cfg.solo_automatica:
             anexos.guardar_seccion(ctx, version, cfg.clave, "Texto de prueba. " * 20)
     anexos.guardar_saldo_inicial(ctx, version, Decimal("100000"))
@@ -115,41 +115,39 @@ def completar_anexos(ctx: Contexto, version: VersionPresupuesto) -> None:
         )
 
 
-def presupuesto_valido(
-    ctx: Contexto, version: VersionPresupuesto, campana: bool = False
-) -> dict[str, Linea]:
-    """Un presupuesto que supera todas las reglas con la configuración de demostración."""
+def presupuesto_valido(ctx: Contexto, version: VersionPresupuesto) -> dict[str, Linea]:
+    """Un presupuesto que supera todas las reglas con la configuración de demostración.
+
+    Según el ámbito de la versión: el ordinario (con donaciones y aportaciones) o el electoral
+    (subvención de 4.000 € y gasto de campaña de 5.000 €).
+    """
     ls: dict[str, Linea] = {}
-    ls["cuotas"] = linea(ctx, version, "I.1.1", "6000", confianza="ALTA")
-    ls["cargos"] = linea(ctx, version, "I.2.1", "1800", confianza="MEDIA")
-    ls["subv"] = linea(ctx, version, "I.3.1", "3000", confianza="MEDIA")
-    ls["dona"] = linea(ctx, version, "I.4.1", "1000", confianza="BAJA")
-    ls["alquiler"] = linea(ctx, version, "G.2.1", "4800")
-    ls["personal"] = linea(ctx, version, "G.1.1", "3000")
-    a, b, c, d = (donante(ctx, n) for n in (1, 2, 3, 4))
-    dn.registrar_donacion(ctx, version, ls["cargos"], a, Decimal("900"))
-    dn.registrar_donacion(ctx, version, ls["cargos"], b, Decimal("900"))
-    dn.registrar_donacion(ctx, version, ls["dona"], c, Decimal("600"))
-    dn.registrar_donacion(ctx, version, ls["dona"], d, Decimal("400"))
-    if campana:
+    if version.ambito == "ELECTORAL":
         ls["subv_elec"] = linea(
-            ctx,
-            version,
-            "I.3.3",
-            "4000",
-            confianza="BAJA",
-            dimension="CAMPANA",
-            tipo="CONDICIONADO",
+            ctx, version, "I.6.1", "4000", confianza="BAJA", tipo="CONDICIONADO"
         )
         ls["campana"] = linea(ctx, version, "G.7.1", "5000", tipo="EXTRAORDINARIO")
+        proceso_electoral(ctx, version)
+    else:
+        ls["cuotas"] = linea(ctx, version, "I.1.1", "6000", confianza="ALTA")
+        ls["cargos"] = linea(ctx, version, "I.2.1", "1800", confianza="MEDIA")
+        ls["subv"] = linea(ctx, version, "I.3.1", "3000", confianza="MEDIA")
+        ls["dona"] = linea(ctx, version, "I.4.1", "1000", confianza="BAJA")
+        ls["alquiler"] = linea(ctx, version, "G.2.1", "4800")
+        ls["personal"] = linea(ctx, version, "G.1.1", "3000")
+        a, b, c, d = (donante(ctx, n) for n in (1, 2, 3, 4))
+        dn.registrar_donacion(ctx, version, ls["cargos"], a, Decimal("900"))
+        dn.registrar_donacion(ctx, version, ls["cargos"], b, Decimal("900"))
+        dn.registrar_donacion(ctx, version, ls["dona"], c, Decimal("600"))
+        dn.registrar_donacion(ctx, version, ls["dona"], d, Decimal("400"))
+    electoral = version.ambito == "ELECTORAL"
     dn.guardar_resultado(
         ctx,
         version,
-        explicacion="Superávit de prueba.",
-        plan_financiacion="",
+        explicacion="Resultado de prueba.",
+        # el electoral de la prueba tiene 1.000 € de déficit: lo cubren fondos ordinarios
+        plan_financiacion="Aportación de fondos ordinarios de la formación." if electoral else "",
         endeudamiento=Decimal("0"),
     )
-    if campana:
-        proceso_electoral(ctx, version)
     completar_anexos(ctx, version)
     return ls

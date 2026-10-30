@@ -238,7 +238,7 @@ def v011(ctx: ContextoVersion) -> list[Incidencia]:
     from apps.anexos.campana import construir_plan_campana
     from apps.anexos.configuracion import parametros_de_version
 
-    if not ctx.version.ejercicio.hay_proceso_electoral:
+    if not ctx.version.es_electoral:
         return []
     plan = construir_plan_campana(ctx.version, ctx.cfg)
     if plan.gasto_total == 0 or plan.limite is None or plan.supera_el_limite:

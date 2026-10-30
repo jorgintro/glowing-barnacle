@@ -69,7 +69,7 @@ def sincronizar_cuadro_cuentas(cfg: CuadroCuentasCfg | None = None) -> Resultado
                 "tipo": cap.tipo,
                 "denominacion": cap.denominacion,
                 "orden": orden_cap,
-                "solo_con_proceso_electoral": cap.solo_con_proceso_electoral,
+                "ambito": cap.ambito,
             },
         )
         if creado:
@@ -79,7 +79,7 @@ def sincronizar_cuadro_cuentas(cfg: CuadroCuentasCfg | None = None) -> Resultado
             tipo=cap.tipo,
             denominacion=cap.denominacion,
             orden=orden_cap,
-            solo_con_proceso_electoral=cap.solo_con_proceso_electoral,
+            ambito=cap.ambito,
             activo=True,
         ):
             capitulo.save()

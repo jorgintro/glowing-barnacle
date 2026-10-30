@@ -35,7 +35,15 @@ class SeccionMemoriaCfg(models.Model):
     )
     obligatoria = models.BooleanField(default=True)
     activa = models.BooleanField(default=True)
-    solo_con_proceso_electoral = models.BooleanField(default=False)
+    ambito = models.CharField(
+        max_length=10,
+        choices=[
+            ("TODOS", "Todos los presupuestos"),
+            ("ORDINARIO", "Solo el ordinario"),
+            ("ELECTORAL", "Solo el electoral"),
+        ],
+        default="TODOS",
+    )
     longitud_minima = models.PositiveIntegerField(
         null=True,
         blank=True,

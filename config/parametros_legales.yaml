@@ -43,6 +43,7 @@ parametros:
     unidad: BOOLEANO
     regla: L-001
     norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    ambito: AMBOS
     # Art. 5.Uno.a: no se pueden aceptar «donaciones anónimas, finalistas o revocables».
     valor: false
     referencia_normativa: "LO 8/2007, art. 5.Uno.a (extracto aportado por el Tesorero)"
@@ -54,6 +55,7 @@ parametros:
     unidad: BOOLEANO
     regla: L-001
     norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    ambito: AMBOS
     # Art. 5.Uno.c: no se admiten donaciones «de personas jurídicas y de entes sin personalidad
     # jurídica». Art. 4.Dos.a: solo de personas físicas.
     valor: false
@@ -66,6 +68,7 @@ parametros:
     unidad: LISTA
     regla: L-002
     norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    ambito: AMBOS
     # Etiquetas que se escriben en el campo «Origen del ingreso» de la línea. Las eligió el sistema
     # a partir del extracto; el Tesorero o su asesor deben confirmarlas o corregirlas:
     #   art. 5.Uno.a  donaciones anónimas, finalistas o revocables
@@ -117,6 +120,7 @@ parametros:
     unidad: BOOLEANO
     regla: L-010
     norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    ambito: AMBOS
     # Art. 4.Dos.a: no se pueden aceptar donaciones de personas físicas que, en ejercicio de una
     # actividad económica o profesional, sean parte de un contrato vigente del sector público.
     valor: false
@@ -129,6 +133,7 @@ parametros:
     unidad: BOOLEANO
     regla: L-011
     norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1)"
+    ambito: AMBOS
     # Art. 5.Uno.a: no se pueden aceptar «donaciones anónimas, finalistas o revocables».
     valor: false
     referencia_normativa: "LO 8/2007, art. 5.Uno.a (extracto aportado por el Tesorero)"
@@ -354,6 +359,7 @@ parametros:
     unidad: EUR
     regla: L-005
     norma_orientativa: "LO 8/2007 (CLAUDE.md §3.1); artículo por verificar"
+    ambito: AMBOS
     valor: null
     referencia_normativa: null
     fecha_verificacion: null

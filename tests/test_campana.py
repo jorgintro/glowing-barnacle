@@ -149,10 +149,9 @@ def _aportacion(esc, v, n: int, importe: str):
     ln = linea(
         esc.tesorero(),
         v,
-        "I.4.3",
+        "I.7.1",
         importe,
         confianza="BAJA",
-        dimension="CAMPANA",
         tipo="EXTRAORDINARIO",
     )
     dn.registrar_donacion(esc.tesorero(), v, ln, donante(esc.tesorero(), n), D(importe))
@@ -175,11 +174,23 @@ def test_l012_suma_todas_las_lineas_de_campana_del_donante(camp) -> None:
     assert len(msgs(validar(v), "L-012")) == 1
 
 
-def test_l012_ignora_las_donaciones_que_no_son_de_campana(camp) -> None:
+def test_l012_solo_mira_el_presupuesto_electoral(camp) -> None:
+    """Una donación ordinaria de 1.400 € (por debajo del límite anual) no cuenta para L-012."""
+    esc, _ = camp
+    ordinario = version_valida(esc, 2079)
+    ln = linea(esc.tesorero(), ordinario, "I.4.1", "1400", confianza="BAJA")
+    dn.registrar_donacion(esc.tesorero(), ordinario, ln, donante(esc.tesorero(), 23), D("1400"))
+    assert "L-012" not in {i.codigo for i in validar(ordinario).incidencias}
+
+
+def test_l012_rechaza_a_una_persona_juridica_y_a_los_importes_sin_identificar(camp) -> None:
     esc, v = camp
-    ln = linea(esc.tesorero(), v, "I.4.1", "1400", confianza="BAJA")
-    dn.registrar_donacion(esc.tesorero(), v, ln, donante(esc.tesorero(), 23), D("1400"))
-    assert "L-012" not in {i.codigo for i in validar(v).incidencias}
+    ln = linea(esc.tesorero(), v, "I.7.1", "500", confianza="BAJA", tipo="EXTRAORDINARIO")
+    empresa = donante(esc.tesorero(), 31, "JURIDICA", "Empresa de prueba")
+    dn.registrar_donacion(esc.tesorero(), v, ln, empresa, D("300"))
+    mensajes = msgs(validar(v), "L-012")
+    assert any("persona jurídica" in m for m in mensajes)
+    assert any("sin donante identificado" in m for m in mensajes)  # faltan 200 € por identificar
 
 
 def test_l012_con_el_parametro_sin_verificar_no_se_da_por_cumplida(camp) -> None:
@@ -198,9 +209,8 @@ def test_l013_la_subvencion_no_supera_el_gasto(camp) -> None:
     linea(
         esc.tesorero(),
         v,
-        "I.3.4",
+        "I.6.1",
         "2000",
-        dimension="CAMPANA",
         tipo="CONDICIONADO",
         confianza="BAJA",
     )  # 6.000 de subvención > 5.000 de gasto
@@ -357,7 +367,7 @@ def test_el_proceso_lo_guarda_solo_el_tesorero_en_borrador_de_un_ejercicio_con_c
     with pytest.raises(PermissionDenied):
         an.guardar_proceso_electoral(esc.vocal(0), v, denominacion="x")
     sin = version_valida(esc, 2073)
-    with pytest.raises(ValidationError, match="no tiene proceso electoral"):
+    with pytest.raises(ValidationError, match="son del presupuesto electoral"):
         an.guardar_proceso_electoral(esc.tesorero(), sin, denominacion="x")
     proponer(esc, v)
     v.refresh_from_db()
@@ -422,23 +432,19 @@ def test_el_proceso_de_una_version_sellada_no_se_toca_ni_con_sql(camp, sql) -> N
             cursor.execute(sql, (v.pk,))
 
 
-def test_una_modificacion_hereda_el_proceso_y_la_prorroga_no(esc) -> None:
+def test_una_modificacion_del_presupuesto_electoral_hereda_el_proceso(esc) -> None:
     v = version_valida(esc, 2074, campana=True)
     aprobar_cp(esc, v)
     ratificar(esc, v)
     m = fs.crear_modificacion(esc.tesorero(), v, "Cambio de prueba")
+    assert m.ambito == "ELECTORAL" and m.numero == 2 and m.version_origen == v
     assert ProcesoElectoral.objects.get(version=m).habitantes_derecho == 136000
-    from apps.presupuesto import servicios as ps
-
-    ej, _ = ps.crear_ejercicio(esc.tesorero(), anio=2075, hay_proceso_electoral=True, es_demo=True)
-    p = fs.crear_prorroga(esc.tesorero(), ej, hoy=date(2075, 1, 3))
-    assert not ProcesoElectoral.objects.filter(version=p).exists()
 
 
 # ------------------------------------------------------------- memoria y vistas
 
 
-def test_la_memoria_pide_la_seccion_de_campana_solo_con_proceso_electoral(esc) -> None:
+def test_la_memoria_pide_la_seccion_de_campana_solo_en_el_presupuesto_electoral(esc) -> None:
     sin = version_valida(esc, 2076)
     con = version_valida(esc, 2077, campana=True)
     claves_sin = [s.cfg.clave for s in construir_memoria(sin).secciones]
@@ -476,7 +482,7 @@ def test_la_pantalla_de_campana(camp) -> None:
     assert "16.500,00" in c.get(url).content.decode()  # 150.000 × 0,11
     sin = version_valida(esc, 2078)
     assert (
-        "no tiene proceso electoral previsto"
+        "presupuesto ordinario"
         in c.get(f"/presupuestos/version/{sin.pk}/campana/").content.decode()
     )
     proponer(esc, v)

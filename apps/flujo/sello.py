@@ -120,6 +120,18 @@ def _contenido_base(
     version: VersionPresupuesto, lineas: list[dict[str, Any]], donaciones: list[dict[str, Any]]
 ) -> dict[str, Any]:
     ej = version.ejercicio
+    contenido = _contenido_base_sin_ambito(version, lineas, donaciones, ej)
+    if version.ambito != "ORDINARIO":  # las huellas de los presupuestos ordinarios no cambian
+        contenido["version"]["ambito"] = version.ambito
+    return contenido
+
+
+def _contenido_base_sin_ambito(
+    version: VersionPresupuesto,
+    lineas: list[dict[str, Any]],
+    donaciones: list[dict[str, Any]],
+    ej: Any,
+) -> dict[str, Any]:
     return {
         "ejercicio": {"anio": ej.anio, "proceso_electoral": ej.hay_proceso_electoral},
         "version": {

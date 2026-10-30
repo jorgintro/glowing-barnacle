@@ -1,0 +1,15 @@
+{% load presupuesto_extras %}
+<table>
+  <thead><tr><th scope="col">Versión</th><th scope="col">Estado</th><th scope="col">Motivo</th><th scope="col">Fecha</th><th scope="col"></th></tr></thead>
+  <tbody>
+  {% for v in versiones %}
+    <tr>
+      <td>v{{ v.numero }}</td>
+      <td><span class="etiqueta {{ v.estado|clase_estado }}">{{ v.get_estado_display }}</span></td>
+      <td>{{ v.motivo|default:"—" }}</td>
+      <td>{{ v.fecha|date:"d/m/Y" }}</td>
+      <td><a href="{% url 'presupuesto:version' v.pk %}">Abrir</a></td>
+    </tr>
+  {% empty %}<tr><td colspan="5" class="suave">Todavía no hay versiones visibles con tu rol.</td></tr>{% endfor %}
+  </tbody>
+</table>

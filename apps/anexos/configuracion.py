@@ -41,7 +41,7 @@ class SeccionCfg:
     orden: int
     contenido: str
     obligatoria: bool
-    solo_con_proceso_electoral: bool
+    ambito: str
     longitud_minima: int | None
     ayuda: str
     plantilla: str
@@ -50,8 +50,9 @@ class SeccionCfg:
     def solo_automatica(self) -> bool:
         return self.contenido == ContenidoAutomatico.CUMPLIMIENTO
 
-    def aplicables_a(self, hay_proceso_electoral: bool) -> bool:
-        return hay_proceso_electoral or not self.solo_con_proceso_electoral
+    def aplicables_a(self, ambito: str) -> bool:
+        """¿Se pide esta sección en el presupuesto de ese ámbito (ORDINARIO o ELECTORAL)?"""
+        return self.ambito in ("TODOS", ambito)
 
 
 @dataclass(frozen=True)
@@ -84,8 +85,8 @@ class ParametrosAnexos:
     def seccion(self, clave: str) -> SeccionCfg | None:
         return next((s for s in self.secciones if s.clave == clave), None)
 
-    def aplicables(self, hay_proceso_electoral: bool) -> list[SeccionCfg]:
-        return [s for s in self.secciones if s.aplicables_a(hay_proceso_electoral)]
+    def aplicables(self, ambito: str) -> list[SeccionCfg]:
+        return [s for s in self.secciones if s.aplicables_a(ambito)]
 
     # --- instantánea (JSON) -------------------------------------------------------------
 
@@ -101,7 +102,7 @@ class ParametrosAnexos:
                     "orden": s.orden,
                     "contenido": s.contenido,
                     "obligatoria": s.obligatoria,
-                    "solo_con_proceso_electoral": s.solo_con_proceso_electoral,
+                    "ambito": s.ambito,
                     "longitud_minima": s.longitud_minima,
                     "ayuda": s.ayuda,
                     "plantilla": s.plantilla,
@@ -125,7 +126,7 @@ class ParametrosAnexos:
             return None if v is None else Decimal(v)
 
         return cls(
-            secciones=tuple(SeccionCfg(**s) for s in datos["secciones"]),
+            secciones=tuple(SeccionCfg(**_seccion_desde_json(s)) for s in datos["secciones"]),
             marcas_pendiente=tuple(datos["marcas_pendiente"]),
             variaciones_destacadas=datos["variaciones_destacadas"],
             saldo_minimo=dec(datos["saldo_minimo"]),
@@ -136,6 +137,15 @@ class ParametrosAnexos:
             semaforo_rojo_pct=dec(datos.get("semaforo_rojo_pct")),
             semaforo_importe_minimo=dec(datos.get("semaforo_importe_minimo")),
         )
+
+
+def _seccion_desde_json(s: dict[str, Any]) -> dict[str, Any]:
+    """Acepta instantáneas anteriores a la separación del presupuesto electoral."""
+    datos = dict(s)
+    if "solo_con_proceso_electoral" in datos:
+        antiguo = datos.pop("solo_con_proceso_electoral")
+        datos.setdefault("ambito", "ELECTORAL" if antiguo else "TODOS")
+    return datos
 
 
 # ------------------------------------------------------------------ lectura de los YAML
@@ -210,7 +220,7 @@ def asegurar_configuracion(demo: bool = False) -> None:
                 "orden": orden,
                 "contenido": s.get("contenido", "NINGUNO"),
                 "obligatoria": bool(s.get("obligatoria", True)),
-                "solo_con_proceso_electoral": bool(s.get("solo_con_proceso_electoral", False)),
+                "ambito": str(s.get("ambito", "TODOS")),
                 "longitud_minima": s.get("longitud_minima"),
                 "ayuda": (s.get("ayuda") or "").strip(),
                 "plantilla": (s.get("plantilla") or "").rstrip(),
@@ -257,7 +267,7 @@ def parametros_actuales(demo: bool = False) -> ParametrosAnexos:
             orden=s.orden,
             contenido=s.contenido,
             obligatoria=s.obligatoria,
-            solo_con_proceso_electoral=s.solo_con_proceso_electoral,
+            ambito=s.ambito,
             longitud_minima=s.longitud_minima,
             ayuda=s.ayuda,
             plantilla=s.plantilla,

@@ -26,7 +26,8 @@ class EjercicioForm(forms.Form):
     hay_proceso_electoral = forms.BooleanField(
         label="Hay proceso electoral previsto en este ejercicio",
         required=False,
-        help_text="Activa el capítulo G.7 (gastos electorales) y el anexo de campaña.",
+        help_text="Permite abrir el presupuesto electoral: un presupuesto separado del ordinario, "
+        "con su propio flujo de aprobación (como un presupuesto extraordinario).",
     )
 
 

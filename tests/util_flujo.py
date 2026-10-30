@@ -57,8 +57,12 @@ def crear_escenario() -> Escenario:
 
 def version_valida(e: Escenario, anio: int = 2060, campana: bool = False) -> VersionPresupuesto:
     """Borrador DEMO (usa la configuración ficticia) que supera todas las reglas."""
-    _, v = ps.crear_ejercicio(e.tesorero(), anio=anio, hay_proceso_electoral=campana, es_demo=True)
-    presupuesto_valido(e.tesorero(), v, campana=campana)
+    ejercicio, v = ps.crear_ejercicio(
+        e.tesorero(), anio=anio, hay_proceso_electoral=campana, es_demo=True
+    )
+    if campana:  # el presupuesto electoral es otro, con su propio flujo: se devuelve ese
+        v = ps.crear_presupuesto_electoral(e.tesorero(), ejercicio)
+    presupuesto_valido(e.tesorero(), v)
     return v
 
 

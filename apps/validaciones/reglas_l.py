@@ -198,16 +198,9 @@ def l004(ctx: ContextoVersion) -> list[Incidencia]:
     """
     from apps.anexos.campana import construir_plan_campana, es_gasto_electoral
 
-    gasto = [ln for ln in ctx.lineas if es_gasto_electoral(ln)]
-    if not ctx.version.ejercicio.hay_proceso_electoral:
-        if gasto:
-            return [
-                _inc(
-                    "L-004",
-                    "Hay gasto electoral pero el ejercicio no tiene proceso electoral previsto.",
-                )
-            ]
+    if not ctx.version.es_electoral:
         return []
+    gasto = [ln for ln in ctx.lineas if es_gasto_electoral(ln)]
     if not gasto:
         return []
     plan = construir_plan_campana(ctx.version, ctx.cfg)
@@ -232,14 +225,37 @@ def l012(ctx: ContextoVersion) -> list[Incidencia]:
     from apps.anexos.campana import aportaciones_de_campana_por_persona
 
     aportaciones = aportaciones_de_campana_por_persona(ctx.version)
-    if not aportaciones:
+    if not ctx.version.es_electoral or not ctx.lineas_de_capitulo("I.7"):
         return []
+    salida: list[Incidencia] = []
+    anonimas = ctx.parametro("donaciones_anonimas_permitidas")
+    if parametro_verificado(anonimas):
+        assert anonimas is not None
+        salida += _identificacion(ctx, "L-012", "I.7", exige=not bool(anonimas.valor))
+    else:
+        salida += _identificacion(ctx, "L-012", "I.7", exige=False)
+        salida += _pendientes(ctx, "L-012", ["donaciones_anonimas_permitidas"])
+    juridicas = ctx.parametro("donaciones_personas_juridicas_permitidas")
+    if parametro_verificado(juridicas):
+        assert juridicas is not None
+        if not bool(juridicas.valor):
+            salida += [
+                _inc(
+                    "L-012",
+                    f"{_quien(d)} es persona jurídica y la cuenta 731 solo recoge donaciones "
+                    "de personas físicas.",
+                )
+                for d in aportaciones
+                if d.tipo_persona == TipoPersona.JURIDICA
+            ]
+    else:
+        salida += _pendientes(ctx, "L-012", ["donaciones_personas_juridicas_permitidas"])
     p = ctx.parametro("limite_aportacion_electoral_por_persona")
     if not parametro_verificado(p):
-        return _pendientes(ctx, "L-012", ["limite_aportacion_electoral_por_persona"])
+        return salida + _pendientes(ctx, "L-012", ["limite_aportacion_electoral_por_persona"])
     assert p is not None
     limite = valor_decimal(p)
-    return [
+    return salida + [
         _inc(
             "L-012",
             f"{_quien(donante)} aporta {formatear_euros(total)} a las cuentas electorales y el "
@@ -257,7 +273,7 @@ def l013(ctx: ContextoVersion) -> list[Incidencia]:
     """
     from apps.anexos.campana import construir_plan_campana
 
-    if not ctx.version.ejercicio.hay_proceso_electoral:
+    if not ctx.version.es_electoral:
         return []
     plan = construir_plan_campana(ctx.version, ctx.cfg)
     if plan.subvenciones > plan.gasto_total:
@@ -277,7 +293,7 @@ def l014(ctx: ContextoVersion) -> list[Incidencia]:
     """Aviso: la subvención electoral presupuestada supera la estimada con las previsiones."""
     from apps.anexos.campana import construir_plan_campana
 
-    if not ctx.version.ejercicio.hay_proceso_electoral:
+    if not ctx.version.es_electoral:
         return []
     plan = construir_plan_campana(ctx.version, ctx.cfg)
     if plan.proceso is None or plan.subvenciones == 0:
@@ -309,7 +325,7 @@ def l015(ctx: ContextoVersion) -> list[Incidencia]:
     """Aviso: gasto de campaña en meses fuera del periodo electoral (LOREG art. 130)."""
     from apps.anexos.campana import construir_plan_campana
 
-    if not ctx.version.ejercicio.hay_proceso_electoral:
+    if not ctx.version.es_electoral:
         return []
     plan = construir_plan_campana(ctx.version, ctx.cfg)
     pe = plan.proceso
@@ -396,10 +412,10 @@ def l007(ctx: ContextoVersion) -> list[Incidencia]:
     """
     salida = []
     anio = ctx.version.ejercicio.anio
-    hay_elecciones = ctx.version.ejercicio.hay_proceso_electoral
+    mi_ambito = "ELECTORAL" if ctx.version.es_electoral else "GENERAL"
     for clave, p in ctx.cfg.legales.items():
-        if p.informativo or (p.ambito == "ELECTORAL" and not hay_elecciones):
-            continue  # no condiciona ninguna regla de esta versión
+        if p.informativo or p.ambito not in (mi_ambito, "AMBOS"):
+            continue  # no condiciona ninguna regla de este presupuesto
         if not parametro_verificado(p):
             salida.append(
                 _inc("L-007", f"El parámetro legal «{clave}» está pendiente de verificación.")
@@ -520,7 +536,7 @@ def l010(ctx: ContextoVersion) -> list[Incidencia]:
     donantes = {
         d.donante
         for d in ctx.donaciones
-        if d.linea.partida.capitulo.codigo == "I.4" and d.donante.contratista_publico
+        if d.linea.partida.capitulo.codigo in ("I.4", "I.7") and d.donante.contratista_publico
     }
     if not donantes:
         return []
@@ -545,7 +561,7 @@ def l011(ctx: ContextoVersion) -> list[Incidencia]:
     marcadas = [
         d
         for d in ctx.donaciones
-        if d.linea.partida.capitulo.codigo == "I.4" and (d.finalista or d.revocable)
+        if d.linea.partida.capitulo.codigo in ("I.4", "I.7") and (d.finalista or d.revocable)
     ]
     if not marcadas:
         return []

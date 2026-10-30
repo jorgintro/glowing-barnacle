@@ -14,7 +14,8 @@ import yaml
 from django.conf import settings
 
 UNIDADES_VALIDAS = {"EUR", "PORCENTAJE", "BOOLEANO", "LISTA", "TEXTO", "DIAS"}
-AMBITOS_VALIDOS = {"GENERAL", "ELECTORAL"}
+# GENERAL: presupuesto ordinario · ELECTORAL: presupuesto electoral · AMBOS: los dos.
+AMBITOS_VALIDOS = {"GENERAL", "ELECTORAL", "AMBOS"}
 DIMENSIONES_VALIDAS = {"ORDINARIO", "CAMPANA", "GRUPO_MUNICIPAL"}
 TIPOS_VALIDOS = {"INGRESO", "GASTO"}
 
@@ -44,7 +45,7 @@ class CapituloCfg:
     codigo: str
     tipo: str
     denominacion: str
-    solo_con_proceso_electoral: bool
+    ambito: str
     partidas: tuple[PartidaCfg, ...]
 
 
@@ -71,7 +72,7 @@ class ParametroCfg:
     referencia_normativa: str
     fecha_verificacion: date | None
     verificador: str
-    # ELECTORAL: solo se exige verificarlo en ejercicios con proceso electoral (L-007).
+    # Presupuesto al que afecta: solo se exige verificarlo en él (L-007).
     ambito: str = "GENERAL"
     # Informativo: alimenta estimaciones y calendarios, pero no condiciona ninguna regla (L-007).
     informativo: bool = False
@@ -128,6 +129,8 @@ def cargar_cuadro_cuentas(directorio: Path | None = None) -> CuadroCuentasCfg:
         tipo = cap.get("tipo")
         if tipo not in TIPOS_VALIDOS:
             raise ErrorConfiguracion(f"Capítulo {cod_cap}: tipo debe ser INGRESO o GASTO.")
+        if cap.get("ambito", "ORDINARIO") not in ("ORDINARIO", "ELECTORAL"):
+            raise ErrorConfiguracion(f"Capítulo {cod_cap}: ámbito debe ser ORDINARIO o ELECTORAL.")
         partidas: list[PartidaCfg] = []
         for p in cap.get("partidas") or []:
             cod_p = _texto(p.get("codigo"), f"partida de {cod_cap}")
@@ -161,7 +164,7 @@ def cargar_cuadro_cuentas(directorio: Path | None = None) -> CuadroCuentasCfg:
                 cod_cap,
                 tipo,
                 _texto(cap.get("denominacion"), cod_cap),
-                bool(cap.get("solo_con_proceso_electoral", False)),
+                str(cap.get("ambito", "ORDINARIO")),
                 tuple(partidas),
             )
         )

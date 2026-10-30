@@ -51,8 +51,8 @@ def contexto_flujo(request: HttpRequest, v: VersionPresupuesto) -> dict[str, Any
         "puede_ratificar": esperando_junta and rol in ratifican,
         "puede_modificar": rol == Rol.TESORERO
         and v.estado in fs.VIGENTES
-        and fs.vigente(v.ejercicio) == v
-        and not v.ejercicio.versiones.filter(estado__in=fs.ABIERTAS).exists(),
+        and fs.vigente(v.ejercicio, v.ambito) == v
+        and not v.ejercicio.versiones.filter(ambito=v.ambito, estado__in=fs.ABIERTAS).exists(),
         "puede_comentar": rol in (Rol.TESORERO, Rol.COMISION_PERMANENTE)
         and v.estado != EstadoVersion.BORRADOR,
         "ultimo_comentario_abierto": v.comentarios.filter(resuelto=False).count(),

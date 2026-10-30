@@ -134,7 +134,7 @@ secciones:
     titulo: Presupuesto de campaña
     contenido: CAMPANA
     obligatoria: true
-    solo_con_proceso_electoral: true
+    ambito: ELECTORAL
     longitud_minima: 100
     ayuda: >-
       Solo aparece si el ejercicio tiene proceso electoral. Explica qué campaña se prevé, cómo se

@@ -24,6 +24,13 @@ class Tipo(models.TextChoices):
     GASTO = "GASTO", "Gasto"
 
 
+class Ambito(models.TextChoices):
+    """Cada ejercicio tiene dos presupuestos con flujo propio y separado (decisión 0008)."""
+
+    ORDINARIO = "ORDINARIO", "Ordinario"
+    ELECTORAL = "ELECTORAL", "Electoral (extraordinario)"
+
+
 class Dimension(models.TextChoices):
     ORDINARIO = "ORDINARIO", "Ordinario"
     CAMPANA = "CAMPANA", "Campaña"
@@ -64,7 +71,7 @@ class Capitulo(models.Model):
     tipo = models.CharField(max_length=10, choices=Tipo.choices)
     denominacion = models.CharField(max_length=200)
     orden = models.PositiveSmallIntegerField()
-    solo_con_proceso_electoral = models.BooleanField(default=False)
+    ambito = models.CharField(max_length=10, choices=Ambito.choices, default=Ambito.ORDINARIO)
     activo = models.BooleanField(default=True)
 
     class Meta:
@@ -162,7 +169,14 @@ class Ejercicio(models.Model):
 
     @property
     def ultima_version(self) -> "VersionPresupuesto | None":
-        return self.versiones.order_by("-numero").first()
+        return self.versiones.filter(ambito=Ambito.ORDINARIO).order_by("-numero").first()
+
+    def versiones_de(self, ambito: str) -> "models.QuerySet[VersionPresupuesto]":
+        return self.versiones.filter(ambito=ambito)
+
+    @property
+    def presupuesto_electoral(self) -> "VersionPresupuesto | None":
+        return self.versiones.filter(ambito=Ambito.ELECTORAL).order_by("-numero").first()
 
 
 class TipoOrigen(models.TextChoices):
@@ -174,6 +188,7 @@ class TipoOrigen(models.TextChoices):
 
 class VersionPresupuesto(models.Model):
     ejercicio = models.ForeignKey(Ejercicio, on_delete=models.PROTECT, related_name="versiones")
+    ambito = models.CharField(max_length=10, choices=Ambito.choices, default=Ambito.ORDINARIO)
     numero = models.PositiveSmallIntegerField()
     estado = models.CharField(
         max_length=20, choices=EstadoVersion.choices, default=EstadoVersion.BORRADOR
@@ -226,18 +241,25 @@ class VersionPresupuesto(models.Model):
     es_demo = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ["ejercicio", "numero"]
+        ordering = ["ejercicio", "-ambito", "numero"]
         verbose_name = "versión del presupuesto"
         verbose_name_plural = "versiones del presupuesto"
         constraints = [
-            models.UniqueConstraint(fields=["ejercicio", "numero"], name="un_numero_por_ejercicio"),
+            models.UniqueConstraint(
+                fields=["ejercicio", "ambito", "numero"], name="un_numero_por_ejercicio_y_ambito"
+            ),
             models.CheckConstraint(
                 condition=Q(endeudamiento_previsto__gte=0), name="endeudamiento_no_negativo"
             ),
         ]
 
     def __str__(self) -> str:
-        return f"{self.ejercicio} · v{self.numero}"
+        etiqueta = " · electoral" if self.ambito == Ambito.ELECTORAL else ""
+        return f"{self.ejercicio}{etiqueta} · v{self.numero}"
+
+    @property
+    def es_electoral(self) -> bool:
+        return self.ambito == Ambito.ELECTORAL
 
     @property
     def editable(self) -> bool:

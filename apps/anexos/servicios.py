@@ -41,7 +41,7 @@ def guardar_seccion(
     exigir_tesorero(contexto)
     exigir_borrador(version)
     cfg = parametros_actuales(version.es_demo).seccion(clave)
-    if cfg is None or not cfg.aplicables_a(version.ejercicio.hay_proceso_electoral):
+    if cfg is None or not cfg.aplicables_a(version.ambito):
         raise ValidationError("Esa sección no existe o no se aplica a esta versión.")
     if cfg.solo_automatica:
         raise ValidationError(f"La sección «{cfg.titulo}» la genera el sistema: no se escribe.")
@@ -110,10 +110,10 @@ def copiar_anexos(
     """Copia la memoria (marcada como pendiente de revisar), el saldo inicial y la campaña."""
     n = 0
     params = parametros_actuales(destino.es_demo)
-    hay_campana = destino.ejercicio.hay_proceso_electoral
+    ambito = destino.ambito
     for s in SeccionMemoria.objects.filter(version=origen):
         cfg = params.seccion(s.clave)
-        if cfg is None or not cfg.aplicables_a(hay_campana):
+        if cfg is None or not cfg.aplicables_a(ambito):
             continue  # la sección ya no existe o no se aplica a la versión nueva
         SeccionMemoria.objects.create(
             version=destino,
@@ -177,8 +177,8 @@ def guardar_proceso_electoral(
     """Datos del proceso electoral de la versión (solo borradores de ejercicios con campaña)."""
     exigir_tesorero(contexto)
     exigir_borrador(version)
-    if not version.ejercicio.hay_proceso_electoral:
-        raise ValidationError("El ejercicio no tiene proceso electoral previsto.")
+    if not version.es_electoral:
+        raise ValidationError("Los datos del proceso electoral son del presupuesto electoral.")
     desconocidos = set(datos) - set(CAMPOS_PROCESO)
     if desconocidos:
         raise ValidationError(f"Datos desconocidos: {', '.join(sorted(desconocidos))}.")
@@ -232,7 +232,7 @@ def _datos_seccion(s: SeccionMemoriaCfg) -> dict[str, Any]:
         "obligatoria": s.obligatoria,
         "activa": s.activa,
         "longitud_minima": s.longitud_minima,
-        "solo_con_proceso_electoral": s.solo_con_proceso_electoral,
+        "ambito": s.ambito,
         "ayuda": _huella(s.ayuda),
         "plantilla": _huella(s.plantilla),
     }
@@ -248,7 +248,7 @@ def guardar_seccion_cfg(
     obligatoria: bool,
     activa: bool,
     longitud_minima: int | None,
-    solo_con_proceso_electoral: bool,
+    ambito: str,
     ayuda: str,
     plantilla: str,
 ) -> SeccionMemoriaCfg:
@@ -261,7 +261,7 @@ def guardar_seccion_cfg(
     cfg.obligatoria = obligatoria
     cfg.activa = activa
     cfg.longitud_minima = longitud_minima or None
-    cfg.solo_con_proceso_electoral = solo_con_proceso_electoral
+    cfg.ambito = ambito
     cfg.ayuda = ayuda.strip()
     cfg.plantilla = plantilla.rstrip()
     cfg.save()

@@ -5,7 +5,7 @@
 <h1>Presupuesto de campaña</h1>
 {% include "anexos/_cabecera.html" %}
 {% if sin_proceso %}
-<p class="aviso-caja">Este ejercicio <strong>no tiene proceso electoral previsto</strong>, así que no hay anexo de campaña. Si lo hay, actívalo al crear el ejercicio.</p>
+<p class="aviso-caja">Esta es una versión del <strong>presupuesto ordinario</strong>: la campaña tiene su <strong>propio presupuesto, separado</strong>, con su flujo de aprobación. Búscalo en la lista de presupuestos del ejercicio (solo existe si el ejercicio tiene proceso electoral previsto).</p>
 {% else %}
 <p class="aviso-caja">Los gastos electorales se imputan <strong>de forma separada</strong> del gasto ordinario (capítulo G.7 y líneas de dimensión «campaña»). Los importes legales salen de <code>config/parametros_legales.yaml</code>; los que figuran como «sin verificar» no se dan por buenos. No es asesoramiento jurídico.</p>
 

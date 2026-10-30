@@ -17,7 +17,6 @@ from decimal import ROUND_HALF_UP, Decimal
 from apps.presupuesto.configuracion import ConfiguracionVersion, ParametroCfg, cargar_configuracion
 from apps.presupuesto.dinero import CERO, formatear_euros, redondear
 from apps.presupuesto.models import (
-    Dimension,
     Donacion,
     Donante,
     ImporteMensual,
@@ -27,8 +26,6 @@ from apps.presupuesto.models import (
 )
 
 from .models import ProcesoElectoral
-
-CAPITULO_GASTOS_ELECTORALES = "G.7"
 
 
 def verificado(p: ParametroCfg | None) -> bool:
@@ -55,25 +52,19 @@ def _dec_informativo(cfg: ConfiguracionVersion, clave: str) -> tuple[Decimal | N
     return Decimal(str(p.valor)), verificado(p)
 
 
-def es_gasto_electoral(linea: Linea) -> bool:
-    return linea.partida.capitulo.tipo == Tipo.GASTO and (
-        linea.dimension == Dimension.CAMPANA
-        or linea.partida.capitulo.codigo == CAPITULO_GASTOS_ELECTORALES
+def lineas_electorales(version: VersionPresupuesto) -> list[Linea]:
+    """Líneas del presupuesto electoral (nada del presupuesto ordinario entra aquí)."""
+    if not version.es_electoral:
+        return []
+    return list(
+        Linea.objects.filter(version=version, anulada=False)
+        .select_related("partida__capitulo", "cuenta_pgc")
+        .order_by("codigo")
     )
 
 
-def es_ingreso_de_campana(linea: Linea) -> bool:
-    return linea.partida.capitulo.tipo == Tipo.INGRESO and linea.dimension == Dimension.CAMPANA
-
-
-def lineas_electorales(version: VersionPresupuesto) -> list[Linea]:
-    return [
-        ln
-        for ln in Linea.objects.filter(version=version, anulada=False)
-        .select_related("partida__capitulo", "cuenta_pgc")
-        .order_by("codigo")
-        if es_gasto_electoral(ln) or es_ingreso_de_campana(ln)
-    ]
+def es_gasto_electoral(linea: Linea) -> bool:
+    return linea.partida.capitulo.tipo == Tipo.GASTO
 
 
 @dataclass
@@ -310,9 +301,9 @@ def construir_plan_campana(
                 plan.gasto_envio += ln.importe_anual
         else:
             capitulo = ln.partida.capitulo.codigo
-            if capitulo == "I.3":
+            if capitulo == "I.6":  # ingresos electorales de origen público
                 plan.subvenciones += ln.importe_anual
-            elif capitulo in ("I.2", "I.4", "I.5"):
+            elif capitulo == "I.7":  # ingresos electorales de origen privado
                 plan.aportaciones += ln.importe_anual
             else:
                 plan.otros_ingresos += ln.importe_anual
@@ -334,9 +325,8 @@ def aportaciones_de_campana_por_persona(
 ) -> dict[Donante, Decimal]:
     """Lo que cada persona aporta a las cuentas electorales (donaciones en líneas de campaña)."""
     total: dict[Donante, Decimal] = {}
-    for d in Donacion.objects.filter(version=version, anulada=False).select_related(
-        "donante", "linea"
-    ):
-        if d.linea.dimension == Dimension.CAMPANA:
-            total[d.donante] = total.get(d.donante, CERO) + d.importe
+    if not version.es_electoral:
+        return total
+    for d in Donacion.objects.filter(version=version, anulada=False).select_related("donante"):
+        total[d.donante] = total.get(d.donante, CERO) + d.importe
     return total

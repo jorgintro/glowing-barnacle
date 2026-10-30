@@ -111,8 +111,9 @@ def construir_certificado(
             formatear_euros(res.resultado),
         ),
     ]
+    nombre_presupuesto = "presupuesto electoral" if version.es_electoral else "presupuesto"
     sujeto = (
-        f"el presupuesto del ejercicio {ej.anio}, versión {version.numero}"
+        f"el {nombre_presupuesto} del ejercicio {ej.anio}, versión {version.numero}"
         + (" (prórroga provisional)" if version.es_prorroga else "")
         + (" (modificación presupuestaria)" if version.tipo_origen == "MODIFICACION" else "")
     )
@@ -158,7 +159,7 @@ def construir_certificado(
             )
         elif version.requiere_junta:
             parrafos.append("Queda pendiente su ratificación por la Junta General.")
-        titulo = "Certificado de aprobación del presupuesto por la Comisión Permanente"
+        titulo = f"Certificado de aprobación del {nombre_presupuesto} por la Comisión Permanente"
     else:
         rat = getattr(version, "ratificacion", None)
         if rat is None or rat.resultado != ResultadoRatificacion.RATIFICADO:
@@ -177,7 +178,7 @@ def construir_certificado(
             "El presupuesto había sido aprobado previamente por la Comisión Permanente "
             "conforme a los estatutos y reglamentos de la organización."
         )
-        titulo = "Certificado de ratificación del presupuesto por la Junta General"
+        titulo = f"Certificado de ratificación del {nombre_presupuesto} por la Junta General"
 
     parrafos.append(
         f"Y para que conste, se expide el presente certificado en {org.localidad}, a {_fecha(hoy)}."

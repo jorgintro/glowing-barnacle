@@ -13,7 +13,7 @@ from .models import Donacion, Donante, Linea, TipoDonacion, TipoPersona, Version
 from .nif import validar_nif
 from .servicios import exigir_borrador, exigir_tesorero
 
-CAPITULOS_CON_DONANTES = ("I.2", "I.4", "I.5")
+CAPITULOS_CON_DONANTES = ("I.2", "I.4", "I.5", "I.7")
 
 
 @transaction.atomic

@@ -47,6 +47,7 @@ from apps.usuarios.roles import Rol
 
 from .dinero import redondear, repartir_proporcional, repartir_uniforme
 from .models import (
+    Ambito,
     Comentario,
     CuentaPGC,
     Donacion,
@@ -355,7 +356,7 @@ def _lineas_campana() -> list[LineaDemo]:
     ext = "EXTRAORDINARIO"
     return [
         LineaDemo(
-            "I.3.4",
+            "I.6.1",
             "Subvención electoral prevista",
             "9000",
             "BAJA",
@@ -367,7 +368,7 @@ def _lineas_campana() -> list[LineaDemo]:
             dimension="CAMPANA",
         ),
         LineaDemo(
-            "I.4.3",
+            "I.7.1",
             "Donaciones para la campaña",
             "3200",
             "BAJA",
@@ -500,7 +501,7 @@ class _Constructor:
         )
         if donantes is None:
             donantes = _DONANTES_POR_PARTIDA.get(spec.partida, ())
-            if spec.dimension == "CAMPANA" and spec.partida == "I.4.3":
+            if spec.dimension == "CAMPANA" and spec.partida == "I.7.1":
                 donantes = _DONANTES_CAMPANA
         if donantes:
             repartos = repartir_proporcional(importe, [1] * len(donantes))
@@ -539,9 +540,11 @@ def _version(
     autor: Usuario | None,
     origen: VersionPresupuesto | None = None,
     tipo_origen: str = TipoOrigen.NUEVA,
+    ambito: str = Ambito.ORDINARIO,
 ) -> VersionPresupuesto:
     return VersionPresupuesto.objects.create(
         ejercicio=ej,
+        ambito=ambito,
         numero=numero,
         motivo=motivo,
         autor=autor,
@@ -551,17 +554,72 @@ def _version(
     )
 
 
-def _rellenar(
-    version: VersionPresupuesto, *, campana: bool, factor: Decimal, anterior: bool
-) -> _Constructor:
+def _rellenar(version: VersionPresupuesto, *, factor: Decimal, anterior: bool) -> _Constructor:
+    """Presupuesto ordinario ficticio."""
     c = _Constructor(version)
     for spec in _lineas_base():
         c.anadir(spec, factor=factor, con_anterior=anterior)
-    if campana:
-        for spec in _lineas_campana():
-            c.anadir(spec, factor=factor, con_anterior=False)
     _explicar_resultado(version)
     return c
+
+
+def _rellenar_electoral(version: VersionPresupuesto, *, factor: Decimal) -> _Constructor:
+    """Presupuesto electoral ficticio (separado del ordinario)."""
+    c = _Constructor(version)
+    for spec in _lineas_campana():
+        c.anadir(spec, factor=factor)
+    _explicar_resultado(version)
+    return c
+
+
+def _casos_electorales(version: VersionPresupuesto) -> None:
+    """Defectos deliberados del presupuesto electoral (cada comentario dice la regla)."""
+    c = _Constructor(version)
+    for spec in _lineas_campana():
+        c.anadir(spec)
+    # L-004: el gasto de campaña, con este gasto extra, supera el límite ficticio de 14.960 €.
+    c.anadir(
+        LineaDemo(
+            "G.7.3",
+            "Gasto de campaña adicional",
+            "4000",
+            "",
+            "Gasto ficticio adicional.",
+            "Estimación ficticia",
+            "Campaña",
+            tipo="EXTRAORDINARIO",
+        ),
+    )
+    # L-012: una persona aporta a las cuentas electorales más del máximo ficticio (1.000 €).
+    c.anadir(
+        LineaDemo(
+            "I.7.1",
+            "Aportación de campaña excesiva",
+            "1500",
+            "BAJA",
+            "Aportación ficticia que, sumada a las demás del mismo donante, supera el máximo.",
+            "Estimación ficticia",
+            "Tesorería",
+            tipo="EXTRAORDINARIO",
+            dimension="CAMPANA",
+        ),
+        donantes=("D5",),
+    )
+    # L-013 y L-014 (avisos): subvención electoral por encima del gasto y de la estimada.
+    c.anadir(
+        LineaDemo(
+            "I.6.1",
+            "Subvención electoral excesiva",
+            "20000",
+            "BAJA",
+            "Importe ficticio muy superior a lo que cabría esperar.",
+            "Estimación ficticia",
+            "Tesorería",
+            tipo="CONDICIONADO",
+            dimension="CAMPANA",
+        ),
+    )
+    _explicar_resultado(version)
 
 
 def _casos_incumplidos(version: VersionPresupuesto) -> None:
@@ -580,9 +638,9 @@ def _casos_incumplidos(version: VersionPresupuesto) -> None:
     # V-003: línea sin cuenta del PGC.
     sin_cuenta = c.anadir(gastos["G.2.2"])
     Linea.objects.filter(pk=sin_cuenta.pk).update(cuenta_pgc=None)
-    # V-003: cuenta que no corresponde a la partida (720 = cuotas, en un gasto de personal).
+    # V-003: cuenta que no corresponde a la partida (710 = cuotas, en un gasto de personal).
     mala = c.anadir(gastos["G.1.1"])
-    Linea.objects.filter(pk=mala.pk).update(cuenta_pgc=CuentaPGC.objects.get(codigo="720"))
+    Linea.objects.filter(pk=mala.pk).update(cuenta_pgc=CuentaPGC.objects.get(codigo="710"))
 
     # V-004: línea sin hipótesis y línea sin responsable.
     sin_hip = c.anadir(gastos["G.2.3"])
@@ -674,48 +732,6 @@ def _casos_incumplidos(version: VersionPresupuesto) -> None:
         ),
         donantes=(),
     )
-    # L-004: el gasto de campaña, con este gasto extra, supera el límite ficticio de 14.960 €.
-    c.anadir(
-        LineaDemo(
-            "G.7.3",
-            "Gasto de campaña adicional",
-            "4000",
-            "",
-            "Gasto ficticio adicional.",
-            "Estimación ficticia",
-            "Campaña",
-            tipo="EXTRAORDINARIO",
-        ),
-    )
-    # L-012: una persona aporta a las cuentas electorales más del máximo ficticio (1.000 €).
-    c.anadir(
-        LineaDemo(
-            "I.4.3",
-            "Aportación de campaña excesiva",
-            "1500",
-            "BAJA",
-            "Aportación ficticia que, sumada a las demás del mismo donante, supera el máximo.",
-            "Estimación ficticia",
-            "Tesorería",
-            tipo="EXTRAORDINARIO",
-            dimension="CAMPANA",
-        ),
-        donantes=("D5",),
-    )
-    # L-013 y L-014 (avisos): subvención electoral por encima del gasto y de la estimada.
-    c.anadir(
-        LineaDemo(
-            "I.3.4",
-            "Subvención electoral excesiva",
-            "20000",
-            "BAJA",
-            "Importe ficticio muy superior a lo que cabría esperar.",
-            "Estimación ficticia",
-            "Tesorería",
-            tipo="CONDICIONADO",
-            dimension="CAMPANA",
-        ),
-    )
     # L-005: endeudamiento superior al límite ficticio de 5.000 €.
     VersionPresupuesto.objects.filter(pk=version.pk).update(
         endeudamiento_previsto=Decimal("8000.00")
@@ -726,8 +742,6 @@ def _casos_incumplidos(version: VersionPresupuesto) -> None:
     # Gastos que, junto con los anteriores, dejan un déficit sin plan de financiación (V-006).
     for partida in ("G.1.2", "G.2.4", "G.2.5", "G.3.4", "G.4.1", "G.4.2", "G.6.1", "G.8.1"):
         c.anadir(gastos[partida])
-    for spec in _lineas_campana():
-        c.anadir(spec)
     c.anadir(
         LineaDemo(
             "G.3.4",
@@ -902,7 +916,7 @@ def _redactar_memoria(
     """Escribe una memoria ficticia (y el saldo inicial) con los servicios reales."""
     tesorero = _ctx(usuarios, "demo_tesorero", Rol.TESORERO)
     params = parametros_actuales(True)
-    for cfg in params.aplicables(version.ejercicio.hay_proceso_electoral):
+    for cfg in params.aplicables(version.ambito):
         if cfg.solo_automatica or (solo and cfg.clave not in solo):
             continue
         texto = (
@@ -1022,11 +1036,10 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
     todos_a_favor = {"demo_tesorero": A, "demo_cp1": A, "demo_cp2": A, "demo_cp3": A}
     mayoria = {"demo_tesorero": A, "demo_cp1": A, "demo_cp2": A, "demo_cp3": N}
 
-    # 2027 · con campaña: v1 rechazada por la Junta, v2 ratificada, v3 modificación.
-    e2027 = _ejercicio(2027, "Ejercicio de demostración con campaña", True, autor)
+    # 2027 · presupuesto ordinario: v1 rechazada por la Junta, v2 ratificada, v3 modificación.
+    e2027 = _ejercicio(2027, "Ejercicio de demostración con presupuesto electoral", True, autor)
     v1 = _version(e2027, 1, "Primera propuesta (rechazada por la Junta en la demostración)", autor)
-    _rellenar(v1, campana=True, factor=Decimal("0.90"), anterior=False)
-    _proceso_demo(v1, usuarios, anio=2027, envio=True, concejales=20, votos=10000)
+    _rellenar(v1, factor=Decimal("0.90"), anterior=False)
     _recorrer_flujo(
         v1,
         usuarios,
@@ -1037,8 +1050,7 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
         crear_borrador=False,
     )
     v2 = _version(e2027, 2, "Versión corregida tras el rechazo", autor, v1, TipoOrigen.TRAS_RECHAZO)
-    _rellenar(v2, campana=True, factor=Decimal("1.00"), anterior=False)
-    _proceso_demo(v2, usuarios, anio=2027, envio=True, concejales=20, votos=10000)
+    _rellenar(v2, factor=Decimal("1.00"), anterior=False)
     _recorrer_flujo(
         v2,
         usuarios,
@@ -1051,8 +1063,7 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
     v3 = _version(
         e2027, 3, "Modificación: reforma ficticia de la sede", autor, v2, TipoOrigen.MODIFICACION
     )
-    c3 = _rellenar(v3, campana=True, factor=Decimal("1.00"), anterior=False)
-    _proceso_demo(v3, usuarios, anio=2027, envio=True, concejales=20, votos=10000)
+    c3 = _rellenar(v3, factor=Decimal("1.00"), anterior=False)
     c3.anadir(
         LineaDemo(
             "G.2.5",
@@ -1067,15 +1078,35 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
     )
     _recorrer_flujo(v3, usuarios, votos=mayoria)
 
+    # 2027 · PRESUPUESTO ELECTORAL: separado del ordinario y con su propio flujo (aprobado por la
+    # Comisión Permanente y ratificado por la Junta aparte).
+    ev1 = _version(
+        e2027,
+        1,
+        "Presupuesto electoral de la campaña ficticia",
+        autor,
+        ambito=Ambito.ELECTORAL,
+    )
+    _rellenar_electoral(ev1, factor=Decimal("1.00"))
+    _proceso_demo(ev1, usuarios, anio=2027, envio=True, concejales=20, votos=10000)
+    _recorrer_flujo(
+        ev1,
+        usuarios,
+        votos=todos_a_favor,
+        convocar="CONV-DEMO-ELECTORAL",
+        ratificar="RATIFICADO",
+        acta="ACTA-DEMO-ELECTORAL",
+    )
+
     # Ejercicios sin campaña, cada uno en un punto del flujo.
     e2028 = _ejercicio(2028, "Ejercicio de demostración sin campaña (Borrador)", False, autor)
     v = _version(e2028, 1, "Borrador de trabajo del Tesorero", autor)
-    _rellenar(v, campana=False, factor=Decimal("1.00"), anterior=False)
+    _rellenar(v, factor=Decimal("1.00"), anterior=False)
     _redactar_memoria(v, usuarios)  # borrador completo: supera todas las reglas
 
     e2029 = _ejercicio(2029, "Ejercicio de demostración sin campaña (Propuesto)", False, autor)
     v2029 = _version(e2029, 1, "Propuesto a la Comisión Permanente (votación abierta)", autor)
-    _rellenar(v2029, campana=False, factor=Decimal("1.02"), anterior=True)
+    _rellenar(v2029, factor=Decimal("1.02"), anterior=True)
     _recorrer_flujo(v2029, usuarios, votos={"demo_cp1": A}, cerrar=False)
     flujo.comentar(
         _ctx(usuarios, "demo_cp2", Rol.COMISION_PERMANENTE),
@@ -1085,7 +1116,7 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
 
     e2030 = _ejercicio(2030, "Ejercicio de demostración sin campaña (Aprobado)", False, autor)
     v2030 = _version(e2030, 1, "Aprobado por la Comisión Permanente", autor)
-    _rellenar(v2030, campana=False, factor=Decimal("1.04"), anterior=True)
+    _rellenar(v2030, factor=Decimal("1.04"), anterior=True)
     _recorrer_flujo(
         v2030,
         usuarios,
@@ -1098,14 +1129,24 @@ def _cargar_demo(contexto: Contexto) -> dict[str, str]:
     e2031 = _ejercicio(2031, "Casos que incumplen reglas", True, autor)
     v = _version(e2031, 1, "Borrador con errores deliberados para probar los bloqueos", autor)
     _casos_incumplidos(v)
-    _proceso_demo(v, usuarios, anio=2031, envio=False, concejales=5, votos=2000)
     # Memoria a medias y sin saldo inicial, a propósito (V-008 y V-009).
     _redactar_memoria(v, usuarios, solo=("resumen", "contexto"))
+    # El presupuesto electoral de 2031 también trae defectos deliberados (L-004, L-012 a L-015).
+    ev = _version(
+        e2031,
+        1,
+        "Borrador electoral con errores deliberados",
+        autor,
+        ambito=Ambito.ELECTORAL,
+    )
+    _casos_electorales(ev)
+    _proceso_demo(ev, usuarios, anio=2031, envio=False, concejales=5, votos=2000)
+    _redactar_memoria(ev, usuarios)
 
     # 2032 · rechazada por la Comisión Permanente (y nuevo borrador automático).
     e2032 = _ejercicio(2032, "Ejercicio de demostración rechazado por la CP", False, autor)
     v = _version(e2032, 1, "Propuesta que la Comisión Permanente rechaza en la demostración", autor)
-    _rellenar(v, campana=False, factor=Decimal("1.00"), anterior=False)
+    _rellenar(v, factor=Decimal("1.00"), anterior=False)
     _recorrer_flujo(
         v, usuarios, votos={"demo_tesorero": A, "demo_cp1": C, "demo_cp2": C, "demo_cp3": C}
     )

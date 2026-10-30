@@ -190,8 +190,9 @@ def test_l003_limite_sin_verificar(ok) -> None:
 def con_campana(catalogo, ctx_tesorero):
     from apps.presupuesto import servicios as ps
 
-    _, version = ps.crear_ejercicio(ctx_tesorero, anio=2051, hay_proceso_electoral=True)
-    ls = presupuesto_valido(ctx_tesorero, version, campana=True)
+    ejercicio, _ = ps.crear_ejercicio(ctx_tesorero, anio=2051, hay_proceso_electoral=True)
+    version = ps.crear_presupuesto_electoral(ctx_tesorero, ejercicio)
+    ls = presupuesto_valido(ctx_tesorero, version)
     return version, ctx_tesorero, ls
 
 
@@ -213,14 +214,9 @@ def test_l004_justo_en_el_limite_se_acepta(con_campana) -> None:
     assert "L-004" not in codigos(validar(version))
 
 
-def test_l004_gasto_electoral_sin_proceso_electoral(ok) -> None:
-    version, ctx, ls = ok
-    version.ejercicio.hay_proceso_electoral = True
-    version.ejercicio.save()
-    linea(ctx, version, "G.7.1", "100")
-    version.ejercicio.hay_proceso_electoral = False
-    version.ejercicio.save()
-    assert any("no tiene proceso electoral" in m for m in _mensajes(validar(version), "L-004"))
+def test_l004_no_se_evalua_en_el_presupuesto_ordinario(ok) -> None:
+    version, _, _ = ok
+    assert version.ambito == "ORDINARIO" and "L-004" not in codigos(validar(version))
 
 
 def test_l004_limite_sin_verificar(con_campana) -> None:

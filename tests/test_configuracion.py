@@ -12,10 +12,13 @@ def _config(tmp_path: Path, nombre: str, texto: str) -> Path:
     return tmp_path
 
 
-def test_cuadro_real_es_valido_y_tiene_13_capitulos() -> None:
+def test_cuadro_real_es_valido_y_tiene_15_capitulos_en_dos_ambitos() -> None:
     c = cfg.cargar_cuadro_cuentas()
-    assert [x.codigo for x in c.capitulos if x.tipo == "INGRESO"] == [f"I.{i}" for i in range(1, 6)]
+    assert [x.codigo for x in c.capitulos if x.tipo == "INGRESO"] == [f"I.{i}" for i in range(1, 8)]
     assert [x.codigo for x in c.capitulos if x.tipo == "GASTO"] == [f"G.{i}" for i in range(1, 9)]
+    # dos presupuestos separados: el electoral tiene sus propios capítulos
+    electorales = [x.codigo for x in c.capitulos if x.ambito == "ELECTORAL"]
+    assert electorales == ["I.6", "I.7", "G.7"]
     assert not c.validado  # el Tesorero aún no lo ha validado
 
 
@@ -159,9 +162,9 @@ def test_sincronizacion_es_idempotente_y_audita() -> None:
     assert not segunda["cuadro_cuentas"].hubo_cambios
     assert not segunda["parametros_legales"].hubo_cambios
     assert RegistroAuditoria.objects.filter(accion="config.sincronizar").count() == n_audit
-    assert Capitulo.objects.count() == 13
+    assert Capitulo.objects.count() == 15
     assert Partida.objects.get(codigo="G.7.1").dimension_por_defecto == "CAMPANA"
-    assert CuentaPGC.objects.filter(codigo="720").exists()
+    assert CuentaPGC.objects.filter(codigo="710").exists()
     assert ParametroLegal.objects.filter(valor__isnull=False).count() == 25  # 9 + 16 electorales
     assert ParametroLegal.objects.filter(ambito="ELECTORAL").count() == 16
     assert Partida.objects.filter(envio_electoral=True).count() == 4  # G.7.11 a G.7.14
@@ -190,6 +193,32 @@ capitulos:
     )
     r = sincronizar_cuadro_cuentas(cfg.cargar_cuadro_cuentas(d))
     assert r.desactivados > 0
-    assert Capitulo.objects.count() == 13
+    assert Capitulo.objects.count() == 15
     assert Capitulo.objects.get(codigo="G.1").activo is False
     assert Capitulo.objects.get(codigo="I.1").activo is True
+
+
+def test_el_cuadro_solo_usa_cuentas_del_plan_contable_de_las_formaciones() -> None:
+    """Cada cuenta del cuadro (real y demo) existe en el catálogo aportado, con su denominación."""
+    from pathlib import Path
+
+    import yaml
+    from django.conf import settings
+
+    base = Path(settings.CONFIG_DIR)
+    plan = yaml.safe_load((base / "plan_cuentas_formaciones.yaml").read_text(encoding="utf-8"))
+    oficiales = {str(k): v for k, v in plan["cuentas"].items()}
+    for ruta in (base, base / "demo"):
+        cuadro = cfg.cargar_cuadro_cuentas(ruta)
+        for cuenta in cuadro.cuentas:
+            assert cuenta.codigo in oficiales, f"{cuenta.codigo} no está en el plan contable"
+            assert cuenta.denominacion == oficiales[cuenta.codigo], cuenta.codigo
+        # y todas las partidas usan cuentas definidas en el cuadro (lo exige el cargador)
+        assert all(p.cuentas for c in cuadro.capitulos for p in c.partidas)
+
+
+def test_la_estructura_de_la_demo_coincide_con_la_real() -> None:
+    real, demo = cfg.cargar_cuadro_cuentas(), cfg.cargar_cuadro_cuentas(cfg.directorio_config(True))
+    assert [(c.codigo, c.ambito, [p.codigo for p in c.partidas]) for c in real.capitulos] == [
+        (c.codigo, c.ambito, [p.codigo for p in c.partidas]) for c in demo.capitulos
+    ]

@@ -77,11 +77,7 @@ def memoria(request: HttpRequest, pk: int) -> HttpResponse:
 def memoria_editar(request: HttpRequest, pk: int, clave: str) -> HttpResponse:
     v = _visible(request, pk)
     cfg = parametros_actuales(v.es_demo).seccion(clave)
-    if (
-        cfg is None
-        or cfg.solo_automatica
-        or not cfg.aplicables_a(v.ejercicio.hay_proceso_electoral)
-    ):
+    if cfg is None or cfg.solo_automatica or not cfg.aplicables_a(v.ambito):
         raise Http404("Sección no disponible.")
     if not v.editable:
         messages.error(request, "Esta versión es de solo lectura.")
@@ -121,7 +117,7 @@ def memoria_editar(request: HttpRequest, pk: int, clave: str) -> HttpResponse:
 @requiere_rol(*TODOS)
 def campana(request: HttpRequest, pk: int) -> HttpResponse:
     v = _visible(request, pk)
-    if not v.ejercicio.hay_proceso_electoral:
+    if not v.es_electoral:
         return render(request, "anexos/campana.html", {"version": v, "sin_proceso": True})
     puede = _puede_editar(request, v)
     form = None
@@ -214,7 +210,7 @@ def ejecucion(request: HttpRequest, pk: int) -> HttpResponse:
                 request, f"Importadas {imp.filas} filas (corte en el mes {imp.mes_corte})."
             )
             return redirect("anexos:ejecucion", pk=ejercicio.pk)
-    ultima = ejercicio.versiones.order_by("-numero").first()
+    ultima = ejercicio.ultima_version
     return render(
         request,
         "anexos/ejecucion.html",
@@ -224,7 +220,8 @@ def ejecucion(request: HttpRequest, pk: int) -> HttpResponse:
             "form_anular": MotivoAnulacionForm(),
             "importaciones": ejercicio.importaciones.select_related("importado_por"),
             "vigente": importacion_vigente(ejercicio),
-            "version_para_comparar": ejercicio.versiones.exclude(estado="BORRADOR")
+            "version_para_comparar": ejercicio.versiones.filter(ambito="ORDINARIO")
+            .exclude(estado="BORRADOR")
             .order_by("-numero")
             .first()
             or ultima,
@@ -340,7 +337,7 @@ def seccion_cfg_editar(request: HttpRequest, pk: int) -> HttpResponse:
                 obligatoria=d["obligatoria"],
                 activa=d["activa"],
                 longitud_minima=d["longitud_minima"],
-                solo_con_proceso_electoral=d["solo_con_proceso_electoral"],
+                ambito=d["ambito"],
                 ayuda=d["ayuda"],
                 plantilla=d["plantilla"],
             )

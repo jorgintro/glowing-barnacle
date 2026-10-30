@@ -219,7 +219,7 @@ def test_la_estructura_del_cuadro_demo_coincide_con_la_real() -> None:
                 (
                     k.codigo,
                     k.tipo,
-                    k.solo_con_proceso_electoral,
+                    k.ambito,
                     [(p.codigo, p.cuentas, p.dimension) for p in k.partidas],
                 )
                 for k in c.capitulos

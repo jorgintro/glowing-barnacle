@@ -16,6 +16,7 @@ from .dinero import CERO, redondear, repartir_uniforme
 from .errores import VersionNoEditable
 from .estados import EstadoVersion
 from .models import (
+    Ambito,
     CuentaPGC,
     Ejercicio,
     Hipotesis,
@@ -77,6 +78,38 @@ def crear_ejercicio(
         es_demo=es_demo,
     )
     return ejercicio, version
+
+
+@transaction.atomic
+def crear_presupuesto_electoral(contexto: Contexto, ejercicio: Ejercicio) -> VersionPresupuesto:
+    """Abre el presupuesto electoral del ejercicio: separado del ordinario y con flujo propio.
+
+    Funciona como un presupuesto extraordinario: tiene sus propias versiones, memoria, votación,
+    ratificación y huella. Solo si el ejercicio tiene proceso electoral previsto.
+    """
+    exigir_tesorero(contexto)
+    if not ejercicio.hay_proceso_electoral:
+        raise ValidationError("El ejercicio no tiene proceso electoral previsto.")
+    if ejercicio.versiones.filter(ambito=Ambito.ELECTORAL).exists():
+        raise ValidationError("Este ejercicio ya tiene su presupuesto electoral.")
+    version = VersionPresupuesto.objects.create(
+        ejercicio=ejercicio,
+        ambito=Ambito.ELECTORAL,
+        numero=1,
+        estado=EstadoVersion.BORRADOR,
+        autor=contexto.usuario,
+        motivo="Primera versión del presupuesto electoral",
+        es_demo=ejercicio.es_demo,
+    )
+    registrar(
+        contexto,
+        accion="ejercicio.crear_presupuesto_electoral",
+        entidad="VersionPresupuesto",
+        entidad_id=version.pk,
+        despues={"ejercicio": ejercicio.pk, "ambito": Ambito.ELECTORAL},
+        es_demo=ejercicio.es_demo,
+    )
+    return version
 
 
 def _siguiente_codigo(version: VersionPresupuesto, partida: Partida) -> str:
@@ -163,8 +196,12 @@ def guardar_linea(
     capitulo = partida.capitulo
     if not partida.activa or not capitulo.activo:
         errores.append("La partida elegida ya no está activa.")
-    if capitulo.solo_con_proceso_electoral and not version.ejercicio.hay_proceso_electoral:
-        errores.append("Este capítulo solo se usa si el ejercicio tiene proceso electoral.")
+    if capitulo.ambito != version.ambito:
+        errores.append(
+            f"El capítulo {capitulo.codigo} es del presupuesto "
+            f"{capitulo.get_ambito_display().lower()} y esta versión es del "
+            f"{version.get_ambito_display().lower()}: cada presupuesto tiene su propio flujo."
+        )
     if not partida.cuentas.filter(pk=cuenta.pk).exists():
         errores.append(f"La cuenta {cuenta.codigo} no corresponde a la partida {partida.codigo}.")
     if not denominacion.strip():

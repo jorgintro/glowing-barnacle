@@ -153,14 +153,15 @@ def test_una_seccion_desactivada_deja_de_pedirse(esc) -> None:
     assert v008(v) == []
 
 
-def test_la_seccion_de_campana_solo_se_pide_con_proceso_electoral(esc) -> None:
+def test_la_seccion_de_campana_solo_se_pide_en_el_presupuesto_electoral(esc) -> None:
     sin = version_valida(esc, 2062)
     con = version_valida(esc, 2063, campana=True)
+    assert con.es_electoral
     SeccionMemoriaCfg.objects.create(
         clave="plan-de-campana",
         titulo="Plan de campaña",
         orden=7,
-        solo_con_proceso_electoral=True,
+        ambito="ELECTORAL",
         longitud_minima=10,
         es_demo=True,
     )

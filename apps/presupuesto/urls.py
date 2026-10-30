@@ -7,6 +7,11 @@ app_name = "presupuesto"
 urlpatterns = [
     path("presupuestos/", views.lista, name="lista"),
     path("presupuestos/ejercicio/nuevo/", views.ejercicio_nuevo, name="ejercicio_nuevo"),
+    path(
+        "presupuestos/ejercicio/<int:pk>/electoral/",
+        views.crear_electoral,
+        name="crear_electoral",
+    ),
     path("presupuestos/version/<int:pk>/", views.version, name="version"),
     path(
         "presupuestos/version/<int:pk>/lineas/nueva/",
