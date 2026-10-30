@@ -75,7 +75,7 @@ def test_v003_sin_cuenta(ok) -> None:
 def test_v003_cuenta_ajena_a_la_partida(ok) -> None:
     version, _, ls = ok
     Linea.objects.filter(pk=ls["personal"].pk).update(
-        cuenta_pgc=CuentaPGC.objects.get(codigo="720")
+        cuenta_pgc=CuentaPGC.objects.get(codigo="710")
     )
     inc = [i for i in validar(version).incidencias if i.codigo == "V-003"]
     assert len(inc) == 1 and "no corresponde" in inc[0].mensaje

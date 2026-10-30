@@ -23,7 +23,7 @@ def _cliente(usuario: str) -> Client:
 def _datos_linea(**extra: object) -> dict[str, object]:
     base: dict[str, object] = {
         "denominacion": "Cuotas de prueba",
-        "cuenta": CuentaPGC.objects.get(codigo="720").pk,
+        "cuenta": CuentaPGC.objects.get(codigo="710").pk,
         "importe_anual": "1.234,56",
         "tipo": "RECURRENTE",
         "dimension": "ORDINARIO",
@@ -116,7 +116,7 @@ def test_formulario_se_rellena_al_editar(
         borrador,
         partida=p,
         denominacion="Original",
-        cuenta=CuentaPGC.objects.get(codigo="720"),
+        cuenta=CuentaPGC.objects.get(codigo="710"),
         importe_anual=Decimal("1200"),
         hipotesis=ps.DatosHipotesis("t", "f", "ALTA"),
         responsable="R",
@@ -204,7 +204,7 @@ def test_linea_sin_hipotesis_muestra_aviso(
         borrador,
         partida=p,
         denominacion="X",
-        cuenta=CuentaPGC.objects.get(codigo="720"),
+        cuenta=CuentaPGC.objects.get(codigo="710"),
         importe_anual=Decimal("10"),
         hipotesis=ps.DatosHipotesis("t", "f", "ALTA"),
         responsable="R",

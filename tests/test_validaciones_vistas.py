@@ -27,7 +27,9 @@ def demo_cargada(catalogo, tesorero):
 
 
 def _demo(anio: int) -> VersionPresupuesto:
-    return VersionPresupuesto.objects.get(ejercicio__anio=anio, ejercicio__es_demo=True)
+    return VersionPresupuesto.objects.get(
+        ejercicio__anio=anio, ejercicio__es_demo=True, ambito="ORDINARIO"
+    )
 
 
 # --------------------------------------------------------------- panel de validaciones
@@ -205,7 +207,7 @@ def test_el_origen_del_ingreso_se_guarda(borrador, cliente_tesorero) -> None:
 
     datos = {
         "denominacion": "Merchandising",
-        "cuenta": CuentaPGC.objects.get(codigo="70x").pk,
+        "cuenta": CuentaPGC.objects.get(codigo="751").pk,
         "importe_anual": "100,00",
         "tipo": "RECURRENTE",
         "dimension": "ORDINARIO",
@@ -225,4 +227,4 @@ def test_el_nif_de_pruebas_es_valido() -> None:
     from apps.presupuesto.nif import validar_nif
 
     assert validar_nif(nif(1234), "FISICA") == nif(1234)
-    assert dn.CAPITULOS_CON_DONANTES == ("I.2", "I.4", "I.5")
+    assert dn.CAPITULOS_CON_DONANTES == ("I.2", "I.4", "I.5", "I.7")

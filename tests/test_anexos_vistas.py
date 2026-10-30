@@ -195,6 +195,7 @@ def test_el_panel_edita_una_seccion_y_la_restablece(esc) -> None:
     datos = {
         "titulo": "Resumen para la Junta",
         "orden": "1",
+        "ambito": "TODOS",
         "obligatoria": "on",
         "activa": "on",
         "longitud_minima": "300",

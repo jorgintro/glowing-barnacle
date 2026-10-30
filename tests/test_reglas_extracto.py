@@ -399,7 +399,7 @@ def test_el_formulario_de_linea_pide_operaciones_altas_solo_en_i5(
 def test_operaciones_altas_se_guardan_desde_la_interfaz(borrador, cliente_tesorero) -> None:
     datos = {
         "denominacion": "Venta de entradas",
-        "cuenta": CuentaPGC.objects.get(codigo="70x").pk,
+        "cuenta": CuentaPGC.objects.get(codigo="751").pk,
         "importe_anual": "500,00",
         "tipo": "RECURRENTE",
         "dimension": "ORDINARIO",

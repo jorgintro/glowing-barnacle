@@ -26,7 +26,7 @@ def _linea(ctx: Contexto, version, partida: str = "I.1.1", importe: str = "1200"
         version,
         partida=p,
         denominacion=extra.pop("denominacion", "Línea de prueba"),
-        cuenta=p.cuentas.first() or CuentaPGC.objects.get(codigo="720"),
+        cuenta=p.cuentas.first() or CuentaPGC.objects.get(codigo="710"),
         importe_anual=Decimal(importe),
         hipotesis=HIP,
         responsable="Tesorería",
