@@ -199,7 +199,7 @@ def test_borrar_elimina_solo_lo_demo_y_deja_intacto_lo_real(
         borrador,
         partida=p,
         denominacion="Cuotas reales",
-        cuenta=CuentaPGC.objects.get(codigo="720"),
+        cuenta=CuentaPGC.objects.get(codigo="710"),
         importe_anual=Decimal("100"),
         hipotesis=ps.DatosHipotesis("h", "f", "ALTA"),
         responsable="Tesorería",
@@ -309,24 +309,38 @@ def test_el_caso_que_incumple_dispara_cada_regla_prevista(cargada: dict[str, str
         "L-001",
         "L-002",
         "L-003",
-        "L-004",
         "L-005",
         "L-006",
         "L-008",
         "L-009",
         "L-010",
         "L-011",
+    }
+    assert res.codigos_incumplidos() == esperadas
+    assert not res.puede_avanzar
+    avisos = {"V-007", "V-009", "L-008"}
+    assert {i.codigo for i in res.avisos} == avisos  # solo avisos
+    # V-010 no se evalúa sin saldo inicial; L-007: parámetros ficticios verificados en config/demo/
+    # las reglas de campaña no se aplican al ordinario y cuentan como superadas
+    assert res.superadas() == [
+        "V-010",
+        "V-011",
+        "L-004",
+        "L-007",
         "L-012",
         "L-013",
         "L-014",
         "L-015",
-    }
-    assert res.codigos_incumplidos() == esperadas
+    ]
+
+
+def test_el_presupuesto_electoral_con_defectos_dispara_las_reglas_de_campana(
+    cargada: dict[str, str],
+) -> None:
+    res = validar_version(_version(2031, 1, "ELECTORAL"))
+    esperadas = {"L-004", "L-012", "L-013", "L-014", "L-015"}
+    assert esperadas <= res.codigos_incumplidos()
     assert not res.puede_avanzar
-    avisos = {"V-007", "V-009", "L-008", "L-013", "L-014", "L-015"}
-    assert {i.codigo for i in res.avisos} == avisos  # solo avisos
-    # V-010 no se evalúa sin saldo inicial; L-007: parámetros ficticios verificados en config/demo/
-    assert res.superadas() == ["V-010", "V-011", "L-007"]
 
 
 def test_los_donantes_demo_son_ficticios_y_se_borran(
