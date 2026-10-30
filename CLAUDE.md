@@ -304,6 +304,9 @@ Las validaciones se ejecutan **antes de cada transición de estado** y también 
 | `V-005` | Importes con dos decimales; sin valores negativos salvo ajustes justificados. | 🔴 Bloqueante |
 | `V-006` | Resultado presupuestario calculado y explicado. Un déficit exige plan de financiación. | 🔴 Bloqueante |
 | `V-007` | Variación superior al umbral configurado respecto al ejercicio anterior exige justificación. | 🟡 Aviso |
+| `V-008` | La memoria explicativa está completa (§7.1). | 🔴 Bloqueante |
+| `V-009` | Está indicado el saldo inicial de tesorería (§7.2). | 🟡 Aviso |
+| `V-010` | Sin tensión de tesorería (saldo negativo o bajo el mínimo) en el escenario base (§7.2). | 🟡 Aviso |
 
 ### 8.2 Validaciones legales
 
