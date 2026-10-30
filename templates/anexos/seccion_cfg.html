@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Sección · {{ cfg.titulo }}{% endblock %}
+{% block contenido %}
+<h1>Sección de la memoria: {{ cfg.titulo }}</h1>
+<p class="suave">Contenido: {{ cfg.get_contenido_display }} · <a href="{% url 'anexos:configuracion' %}">Volver a la configuración</a></p>
+{% if cfg.solo_automatica %}<p class="aviso-caja">Esta sección la genera el sistema: la ayuda y las exigencias de escritura no se aplican.</p>{% endif %}
+<form method="post" class="tarjeta">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+  {% for campo in form %}
+  <div class="campo"><label for="{{ campo.id_for_label }}">{% if campo.field.widget.input_type == "checkbox" %}{{ campo }} {% endif %}{{ campo.label }}</label>{% if campo.field.widget.input_type != "checkbox" %}{{ campo }}{% endif %}
+    {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}</div>
+  {% endfor %}
+  <p class="sub">En la plantilla se rellenan solos estos marcadores: <code>{organizacion}</code> <code>{ejercicio}</code> <code>{version}</code> <code>{total_ingresos}</code> <code>{total_gastos}</code> <code>{resultado}</code> <code>{tipo_resultado}</code> <code>{proceso_electoral}</code>. Escribe <code>[COMPLETAR: …]</code> donde quien redacte deba poner algo.</p>
+  <button class="boton" type="submit">Guardar la sección</button>
+</form>
+<form method="post" action="{% url 'anexos:seccion_cfg_restablecer' cfg.pk %}">{% csrf_token %}
+  <button class="boton secundario" type="submit">Volver a los valores propuestos</button>
+  <span class="sub">Restablece título, ayuda, plantilla y exigencias de esta sección (no toca textos ya escritos en versiones).</span>
+</form>
+{% endblock %}

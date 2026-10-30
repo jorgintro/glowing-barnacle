@@ -1,0 +1,7 @@
+{% load l10n %}{% load presupuesto_extras %}
+<p class="suave">{{ version.ejercicio.anio|unlocalize }} · versión {{ version.numero }} ·
+  <span class="etiqueta {{ version.estado|clase_estado }}">{{ version.get_estado_display }}</span>
+  {% if version.es_demo %}<span class="etiqueta aviso">DEMO · datos ficticios</span>{% endif %}
+  · <a href="{% url 'presupuesto:version' version.pk %}">Volver a la versión</a>
+  · <a href="{% url 'anexos:memoria' version.pk %}">Memoria</a>
+  · <a href="{% url 'anexos:tesoreria' version.pk %}">Plan de tesorería</a></p>

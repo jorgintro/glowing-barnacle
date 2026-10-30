@@ -1,0 +1,19 @@
+<p class="sub">{{ c.origen }}.</p>
+<p>No es asesoramiento jurídico: es el resultado de las comprobaciones automáticas del sistema sobre los datos introducidos.</p>
+<h3>Comprobaciones superadas ({{ c.superadas|length }})</h3>
+<ul>{% for s in c.superadas %}<li><strong>{{ s.codigo }}</strong> · {{ s.titulo }}</li>{% empty %}<li class="suave">Ninguna.</li>{% endfor %}</ul>
+<h3>Incidencias</h3>
+<ul>{% for i in c.incidencias %}<li><span class="etiqueta {% if i.gravedad == 'BLOQUEANTE' %}error{% else %}aviso{% endif %}">{% if i.gravedad == 'BLOQUEANTE' %}Bloqueante{% else %}Aviso{% endif %}</span> <strong>{{ i.codigo }}</strong>{% if i.linea %} · {{ i.linea }}{% endif %}: {{ i.mensaje }}</li>{% empty %}<li class="suave">Ninguna.</li>{% endfor %}</ul>
+{% if c.avisos_aceptados %}<p><strong>Avisos aceptados con constancia al proponer:</strong> {{ c.avisos_aceptados|join:", " }}.</p>{% endif %}
+<h3>Parámetros legales usados</h3>
+<div class="tabla-ancha"><table>
+  <thead><tr><th scope="col">Parámetro</th><th scope="col">Valor</th><th scope="col">Referencia</th><th scope="col">Verificado</th></tr></thead>
+  <tbody>
+  {% for p in c.parametros %}
+    <tr><td>{{ p.clave }}<div class="sub">{{ p.descripcion }}</div></td>
+      <td>{% if p.valor %}{{ p.valor }} {{ p.unidad }}{% else %}<span class="etiqueta error">Sin valor</span>{% endif %}</td>
+      <td>{{ p.referencia|default:"—" }}</td>
+      <td>{% if p.verificado %}<span class="etiqueta ok">Sí</span><div class="sub">{{ p.fecha }} · {{ p.verificador }}</div>{% else %}<span class="etiqueta error">No</span>{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>

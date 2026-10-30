@@ -1,0 +1,24 @@
+{% load presupuesto_extras %}
+<div class="aviso-caja" style="border-color:var(--marca);background:var(--marca-clara)">
+  <strong>Cifras (se calculan solas)</strong>
+  <table>
+    <tbody>
+      <tr><th scope="row">Ingresos</th><td class="num">{{ r.ingresos|euros }}</td></tr>
+      <tr><th scope="row">Gastos</th><td class="num">{{ r.gastos|euros }}</td></tr>
+      <tr><th scope="row">Resultado presupuestario ({% if r.es_deficit %}déficit{% elif r.resultado == 0 %}equilibrado{% else %}superávit{% endif %})</th><td class="num"><strong>{{ r.resultado|euros }}</strong></td></tr>
+    </tbody>
+  </table>
+  {% if r.explicacion %}<p><strong>Explicación del resultado:</strong> {{ r.explicacion }}</p>{% endif %}
+  {% if r.plan_financiacion %}<p><strong>Plan de financiación:</strong> {{ r.plan_financiacion }}</p>{% endif %}
+  <p style="margin-bottom:.25rem"><strong>Principales variaciones respecto al ejercicio anterior</strong></p>
+  {% if r.variaciones %}
+  <table>
+    <thead><tr><th scope="col">Línea</th><th scope="col" class="num">Anterior</th><th scope="col" class="num">Ahora</th><th scope="col" class="num">Diferencia</th><th scope="col" class="num">%</th></tr></thead>
+    <tbody>
+    {% for v in r.variaciones %}
+      <tr><td>{{ v.codigo }} · {{ v.denominacion }}</td><td class="num">{{ v.anterior|euros }}</td><td class="num">{{ v.actual|euros }}</td><td class="num">{{ v.diferencia|euros }}</td><td class="num">{% if v.porcentaje is None %}—{% else %}{{ v.porcentaje }} %{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="suave">No hay líneas con importe del ejercicio anterior distinto del actual.</p>{% endif %}
+</div>
