@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block titulo %}Ejecución real{% endblock %}
+{% block contenido %}
+<h1>Ejecución real · {{ ejercicio.anio|unlocalize }}</h1>
+<p class="suave"><a href="{% url 'presupuesto:lista' %}">Presupuestos</a>
+  {% if version_para_comparar %}· <a href="{% url 'anexos:comparativa' version_para_comparar.pk %}">Ver la comparativa</a>{% endif %}</p>
+<p class="aviso-caja">El sistema <strong>no sustituye a la contabilidad</strong>: solo la consume. Importa aquí los datos reales con un fichero CSV. Es <strong>todo o nada</strong>: si alguna fila falla, no se guarda nada y se te dice cuáles. Una importación no se edita ni se borra: se anula con motivo. La comparativa usa la última importación activa.</p>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">Importar un fichero</h2>
+  <p>1. <a href="{% url 'anexos:ejecucion_plantilla' ejercicio.pk %}">Descarga la plantilla CSV</a> (tiene una fila por línea del presupuesto).<br>
+     2. Rellénala con una fila por línea y mes: <code>codigo;mes;importe</code>, con el importe en formato <code>1.234,56</code>.<br>
+     3. Súbela aquí e indica el último mes con datos.</p>
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="aviso-caja error">{{ form.non_field_errors }}</div>{% endif %}
+    {% for campo in form %}
+    <div class="campo"><label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+      {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}{{ campo.errors }}</div>
+    {% endfor %}
+    <button class="boton" type="submit">Importar</button>
+  </form>
+</section>
+
+<section class="tarjeta">
+  <h2 style="margin-top:0">Importaciones</h2>
+  <table>
+    <thead><tr><th scope="col">Fecha</th><th scope="col">Fichero</th><th scope="col">Corte</th><th scope="col" class="num">Filas</th><th scope="col">Estado</th><th scope="col"></th></tr></thead>
+    <tbody>
+    {% for i in importaciones %}
+      <tr><td>{{ i.importado_en|date:"d/m/Y H:i" }}</td>
+        <td>{{ i.nombre_fichero }}<div class="sub">Huella: <code>{{ i.huella_fichero|slice:":12" }}…</code></div></td>
+        <td>mes {{ i.mes_corte }}</td><td class="num">{{ i.filas }}</td>
+        <td>{% if i.estado == "ACTIVA" %}<span class="etiqueta ok">Activa</span>{% if i == vigente %} <span class="etiqueta marca">En uso</span>{% endif %}{% else %}<span class="etiqueta error">Anulada</span><div class="sub">{{ i.motivo_anulacion }}</div>{% endif %}</td>
+        <td>{% if i.estado == "ACTIVA" %}
+          <form method="post" action="{% url 'anexos:ejecucion_anular' ejercicio.pk i.pk %}">{% csrf_token %}
+            <input type="text" name="motivo" placeholder="Motivo" required aria-label="Motivo de la anulación">
+            <button class="boton secundario" type="submit">Anular</button></form>{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="6" class="suave">Todavía no hay importaciones.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
