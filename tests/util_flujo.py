@@ -2,10 +2,13 @@
 
 from dataclasses import dataclass, replace
 from datetime import timedelta
+from decimal import Decimal
 from typing import Any
 
 from django.utils import timezone
 
+from apps.anexos import servicios as anexos
+from apps.anexos.models import SeccionMemoria
 from apps.auditoria.servicios import Contexto
 from apps.flujo import servicios as fs
 from apps.flujo.models import Voto
@@ -59,7 +62,16 @@ def version_valida(e: Escenario, anio: int = 2060, campana: bool = False) -> Ver
     return v
 
 
+def revisar_anexos(e: Escenario, v: VersionPresupuesto) -> None:
+    """Lo que haría el Tesorero con una versión copiada: revisar la memoria y poner el saldo."""
+    for s in SeccionMemoria.objects.filter(version=v, pendiente_revision=True):
+        anexos.guardar_seccion(e.tesorero(), v, s.clave, s.texto)
+    if v.saldo_inicial_tesoreria is None and SeccionMemoria.objects.filter(version=v).exists():
+        anexos.guardar_saldo_inicial(e.tesorero(), v, Decimal("100000"))
+
+
 def proponer(e: Escenario, v: VersionPresupuesto):  # type: ignore[no-untyped-def]
+    revisar_anexos(e, v)
     return fs.proponer(e.tesorero(), v, avisos_aceptados=["V-007", "L-008"], confirmar=True)
 
 

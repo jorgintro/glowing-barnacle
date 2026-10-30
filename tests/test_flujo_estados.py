@@ -59,7 +59,7 @@ def test_proponer_sella_la_version_y_abre_la_votacion(esc) -> None:
     assert (t.de_estado, t.a_estado, t.rol) == ("BORRADOR", "PROPUESTO", Rol.TESORERO)
     assert t.hash_version == v.hash and t.hash_previo == "" and len(t.hash_encadenado) == 64
     assert t.validacion is not None
-    assert t.validacion["incidencias"] == [] and len(t.validacion["reglas_ejecutadas"]) == 18
+    assert t.validacion["incidencias"] == [] and len(t.validacion["reglas_ejecutadas"]) == 21
     acciones = set(RegistroAuditoria.objects.values_list("accion", flat=True))
     assert {"version.propuesto", "votacion.abrir"} <= acciones
     assert verificar_integridad(v).ok
